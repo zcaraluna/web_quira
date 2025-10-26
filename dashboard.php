@@ -782,8 +782,10 @@ try {
     file_put_contents('/tmp/debug_quira.txt', "GET params: " . print_r($_GET, true) . "\n", FILE_APPEND);
     
     // Debug de la condición del filtro
-    $condicion_filtro = ($hora_desde !== '00:00' || $hora_hasta !== '23:59');
+    $condicion_filtro = (isset($_GET['hora_desde']) && isset($_GET['hora_hasta']) && 
+                        ($_GET['hora_desde'] !== '00:00' || $_GET['hora_hasta'] !== '23:59'));
     file_put_contents('/tmp/debug_quira.txt', "Condición filtro: " . ($condicion_filtro ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
+    file_put_contents('/tmp/debug_quira.txt', "Valores GET: desde=" . ($_GET['hora_desde'] ?? 'NO_SET') . ", hasta=" . ($_GET['hora_hasta'] ?? 'NO_SET') . "\n", FILE_APPEND);
 
 try {
     // Construir filtro de fecha y hora
@@ -791,7 +793,8 @@ try {
     $parametros = [$fecha_reporte];
     
     // Agregar filtro de franja horaria si se especifica
-    if ($hora_desde !== '00:00' || $hora_hasta !== '23:59') {
+    if (isset($_GET['hora_desde']) && isset($_GET['hora_hasta']) && 
+        ($_GET['hora_desde'] !== '00:00' || $_GET['hora_hasta'] !== '23:59')) {
         $filtro_fecha_hora .= " AND fecha_registro::time >= ? AND fecha_registro::time <= ?";
         $parametros[] = $hora_desde;
         $parametros[] = $hora_hasta;
@@ -807,12 +810,21 @@ try {
     $stmt->execute($parametros);
     $postulantes_fecha = $stmt->fetch()['total'];
     
+    // Debug: escribir la consulta y parámetros
+    file_put_contents('/tmp/debug_quira.txt', "Consulta SQL: SELECT COUNT(*) as total FROM postulantes WHERE $filtro_fecha_hora\n", FILE_APPEND);
+    file_put_contents('/tmp/debug_quira.txt', "Parámetros: " . print_r($parametros, true) . "\n", FILE_APPEND);
+    file_put_contents('/tmp/debug_quira.txt', "Resultado: $postulantes_fecha\n", FILE_APPEND);
+    
     // Debug: verificar si hay datos en la fecha
     $stmt_debug = $pdo->prepare("SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) = ?");
     $stmt_debug->execute([$fecha_reporte]);
     $total_fecha = $stmt_debug->fetch()['total'];
     error_log("DEBUG: Total postulantes en fecha $fecha_reporte: $total_fecha");
     error_log("DEBUG: Total postulantes con filtro horario: $postulantes_fecha");
+    
+    // Debug: escribir en archivo también
+    file_put_contents('/tmp/debug_quira.txt', "Total en fecha $fecha_reporte: $total_fecha\n", FILE_APPEND);
+    file_put_contents('/tmp/debug_quira.txt', "Total con filtro: $postulantes_fecha\n", FILE_APPEND);
     
     // Debug: ver algunos registros de ejemplo
     $stmt_ejemplos = $pdo->prepare("SELECT id, fecha_registro, fecha_registro::time as hora FROM postulantes WHERE DATE(fecha_registro) = ? ORDER BY fecha_registro LIMIT 5");
