@@ -774,6 +774,9 @@ try {
     error_log("hora_desde: " . $hora_desde);
     error_log("hora_hasta: " . $hora_hasta);
     error_log("GET params: " . print_r($_GET, true));
+    
+    // Debug simple que siempre se ejecute
+    file_put_contents('/tmp/debug_quira.txt', "DEBUG: " . date('Y-m-d H:i:s') . " - Fecha: $fecha_reporte, Desde: $hora_desde, Hasta: $hora_hasta\n", FILE_APPEND);
 
 try {
     // Construir filtro de fecha y hora
