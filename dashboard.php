@@ -794,30 +794,8 @@ try {
     $stmt->execute($parametros);
     $postulantes_fecha = $stmt->fetch()['total'];
     
-    // Debug: escribir la consulta y parámetros
-    file_put_contents('/tmp/debug_quira.txt', "Consulta SQL: SELECT COUNT(*) as total FROM postulantes WHERE $filtro_fecha_hora\n", FILE_APPEND);
-    file_put_contents('/tmp/debug_quira.txt', "Parámetros: " . print_r($parametros, true) . "\n", FILE_APPEND);
-    file_put_contents('/tmp/debug_quira.txt', "Resultado: $postulantes_fecha\n", FILE_APPEND);
-    
-    // Debug: verificar si hay datos en la fecha
-    $stmt_debug = $pdo->prepare("SELECT COUNT(*) as total FROM postulantes p WHERE DATE(p.fecha_registro) = ?");
-    $stmt_debug->execute([$fecha_reporte]);
-    $total_fecha = $stmt_debug->fetch()['total'];
-    error_log("DEBUG: Total postulantes en fecha $fecha_reporte: $total_fecha");
-    error_log("DEBUG: Total postulantes con filtro horario: $postulantes_fecha");
-    
-    // Debug: escribir en archivo también
-    file_put_contents('/tmp/debug_quira.txt', "Total en fecha $fecha_reporte: $total_fecha\n", FILE_APPEND);
-    file_put_contents('/tmp/debug_quira.txt', "Total con filtro: $postulantes_fecha\n", FILE_APPEND);
-    
-    // Debug: ver algunos registros de ejemplo
-    $stmt_ejemplos = $pdo->prepare("SELECT id, fecha_registro, fecha_registro::time as hora FROM postulantes p WHERE DATE(p.fecha_registro) = ? ORDER BY p.fecha_registro LIMIT 5");
-    $stmt_ejemplos->execute([$fecha_reporte]);
-    $ejemplos = $stmt_ejemplos->fetchAll();
-    error_log("DEBUG: Ejemplos de registros en la fecha:");
-    foreach($ejemplos as $ejemplo) {
-        error_log("  ID: {$ejemplo['id']}, Fecha: {$ejemplo['fecha_registro']}, Hora: {$ejemplo['hora']}");
-    }
+    // Debug temporal - eliminar después de confirmar que funciona
+    // file_put_contents('/tmp/debug_quira.txt', "Resultado: $postulantes_fecha\n", FILE_APPEND);
     
     // Postulantes por unidad en la fecha específica (con franja horaria)
     $stmt_unidad = $pdo->prepare("
@@ -897,9 +875,8 @@ try {
     }
     
 } catch (Exception $e) {
-    // Debug: escribir el error
-    file_put_contents('/tmp/debug_quira.txt', "ERROR en try-catch: " . $e->getMessage() . "\n", FILE_APPEND);
-    file_put_contents('/tmp/debug_quira.txt', "Archivo: " . $e->getFile() . " Línea: " . $e->getLine() . "\n", FILE_APPEND);
+    // Debug temporal - eliminar después de confirmar que funciona
+    // file_put_contents('/tmp/debug_quira.txt', "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
     
     $postulantes_fecha = 0;
     $postulantes_por_unidad_fecha = [];
@@ -3413,9 +3390,17 @@ $distribucion_unidad = $pdo->query("
             // Preguntar si incluir lista de postulantes
             const incluirPostulantes = confirm('¿Desea incluir la lista detallada de postulantes registrados?\n\nEsto incluirá:\n- Cédula de Identidad\n- Nombre y Apellido\n- Dispositivo utilizado');
             
-            // Recargar la página con el parámetro para que PHP pueda acceder a la decisión
+            // Obtener parámetros de fecha y hora actuales
+            const fecha = document.getElementById('fecha_reporte').value;
+            const horaDesde = document.getElementById('hora_desde').value;
+            const horaHasta = document.getElementById('hora_hasta').value;
+            
+            // Recargar la página con todos los parámetros
             const url = new URL(window.location);
             url.searchParams.set('incluir_postulantes', incluirPostulantes ? '1' : '0');
+            url.searchParams.set('fecha_reporte', fecha);
+            url.searchParams.set('hora_desde', horaDesde);
+            url.searchParams.set('hora_hasta', horaHasta);
             window.location.href = url.toString();
         }
         
@@ -3523,8 +3508,36 @@ $distribucion_unidad = $pdo->query("
                                 })
                             ],
                             alignment: docx.AlignmentType.CENTER,
+                            spacing: { after: 200 }
+                        }),
+                        
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: "Fecha: <?= date('d/m/Y', strtotime($fecha_reporte)) ?>",
+                                    bold: true,
+                                    size: 24,
+                                    color: "2E5090"
+                                })
+                            ],
+                            alignment: docx.AlignmentType.CENTER,
+                            spacing: { after: 200 }
+                        }),
+                        
+                        <?php if (isset($_GET['hora_desde']) && isset($_GET['hora_hasta']) && ($_GET['hora_desde'] !== '00:00' || $_GET['hora_hasta'] !== '23:59')): ?>
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: "Franja horaria: <?= $_GET['hora_desde'] ?> - <?= $_GET['hora_hasta'] ?>",
+                                    bold: true,
+                                    size: 20,
+                                    color: "2E5090"
+                                })
+                            ],
+                            alignment: docx.AlignmentType.CENTER,
                             spacing: { after: 400 }
                         }),
+                        <?php endif; ?>
                         
                         // Información de fechas
                         new docx.Paragraph({
@@ -4328,6 +4341,9 @@ $distribucion_unidad = $pdo->query("
                     <div class="header">
                         <div class="title">REPORTE DIARIO - SISTEMA QUIRA</div>
                         <div class="subtitle">Fecha del reporte: ${fechaFormateada}</div>
+                        <?php if (isset($_GET['hora_desde']) && isset($_GET['hora_hasta']) && ($_GET['hora_desde'] !== '00:00' || $_GET['hora_hasta'] !== '23:59')): ?>
+                        <div class="subtitle">Franja horaria: <?= $_GET['hora_desde'] ?> - <?= $_GET['hora_hasta'] ?></div>
+                        <?php endif; ?>
                         <div class="subtitle">Generado el: ${new Date().toLocaleDateString('es-PY', { timeZone: 'America/Asuncion' })} ${new Date().toLocaleTimeString('es-PY', { timeZone: 'America/Asuncion' })}</div>
                     </div>
                     
