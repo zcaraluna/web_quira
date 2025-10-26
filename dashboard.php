@@ -7,6 +7,12 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Verificar si necesita cambiar contraseña
+if (isset($_SESSION['primer_inicio']) && $_SESSION['primer_inicio'] === true) {
+    header('Location: cambiar_password_obligatorio.php');
+    exit;
+}
+
 // Función para seleccionar imagen aleatoria del header
 function getRandomHeaderImage() {
     $bgHeaderDir = 'assets/media/bg_header/';
@@ -97,7 +103,7 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                 
                 // Crear usuario
                 $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("INSERT INTO usuarios (usuario, nombre, apellido, grado, cedula, telefono, rol, contrasena, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                $stmt = $pdo->prepare("INSERT INTO usuarios (usuario, nombre, apellido, grado, cedula, telefono, rol, contrasena, primer_inicio, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true, NOW())");
                 $stmt->execute([$usuario, $nombre, $apellido, $grado, $cedula, $telefono, $rol, $password_hash]);
                 
                 $_SESSION['mensaje_usuarios'] = 'Usuario creado exitosamente';

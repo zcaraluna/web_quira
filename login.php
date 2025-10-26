@@ -49,8 +49,14 @@ if ($_POST) {
             $_SESSION['apellido'] = $user['apellido'];
             $_SESSION['grado'] = $user['grado'];
             $_SESSION['rol'] = $user['rol'];
+            $_SESSION['primer_inicio'] = $user['primer_inicio'];
             
-            header('Location: dashboard.php');
+            // Verificar si necesita cambiar contraseña
+            if ($user['primer_inicio']) {
+                header('Location: cambiar_password_obligatorio.php');
+            } else {
+                header('Location: dashboard.php');
+            }
             exit;
         } else {
             $error = 'Usuario o contraseña incorrectos';
