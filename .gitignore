@@ -1,0 +1,182 @@
+# Sistema QUIRA - Web Application
+# Archivo .gitignore para proyecto PHP con PostgreSQL
+
+# ===========================================
+# ARCHIVOS DE CONFIGURACIÓN SENSIBLES
+# ===========================================
+config_local.php
+config_production.php
+.env
+.env.local
+.env.production
+
+# ===========================================
+# ARCHIVOS DE LOGS Y DEBUG
+# ===========================================
+*.log
+debug.log
+error.log
+access.log
+logs/
+debug/
+
+# ===========================================
+# ARCHIVOS TEMPORALES Y CACHE
+# ===========================================
+*.tmp
+*.temp
+*.cache
+cache/
+tmp/
+temp/
+
+# ===========================================
+# ARCHIVOS DE DATOS Y BACKUP
+# ===========================================
+*_attlog.dat
+*.dat
+*.sql.gz
+*.zip
+*.7z
+*.tar.gz
+backups/
+backup/
+
+# ===========================================
+# ARCHIVOS DE DESARROLLO Y TESTING
+# ===========================================
+test_*.php
+test_*.html
+debug_*.php
+verificar_*.php
+check_*.php
+expandir_*.php
+*_test.php
+*_debug.php
+
+# ===========================================
+# ARCHIVOS DE BUILD Y COMPILACIÓN
+# ===========================================
+build/
+dist/
+*.spec
+*.exe
+*.pkg
+*.toc
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+LIVE web_quira/
+
+# ===========================================
+# ARCHIVOS DE SISTEMA
+# ===========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===========================================
+# ARCHIVOS DE IDE Y EDITORES
+# ===========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
+
+# ===========================================
+# ARCHIVOS DE DOCUMENTACIÓN TEMPORAL
+# ===========================================
+README_*.md
+INSTRUCCIONES_*.md
+MEMO_*.md
+PRESENTACION_*.md
+PROYECTO_*.md
+SOLUCION_*.md
+RUTA_*.md
+RESUMEN_*.md
+
+# ===========================================
+# ARCHIVOS DE LICENCIA Y LEGALES
+# ===========================================
+License.txt
+LICENSE
+COPYING
+CHANGELOG
+
+# ===========================================
+# ARCHIVOS DE INSTALACIÓN Y SCRIPTS
+# ===========================================
+install_*.sh
+install_*.bat
+*.bat
+*.cmd
+requirements_*.txt
+setup_*.py
+
+# ===========================================
+# ARCHIVOS DE MEDIA TEMPORALES
+# ===========================================
+assets/media/temp/
+assets/media/tmp/
+assets/media/backup/
+*.ico.bak
+*.png.bak
+*.jpg.bak
+
+# ===========================================
+# ARCHIVOS DE SESIÓN Y CACHE DE PHP
+# ===========================================
+sessions/
+session/
+php_errors.log
+
+# ===========================================
+# ARCHIVOS DE CONFIGURACIÓN DE SERVIDOR
+# ===========================================
+.htaccess.bak
+web.config.bak
+nginx.conf.bak
+
+# ===========================================
+# ARCHIVOS DE MIGRACIÓN Y SCRIPTS SQL
+# ===========================================
+migrations/
+sql_scripts/
+*.sql
+agregar_campo_*.sql
+consultar_*.sql
+
+# ===========================================
+# ARCHIVOS DE DESARROLLO PYTHON
+# ===========================================
+zkteco_bridge.py
+restart_bridge.py
+start_zkteco_bridge.py
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# ===========================================
+# ARCHIVOS DE CONFIGURACIÓN ESPECÍFICOS
+# ===========================================
+# Mantener config.php pero ignorar variantes
+config_*.php
+!config.php
+
+# ===========================================
+# ARCHIVOS DE DESARROLLO ESPECÍFICOS
+# ===========================================
+# Archivos que se generan automáticamente
+desarrollo_files.txt
+produccion_files.txt
