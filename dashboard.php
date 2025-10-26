@@ -777,6 +777,13 @@ try {
     
     // Debug simple que siempre se ejecute
     file_put_contents('/tmp/debug_quira.txt', "DEBUG: " . date('Y-m-d H:i:s') . " - Fecha: $fecha_reporte, Desde: $hora_desde, Hasta: $hora_hasta\n", FILE_APPEND);
+    
+    // Debug de parámetros GET
+    file_put_contents('/tmp/debug_quira.txt', "GET params: " . print_r($_GET, true) . "\n", FILE_APPEND);
+    
+    // Debug de la condición del filtro
+    $condicion_filtro = ($hora_desde !== '00:00' || $hora_hasta !== '23:59');
+    file_put_contents('/tmp/debug_quira.txt', "Condición filtro: " . ($condicion_filtro ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
 
 try {
     // Construir filtro de fecha y hora
@@ -785,7 +792,7 @@ try {
     
     // Agregar filtro de franja horaria si se especifica
     if ($hora_desde !== '00:00' || $hora_hasta !== '23:59') {
-        $filtro_fecha_hora .= " AND TIME(fecha_registro) >= ? AND TIME(fecha_registro) <= ?";
+        $filtro_fecha_hora .= " AND fecha_registro::time >= ? AND fecha_registro::time <= ?";
         $parametros[] = $hora_desde;
         $parametros[] = $hora_hasta;
         
@@ -808,7 +815,7 @@ try {
     error_log("DEBUG: Total postulantes con filtro horario: $postulantes_fecha");
     
     // Debug: ver algunos registros de ejemplo
-    $stmt_ejemplos = $pdo->prepare("SELECT id, fecha_registro, TIME(fecha_registro) as hora FROM postulantes WHERE DATE(fecha_registro) = ? ORDER BY fecha_registro LIMIT 5");
+    $stmt_ejemplos = $pdo->prepare("SELECT id, fecha_registro, fecha_registro::time as hora FROM postulantes WHERE DATE(fecha_registro) = ? ORDER BY fecha_registro LIMIT 5");
     $stmt_ejemplos->execute([$fecha_reporte]);
     $ejemplos = $stmt_ejemplos->fetchAll();
     error_log("DEBUG: Ejemplos de registros en la fecha:");
