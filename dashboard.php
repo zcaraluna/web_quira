@@ -822,9 +822,9 @@ try {
     // Postulantes por unidad en la fecha específica (con franja horaria)
     $stmt_unidad = $pdo->prepare("
         SELECT unidad, COUNT(*) as cantidad 
-        FROM postulantes 
-        WHERE $filtro_fecha_hora AND unidad IS NOT NULL AND unidad != ''
-        GROUP BY unidad 
+        FROM postulantes p
+        WHERE $filtro_fecha_hora AND p.unidad IS NOT NULL AND p.unidad != ''
+        GROUP BY p.unidad 
         ORDER BY cantidad DESC
     ");
     $stmt_unidad->execute($parametros);
@@ -862,10 +862,10 @@ try {
     // Hora del primer y último registro del día
     $stmt = $pdo->prepare("
         SELECT 
-            MIN(fecha_registro) as primer_registro,
-            MAX(fecha_registro) as ultimo_registro
-        FROM postulantes 
-        WHERE DATE(fecha_registro) = ?
+            MIN(p.fecha_registro) as primer_registro,
+            MAX(p.fecha_registro) as ultimo_registro
+        FROM postulantes p
+        WHERE DATE(p.fecha_registro) = ?
     ");
     $stmt->execute([$fecha_reporte]);
     $horarios_registro = $stmt->fetch();
