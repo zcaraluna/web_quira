@@ -775,9 +775,14 @@ try {
     
     // Agregar filtro de franja horaria si se especifica
     if ($hora_desde !== '00:00' || $hora_hasta !== '23:59') {
-        $filtro_fecha_hora .= " AND TIME(fecha_registro) BETWEEN ? AND ?";
+        $filtro_fecha_hora .= " AND TIME(fecha_registro) >= ? AND TIME(fecha_registro) <= ?";
         $parametros[] = $hora_desde;
         $parametros[] = $hora_hasta;
+        
+        // Debug temporal - eliminar después
+        error_log("DEBUG FILTRO HORAS: fecha=$fecha_reporte, desde=$hora_desde, hasta=$hora_hasta");
+        error_log("DEBUG SQL: $filtro_fecha_hora");
+        error_log("DEBUG PARAMS: " . print_r($parametros, true));
     }
     
     // Postulantes registrados en la fecha específica (con franja horaria)
@@ -2071,19 +2076,7 @@ $distribucion_unidad = $pdo->query("
                                                         <div class="row mt-2">
                                                             <div class="col-md-12">
                                                                 <div class="btn-group btn-group-sm" role="group">
-                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('madrugada')">
-                                                                        <i class="fas fa-moon"></i> Madrugada (00:00-06:00)
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('manana')">
-                                                                        <i class="fas fa-sun"></i> Mañana (06:00-12:00)
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('tarde')">
-                                                                        <i class="fas fa-sun"></i> Tarde (12:00-18:00)
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('noche')">
-                                                                        <i class="fas fa-moon"></i> Noche (18:00-24:00)
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('completo')">
+                                                                    <button type="button" class="btn btn-outline-primary" onclick="seleccionarFranja('completo')">
                                                                         <i class="fas fa-clock"></i> Día Completo
                                                                     </button>
                                                                 </div>
