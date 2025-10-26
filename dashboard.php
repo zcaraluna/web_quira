@@ -837,18 +837,18 @@ try {
     $stmt_usuarios->execute($parametros);
     $usuarios_registradores_fecha = $stmt_usuarios->fetchAll();
     
-    // Hora del primer y último registro del día
+    // Hora del primer y último registro del día (con filtro de franja horaria)
     $stmt = $pdo->prepare("
         SELECT 
             MIN(p.fecha_registro) as primer_registro,
             MAX(p.fecha_registro) as ultimo_registro
         FROM postulantes p
-        WHERE DATE(p.fecha_registro) = ?
+        WHERE $filtro_fecha_hora
     ");
-    $stmt->execute([$fecha_reporte]);
+    $stmt->execute($parametros);
     $horarios_registro = $stmt->fetch();
     
-    // Lista detallada de postulantes del día agrupada por unidad
+    // Lista detallada de postulantes del día agrupada por unidad (con filtro de franja horaria)
     $stmt = $pdo->prepare("
         SELECT 
             p.cedula,
@@ -858,10 +858,10 @@ try {
             COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo') as dispositivo
         FROM postulantes p
         LEFT JOIN aparatos_biometricos ab ON p.aparato_id = ab.id
-        WHERE DATE(p.fecha_registro) = ?
+        WHERE $filtro_fecha_hora
         ORDER BY p.unidad ASC, p.fecha_registro ASC
     ");
-    $stmt->execute([$fecha_reporte]);
+    $stmt->execute($parametros);
     $postulantes_detallados = $stmt->fetchAll();
     
     // Agrupar postulantes por unidad
