@@ -763,10 +763,17 @@ try {
     $horarios_actividad = [];
 }
 
-// Obtener datos para reporte diario específico
-$fecha_reporte = $_GET['fecha_reporte'] ?? date('Y-m-d');
-$hora_desde = $_GET['hora_desde'] ?? '00:00';
-$hora_hasta = $_GET['hora_hasta'] ?? '23:59';
+    // Obtener datos para reporte diario específico
+    $fecha_reporte = $_GET['fecha_reporte'] ?? date('Y-m-d');
+    $hora_desde = $_GET['hora_desde'] ?? '00:00';
+    $hora_hasta = $_GET['hora_hasta'] ?? '23:59';
+    
+    // Debug completo de parámetros
+    error_log("=== DEBUG REPORTE DIARIO ===");
+    error_log("fecha_reporte: " . $fecha_reporte);
+    error_log("hora_desde: " . $hora_desde);
+    error_log("hora_hasta: " . $hora_hasta);
+    error_log("GET params: " . print_r($_GET, true));
 
 try {
     // Construir filtro de fecha y hora
@@ -789,6 +796,22 @@ try {
     $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM postulantes WHERE $filtro_fecha_hora");
     $stmt->execute($parametros);
     $postulantes_fecha = $stmt->fetch()['total'];
+    
+    // Debug: verificar si hay datos en la fecha
+    $stmt_debug = $pdo->prepare("SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) = ?");
+    $stmt_debug->execute([$fecha_reporte]);
+    $total_fecha = $stmt_debug->fetch()['total'];
+    error_log("DEBUG: Total postulantes en fecha $fecha_reporte: $total_fecha");
+    error_log("DEBUG: Total postulantes con filtro horario: $postulantes_fecha");
+    
+    // Debug: ver algunos registros de ejemplo
+    $stmt_ejemplos = $pdo->prepare("SELECT id, fecha_registro, TIME(fecha_registro) as hora FROM postulantes WHERE DATE(fecha_registro) = ? ORDER BY fecha_registro LIMIT 5");
+    $stmt_ejemplos->execute([$fecha_reporte]);
+    $ejemplos = $stmt_ejemplos->fetchAll();
+    error_log("DEBUG: Ejemplos de registros en la fecha:");
+    foreach($ejemplos as $ejemplo) {
+        error_log("  ID: {$ejemplo['id']}, Fecha: {$ejemplo['fecha_registro']}, Hora: {$ejemplo['hora']}");
+    }
     
     // Postulantes por unidad en la fecha específica (con franja horaria)
     $stmt_unidad = $pdo->prepare("
