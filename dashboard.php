@@ -1217,6 +1217,7 @@ $distribucion_unidad = $pdo->query("
                                     </div>
                                 </div>
                             </div>
+                            <?php if (!in_array($_SESSION['rol'], ['USUARIO'])): ?>
                             <div class="col-sm-6 col-lg-3">
                                 <div class="stats-card success">
                                     <div class="d-flex justify-content-between align-items-start">
@@ -1230,6 +1231,8 @@ $distribucion_unidad = $pdo->query("
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (!in_array($_SESSION['rol'], ['USUARIO'])): ?>
                             <div class="col-sm-6 col-lg-3">
                                 <div class="stats-card warning">
                                     <div class="d-flex justify-content-between align-items-start">
@@ -1243,6 +1246,8 @@ $distribucion_unidad = $pdo->query("
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (!in_array($_SESSION['rol'], ['USUARIO'])): ?>
                             <div class="col-sm-6 col-lg-3">
                                 <div class="stats-card info">
                                     <div class="d-flex justify-content-between align-items-start">
@@ -1256,6 +1261,7 @@ $distribucion_unidad = $pdo->query("
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
                         </div>
                         <!-- END Stats -->
 
