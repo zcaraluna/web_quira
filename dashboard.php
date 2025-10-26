@@ -765,51 +765,65 @@ try {
 
 // Obtener datos para reporte diario específico
 $fecha_reporte = $_GET['fecha_reporte'] ?? date('Y-m-d');
+$hora_desde = $_GET['hora_desde'] ?? '00:00';
+$hora_hasta = $_GET['hora_hasta'] ?? '23:59';
+
 try {
-    // Postulantes registrados en la fecha específica
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) = ?");
-    $stmt->execute([$fecha_reporte]);
+    // Construir filtro de fecha y hora
+    $filtro_fecha_hora = "DATE(fecha_registro) = ?";
+    $parametros = [$fecha_reporte];
+    
+    // Agregar filtro de franja horaria si se especifica
+    if ($hora_desde !== '00:00' || $hora_hasta !== '23:59') {
+        $filtro_fecha_hora .= " AND TIME(fecha_registro) BETWEEN ? AND ?";
+        $parametros[] = $hora_desde;
+        $parametros[] = $hora_hasta;
+    }
+    
+    // Postulantes registrados en la fecha específica (con franja horaria)
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM postulantes WHERE $filtro_fecha_hora");
+    $stmt->execute($parametros);
     $postulantes_fecha = $stmt->fetch()['total'];
     
-    // Postulantes por unidad en la fecha específica
-    $postulantes_por_unidad_fecha = $pdo->prepare("
+    // Postulantes por unidad en la fecha específica (con franja horaria)
+    $stmt_unidad = $pdo->prepare("
         SELECT unidad, COUNT(*) as cantidad 
         FROM postulantes 
-        WHERE DATE(fecha_registro) = ? AND unidad IS NOT NULL AND unidad != ''
+        WHERE $filtro_fecha_hora AND unidad IS NOT NULL AND unidad != ''
         GROUP BY unidad 
         ORDER BY cantidad DESC
     ");
-    $postulantes_por_unidad_fecha->execute([$fecha_reporte]);
-    $postulantes_por_unidad_fecha = $postulantes_por_unidad_fecha->fetchAll();
+    $stmt_unidad->execute($parametros);
+    $postulantes_por_unidad_fecha = $stmt_unidad->fetchAll();
     
-    // Aparatos biométricos utilizados en la fecha específica
-    $aparatos_utilizados_fecha = $pdo->prepare("
+    // Aparatos biométricos utilizados en la fecha específica (con franja horaria)
+    $stmt_aparatos = $pdo->prepare("
         SELECT 
             COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo') as dispositivo,
             COUNT(*) as cantidad
         FROM postulantes p
         LEFT JOIN aparatos_biometricos ab ON p.aparato_id = ab.id
-        WHERE DATE(p.fecha_registro) = ?
+        WHERE $filtro_fecha_hora
         GROUP BY COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo')
         ORDER BY cantidad DESC
     ");
-    $aparatos_utilizados_fecha->execute([$fecha_reporte]);
-    $aparatos_utilizados_fecha = $aparatos_utilizados_fecha->fetchAll();
+    $stmt_aparatos->execute($parametros);
+    $aparatos_utilizados_fecha = $stmt_aparatos->fetchAll();
     
-    // Distribución de usuarios que han registrado en la fecha específica
-    $usuarios_registradores_fecha = $pdo->prepare("
+    // Distribución de usuarios que han registrado en la fecha específica (con franja horaria)
+    $stmt_usuarios = $pdo->prepare("
         SELECT 
             p.registrado_por as usuario,
             COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo') as dispositivo,
             COUNT(*) as cantidad
         FROM postulantes p
         LEFT JOIN aparatos_biometricos ab ON p.aparato_id = ab.id
-        WHERE DATE(p.fecha_registro) = ? AND p.registrado_por IS NOT NULL
+        WHERE $filtro_fecha_hora AND p.registrado_por IS NOT NULL
         GROUP BY p.registrado_por, COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo')
         ORDER BY p.registrado_por, cantidad DESC
     ");
-    $usuarios_registradores_fecha->execute([$fecha_reporte]);
-    $usuarios_registradores_fecha = $usuarios_registradores_fecha->fetchAll();
+    $stmt_usuarios->execute($parametros);
+    $usuarios_registradores_fecha = $stmt_usuarios->fetchAll();
     
     // Hora del primer y último registro del día
     $stmt = $pdo->prepare("
@@ -2029,22 +2043,63 @@ $distribucion_unidad = $pdo->query("
                                     <!-- Pestaña de Reporte Diario -->
                                     <div class="tab-pane fade <?= (isset($_GET['tab']) && $_GET['tab'] === 'reporte') ? 'show active' : '' ?>" id="reporte-content" role="tabpanel" aria-labelledby="reporte-tab">
                                         <div class="mt-3">
-                                            <!-- Selector de fecha -->
+                                            <!-- Selector de fecha y franjas horarias -->
                                             <div class="row mb-4">
-                                                <div class="col-md-6">
-                                                    <form method="GET" class="form-inline" id="fechaForm">
+                                                <div class="col-md-8">
+                                                    <form method="GET" id="fechaForm">
                                                         <input type="hidden" name="tab" value="reporte">
-                                                        <label for="fecha_reporte" class="mr-2">Seleccionar fecha:</label>
-                                                        <input type="date" class="form-control mr-2" id="fecha_reporte" name="fecha_reporte" value="<?= $fecha_reporte ?>">
-                                                        <button type="submit" class="btn btn-primary btn-sm">
-                                                            <i class="fas fa-calendar-check"></i> Aplicar Fecha
-                                                        </button>
+                                                        <div class="row">
+                                                            <div class="col-md-4">
+                                                                <label for="fecha_reporte" class="form-label">Fecha:</label>
+                                                                <input type="date" class="form-control" id="fecha_reporte" name="fecha_reporte" value="<?= $fecha_reporte ?>">
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <label for="hora_desde" class="form-label">Desde:</label>
+                                                                <input type="time" class="form-control" id="hora_desde" name="hora_desde" value="<?= $_GET['hora_desde'] ?? '00:00' ?>">
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <label for="hora_hasta" class="form-label">Hasta:</label>
+                                                                <input type="time" class="form-control" id="hora_hasta" name="hora_hasta" value="<?= $_GET['hora_hasta'] ?? '23:59' ?>">
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <label class="form-label">&nbsp;</label>
+                                                                <button type="submit" class="btn btn-primary btn-block">
+                                                                    <i class="fas fa-calendar-check"></i> Aplicar
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mt-2">
+                                                            <div class="col-md-12">
+                                                                <div class="btn-group btn-group-sm" role="group">
+                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('madrugada')">
+                                                                        <i class="fas fa-moon"></i> Madrugada (00:00-06:00)
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('manana')">
+                                                                        <i class="fas fa-sun"></i> Mañana (06:00-12:00)
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('tarde')">
+                                                                        <i class="fas fa-sun"></i> Tarde (12:00-18:00)
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('noche')">
+                                                                        <i class="fas fa-moon"></i> Noche (18:00-24:00)
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-secondary" onclick="seleccionarFranja('completo')">
+                                                                        <i class="fas fa-clock"></i> Día Completo
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </form>
                                                 </div>
-                                                <div class="col-md-6 text-right">
-                                                    <button type="button" class="btn btn-success btn-sm" onclick="generarReporteDiarioEspecifico()">
-                                                        <i class="fas fa-file-word"></i> Generar Reporte
-                                                    </button>
+                                                <div class="col-md-4 text-right">
+                                                    <div class="btn-group-vertical btn-group-sm">
+                                                        <button type="button" class="btn btn-success" onclick="generarReporteDiarioEspecifico()">
+                                                            <i class="fas fa-file-word"></i> Generar Reporte
+                                                        </button>
+                                                        <button type="button" class="btn btn-info" onclick="exportarReporteHorario()">
+                                                            <i class="fas fa-download"></i> Exportar Excel
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                             
@@ -2053,8 +2108,21 @@ $distribucion_unidad = $pdo->query("
                                                 <div class="col-md-12">
                                                     <div class="card bg-light">
                                                         <div class="card-body text-center">
-                                                            <h5 class="card-title">Reporte del <?= date('d/m/Y', strtotime($fecha_reporte)) ?></h5>
+                                                            <h5 class="card-title">
+                                                                Reporte del <?= date('d/m/Y', strtotime($fecha_reporte)) ?>
+                                                                <?php if (isset($_GET['hora_desde']) && isset($_GET['hora_hasta'])): ?>
+                                                                    <br><small class="text-muted">
+                                                                        Franja horaria: <?= $_GET['hora_desde'] ?> - <?= $_GET['hora_hasta'] ?>
+                                                                    </small>
+                                                                <?php endif; ?>
+                                                            </h5>
                                                             <h2 class="text-primary"><?= number_format($postulantes_fecha) ?> postulante(s) registrado(s)</h2>
+                                                            <?php if (isset($_GET['hora_desde']) && isset($_GET['hora_hasta']) && ($_GET['hora_desde'] !== '00:00' || $_GET['hora_hasta'] !== '23:59')): ?>
+                                                                <p class="text-info mb-0">
+                                                                    <i class="fas fa-info-circle"></i> 
+                                                                    Filtrado por franja horaria específica
+                                                                </p>
+                                                            <?php endif; ?>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -3323,6 +3391,55 @@ $distribucion_unidad = $pdo->query("
             const url = new URL(window.location);
             url.searchParams.set('incluir_postulantes', incluirPostulantes ? '1' : '0');
             window.location.href = url.toString();
+        }
+        
+        // Función para seleccionar franjas horarias predefinidas
+        function seleccionarFranja(tipo) {
+            const horaDesde = document.getElementById('hora_desde');
+            const horaHasta = document.getElementById('hora_hasta');
+            
+            switch(tipo) {
+                case 'madrugada':
+                    horaDesde.value = '00:00';
+                    horaHasta.value = '06:00';
+                    break;
+                case 'manana':
+                    horaDesde.value = '06:00';
+                    horaHasta.value = '12:00';
+                    break;
+                case 'tarde':
+                    horaDesde.value = '12:00';
+                    horaHasta.value = '18:00';
+                    break;
+                case 'noche':
+                    horaDesde.value = '18:00';
+                    horaHasta.value = '23:59';
+                    break;
+                case 'completo':
+                    horaDesde.value = '00:00';
+                    horaHasta.value = '23:59';
+                    break;
+            }
+            
+            // Aplicar automáticamente el filtro
+            document.getElementById('fechaForm').submit();
+        }
+        
+        // Función para exportar reporte con franja horaria
+        function exportarReporteHorario() {
+            const fecha = document.getElementById('fecha_reporte').value;
+            const horaDesde = document.getElementById('hora_desde').value;
+            const horaHasta = document.getElementById('hora_hasta').value;
+            
+            // Crear URL para exportar
+            const url = new URL(window.location);
+            url.searchParams.set('exportar', '1');
+            url.searchParams.set('fecha_reporte', fecha);
+            url.searchParams.set('hora_desde', horaDesde);
+            url.searchParams.set('hora_hasta', horaHasta);
+            
+            // Abrir en nueva ventana para descarga
+            window.open(url.toString(), '_blank');
         }
         
         // Función que se ejecuta cuando la página se carga con el parámetro
