@@ -768,24 +768,8 @@ try {
     $hora_desde = $_GET['hora_desde'] ?? '00:00';
     $hora_hasta = $_GET['hora_hasta'] ?? '23:59';
     
-    // Debug completo de parámetros
-    error_log("=== DEBUG REPORTE DIARIO ===");
-    error_log("fecha_reporte: " . $fecha_reporte);
-    error_log("hora_desde: " . $hora_desde);
-    error_log("hora_hasta: " . $hora_hasta);
-    error_log("GET params: " . print_r($_GET, true));
-    
-    // Debug simple que siempre se ejecute
-    file_put_contents('/tmp/debug_quira.txt', "DEBUG: " . date('Y-m-d H:i:s') . " - Fecha: $fecha_reporte, Desde: $hora_desde, Hasta: $hora_hasta\n", FILE_APPEND);
-    
-    // Debug de parámetros GET
-    file_put_contents('/tmp/debug_quira.txt', "GET params: " . print_r($_GET, true) . "\n", FILE_APPEND);
-    
-    // Debug de la condición del filtro
-    $condicion_filtro = (isset($_GET['hora_desde']) && isset($_GET['hora_hasta']) && 
-                        ($_GET['hora_desde'] !== '00:00' || $_GET['hora_hasta'] !== '23:59'));
-    file_put_contents('/tmp/debug_quira.txt', "Condición filtro: " . ($condicion_filtro ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
-    file_put_contents('/tmp/debug_quira.txt', "Valores GET: desde=" . ($_GET['hora_desde'] ?? 'NO_SET') . ", hasta=" . ($_GET['hora_hasta'] ?? 'NO_SET') . "\n", FILE_APPEND);
+    // Debug temporal - eliminar después de confirmar que funciona
+    // file_put_contents('/tmp/debug_quira.txt', "DEBUG: " . date('Y-m-d H:i:s') . " - Fecha: $fecha_reporte, Desde: $hora_desde, Hasta: $hora_hasta\n", FILE_APPEND);
 
 try {
     // Construir filtro de fecha y hora
@@ -913,6 +897,10 @@ try {
     }
     
 } catch (Exception $e) {
+    // Debug: escribir el error
+    file_put_contents('/tmp/debug_quira.txt', "ERROR en try-catch: " . $e->getMessage() . "\n", FILE_APPEND);
+    file_put_contents('/tmp/debug_quira.txt', "Archivo: " . $e->getFile() . " Línea: " . $e->getLine() . "\n", FILE_APPEND);
+    
     $postulantes_fecha = 0;
     $postulantes_por_unidad_fecha = [];
     $aparatos_utilizados_fecha = [];
