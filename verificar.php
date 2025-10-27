@@ -429,6 +429,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
     <!-- jsPDF Library -->
     <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
     <script>
         // Modal s1mple
         document.getElementById('footer-link').addEventListener('click', function() {
@@ -538,14 +541,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 yPosition += lineHeight + 5;
             });
             
-            // Pie de página simple
-            doc.setFontSize(8);
-            doc.setTextColor(128, 128, 128);
-            doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, pageHeight - 10, { align: 'center' });
+            // Generar código QR con logo QUIRA en el centro
+            try {
+                // Crear canvas temporal para el QR
+                const canvas = document.createElement('canvas');
+                const qrSize = 80;
+                canvas.width = qrSize;
+                canvas.height = qrSize;
+                
+                // Generar QR con los datos del postulante
+                const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
+                
+                QRCode.toCanvas(canvas, qrData, {
+                    width: qrSize,
+                    margin: 1,
+                    color: {
+                        dark: '#2E5090', // Color azul corporativo
+                        light: '#FFFFFF'
+                    }
+                }, function (error) {
+                    if (error) {
+                        console.error('Error generando QR:', error);
+                        // Continuar sin QR
+                        finalizarPDF();
+                        return;
+                    }
+                    
+                    // Agregar logo QUIRA en el centro del QR
+                    const ctx = canvas.getContext('2d');
+                    const logoSize = 20;
+                    const logoX = (qrSize - logoSize) / 2;
+                    const logoY = (qrSize - logoSize) / 2;
+                    
+                    // Crear imagen del logo
+                    const logoImg = new Image();
+                    logoImg.onload = function() {
+                        // Dibujar fondo blanco para el logo
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(logoX - 2, logoY - 2, logoSize + 4, logoSize + 4);
+                        
+                        // Dibujar el logo
+                        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+                        
+                        // Convertir canvas a imagen y agregar al PDF
+                        const qrImageData = canvas.toDataURL('image/png');
+                        doc.addImage(qrImageData, 'PNG', pageWidth/2 - qrSize/2, yPosition + 10, qrSize, qrSize);
+                        
+                        // Finalizar PDF
+                        finalizarPDF();
+                    };
+                    logoImg.onerror = function() {
+                        // Si falla el logo, usar QR sin logo
+                        const qrImageData = canvas.toDataURL('image/png');
+                        doc.addImage(qrImageData, 'PNG', pageWidth/2 - qrSize/2, yPosition + 10, qrSize, qrSize);
+                        finalizarPDF();
+                    };
+                    logoImg.src = 'assets/media/various/quiraXXXL.png';
+                });
+                
+            } catch (error) {
+                console.error('Error con QR:', error);
+                // Continuar sin QR
+                finalizarPDF();
+            }
             
-            // Descargar el PDF
-            const nombreArchivo = 'Datos_Postulante_<?= htmlspecialchars($postulante['cedula']) ?>_<?= date('Y-m-d') ?>.pdf';
-            doc.save(nombreArchivo);
+            // Función para finalizar el PDF
+            function finalizarPDF() {
+                // Pie de página simple
+                doc.setFontSize(8);
+                doc.setTextColor(128, 128, 128);
+                doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, pageHeight - 10, { align: 'center' });
+                
+                // Descargar el PDF
+                const nombreArchivo = 'Datos_Postulante_<?= htmlspecialchars($postulante['cedula']) ?>_<?= date('Y-m-d') ?>.pdf';
+                doc.save(nombreArchivo);
+            }
         }
     </script>
 </body>
