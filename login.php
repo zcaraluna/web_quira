@@ -153,24 +153,17 @@ if ($_POST) {
             text-align: center;
         }
         
+        .footer-simple {
+            cursor: pointer;
+        }
+        
         .footer-simple #footer-text {
             color: #94a3b8;
             transition: color 0.2s ease;
         }
         
-        .footer-simple a {
-            color: #2E5090;
-            font-weight: bold;
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-        
         .footer-simple:hover #footer-text {
             color: #2E5090;
-        }
-        
-        .footer-simple a:hover {
-            color: #1a3a70;
         }
         
         /* MODAL STYLES */
@@ -338,8 +331,8 @@ if ($_POST) {
     </div>
 
     <!-- Footer -->
-    <div class="footer-simple">
-        <span id="footer-text">Powered by <a href="#" id="footer-link">s1mple</a></span>
+    <div class="footer-simple" id="footer-link">
+        <span id="footer-text">Powered by s1mple</span>
     </div>
 
     <!-- Modal -->
@@ -401,7 +394,7 @@ if ($_POST) {
             const modalContainer = document.getElementById('modal-container');
             const btnClose = document.getElementById('btn-close');
             
-            // Open modal when clicking footer link
+            // Open modal when clicking footer
             footerLink.addEventListener('click', function(e) {
                 e.preventDefault();
                 modalOverlay.style.display = 'flex';
