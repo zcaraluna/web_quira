@@ -148,20 +148,29 @@ if ($_POST) {
             right: 0;
             background: #1e293b;
             border-top: 1px solid #334155;
-            padding: 12px 20px;
+            padding: 8px 20px;
             z-index: 40;
             text-align: center;
         }
         
+        .footer-simple #footer-text {
+            color: #94a3b8;
+            transition: color 0.2s ease;
+        }
+        
         .footer-simple a {
-            color: #f1f5f9;
+            color: #2E5090;
             font-weight: bold;
             text-decoration: none;
             transition: color 0.2s ease;
         }
         
+        .footer-simple:hover #footer-text {
+            color: #2E5090;
+        }
+        
         .footer-simple a:hover {
-            color: #e2e8f0;
+            color: #1a3a70;
         }
         
         /* MODAL STYLES */
@@ -330,7 +339,7 @@ if ($_POST) {
 
     <!-- Footer -->
     <div class="footer-simple">
-        <span style="color: #f1f5f9;">Powered by <a href="#" id="footer-link">s1mple</a></span>
+        <span id="footer-text">Powered by <a href="#" id="footer-link">s1mple</a></span>
     </div>
 
     <!-- Modal -->
