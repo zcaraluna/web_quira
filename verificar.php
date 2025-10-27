@@ -460,53 +460,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             
-            // Fondo azul del encabezado (simulando el header de la página)
+            // Fondo azul del encabezado (exactamente como la página web)
             doc.setFillColor(46, 80, 144); // #2E5090
-            doc.rect(0, 0, pageWidth, 40, 'F');
+            doc.rect(0, 0, pageWidth, 50, 'F');
             
-            // Logo/título en el header
-            doc.setTextColor(255, 255, 255); // Blanco
-            doc.setFontSize(24);
+            // Logo QUIRA (exactamente como en la página)
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
-            doc.text('QUIRA', pageWidth/2, 15, { align: 'center' });
+            doc.text('QUIRA', pageWidth/2, 20, { align: 'center' });
             
-            doc.setFontSize(16);
-            doc.text('Sistema Quira', pageWidth/2, 25, { align: 'center' });
+            // Títulos del header
+            doc.setFontSize(14);
+            doc.text('Sistema Quira', pageWidth/2, 30, { align: 'center' });
             
-            doc.setFontSize(12);
-            doc.text('Verificación de Datos de Postulantes', pageWidth/2, 33, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text('Verificación de Datos de Postulantes', pageWidth/2, 40, { align: 'center' });
             
-            // Tarjeta blanca (simulando el contenedor de datos)
-            const cardX = 20;
-            const cardY = 50;
-            const cardWidth = pageWidth - 40;
-            const cardHeight = 200;
+            // Tarjeta blanca (exactamente como el contenedor de la página)
+            const cardX = 15;
+            const cardY = 60;
+            const cardWidth = pageWidth - 30;
+            const cardHeight = 180;
             
-            // Sombra de la tarjeta
-            doc.setFillColor(200, 200, 200, 0.3);
-            doc.rect(cardX + 2, cardY + 2, cardWidth, cardHeight, 'F');
+            // Sombra de la tarjeta (como en la página web)
+            doc.setFillColor(0, 0, 0, 0.1);
+            doc.rect(cardX + 3, cardY + 3, cardWidth, cardHeight, 'F');
             
-            // Tarjeta principal
+            // Tarjeta principal blanca
             doc.setFillColor(255, 255, 255);
             doc.rect(cardX, cardY, cardWidth, cardHeight, 'F');
             
-            // Borde de la tarjeta
+            // Borde de la tarjeta (como en la página web)
             doc.setDrawColor(46, 80, 144);
             doc.setLineWidth(0.5);
             doc.rect(cardX, cardY, cardWidth, cardHeight);
             
-            // Título dentro de la tarjeta
+            // Título "Datos del Postulante" (exactamente como en la página)
             doc.setTextColor(46, 80, 144);
-            doc.setFontSize(16);
+            doc.setFontSize(14);
             doc.setFont(undefined, 'bold');
-            doc.text('Datos del Postulante', cardX + 10, cardY + 15);
+            doc.text('Datos del Postulante', cardX + 15, cardY + 20);
             
-            // Línea divisoria debajo del título
+            // Línea divisoria azul (como en la página web)
             doc.setDrawColor(46, 80, 144);
             doc.setLineWidth(0.5);
-            doc.line(cardX + 10, cardY + 18, cardX + cardWidth - 10, cardY + 18);
+            doc.line(cardX + 15, cardY + 23, cardX + cardWidth - 15, cardY + 23);
             
-            // Datos del postulante
+            // Datos del postulante (exactamente como se muestran en la página)
             const datos = [
                 ['Nombre Completo:', '<?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>'],
                 ['Cédula de Identidad:', '<?= htmlspecialchars($postulante['cedula']) ?>'],
@@ -534,47 +535,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             datos.push(['Observaciones:', '<?= htmlspecialchars($postulante['observaciones']) ?>']);
             <?php endif; ?>
             
-            // Configurar fuente para los datos
+            // Formato exacto como en la página web
             doc.setFontSize(10);
-            doc.setTextColor(0, 0, 0);
+            let yPosition = cardY + 35;
+            const lineHeight = 10;
+            const leftMargin = cardX + 15;
+            const rightMargin = cardX + cardWidth - 15;
             
-            let yPosition = cardY + 30;
-            const lineHeight = 8;
-            const leftMargin = cardX + 10;
-            const rightMargin = cardX + cardWidth - 10;
-            
-            // Agregar cada línea de datos
+            // Agregar cada línea de datos (exactamente como en la página web)
             datos.forEach(function(item) {
                 // Verificar si necesitamos una nueva página
-                if (yPosition > cardY + cardHeight - 20) {
+                if (yPosition > cardY + cardHeight - 15) {
                     doc.addPage();
                     yPosition = 30;
                 }
                 
-                // Etiqueta en negrita
+                // Etiqueta en negrita (como en la página web)
                 doc.setFont(undefined, 'bold');
-                doc.setTextColor(73, 80, 87); // Color gris para las etiquetas
+                doc.setTextColor(73, 80, 87); // Color exacto de las etiquetas en la página
                 doc.text(item[0], leftMargin, yPosition);
                 
-                // Valor en normal
+                // Valor en normal (como en la página web)
                 doc.setFont(undefined, 'normal');
-                doc.setTextColor(0, 0, 0);
+                doc.setTextColor(33, 37, 41); // Color exacto de los valores en la página
                 const labelWidth = doc.getTextWidth(item[0]);
                 doc.text(item[1], leftMargin + labelWidth, yPosition);
                 
-                // Línea divisoria sutil
+                // Línea divisoria sutil (como en la página web)
                 doc.setDrawColor(233, 236, 239);
                 doc.setLineWidth(0.1);
-                doc.line(leftMargin, yPosition + 2, rightMargin, yPosition + 2);
+                doc.line(leftMargin, yPosition + 3, rightMargin, yPosition + 3);
                 
                 yPosition += lineHeight;
             });
             
-            // Pie de página con estilo corporativo
+            // Pie de página (solo la fecha de generación)
             doc.setFontSize(8);
             doc.setTextColor(128, 128, 128);
-            doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, pageHeight - 15, { align: 'center' });
-            doc.text('Sistema Quira - Academia Nacional de Policía', pageWidth/2, pageHeight - 10, { align: 'center' });
+            doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, pageHeight - 10, { align: 'center' });
             
             // Descargar el PDF
             const nombreArchivo = 'Datos_Postulante_<?= htmlspecialchars($postulante['cedula']) ?>_<?= date('Y-m-d') ?>.pdf';
