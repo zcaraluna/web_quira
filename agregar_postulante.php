@@ -1829,6 +1829,9 @@ Por favor verifique:
          }
      });
      </script>
+     
+     <!-- Footer fijo y modal del desarrollador -->
+     <?php include 'includes/developer-footer.php'; ?>
  </body>
  </html>
  <?php

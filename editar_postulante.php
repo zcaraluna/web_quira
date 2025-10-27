@@ -803,5 +803,8 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
             calcularEdad();
         }, 100);
     </script>
+    
+    <!-- Footer fijo y modal del desarrollador -->
+    <?php include 'includes/developer-footer.php'; ?>
 </body>
 </html>
