@@ -453,7 +453,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
         });
 
         // Función para descargar PDF
-        function descargarPDF() {
+        async function descargarPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -461,15 +461,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             
-            // Título simple
-            doc.setFontSize(16);
-            doc.setTextColor(0, 0, 0);
-            doc.text('Datos del Postulante', pageWidth/2, 20, { align: 'center' });
+            // Encabezado azul característico
+            doc.setFillColor(46, 80, 144); // #2E5090
+            doc.rect(0, 0, pageWidth, 50, 'F');
+            
+            // Intentar cargar el logo QUIRA.png
+            try {
+                // Crear imagen del logo
+                const img = new Image();
+                img.src = 'assets/media/various/quiraXXXL.png';
+                
+                // Esperar a que cargue la imagen
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                });
+                
+                // Agregar logo al PDF (escalado apropiadamente)
+                const logoWidth = 30;
+                const logoHeight = 20;
+                doc.addImage(img, 'PNG', pageWidth/2 - logoWidth/2, 5, logoWidth, logoHeight);
+                
+            } catch (error) {
+                console.log('Error cargando logo:', error);
+                // Fallback: texto QUIRA
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(18);
+                doc.setFont(undefined, 'bold');
+                doc.text('QUIRA', pageWidth/2, 15, { align: 'center' });
+            }
+            
+            // Títulos del encabezado
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Sistema QUIRA', pageWidth/2, 30, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.text('Datos del Postulante', pageWidth/2, 40, { align: 'center' });
             
             // Línea divisoria simple
             doc.setDrawColor(0, 0, 0);
             doc.setLineWidth(0.5);
-            doc.line(20, 25, pageWidth - 20, 25);
+            doc.line(20, 60, pageWidth - 20, 60);
             
             // Datos del postulante
             const datos = [
@@ -501,7 +535,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             
             // Formato simple
             doc.setFontSize(10);
-            let yPosition = 40;
+            let yPosition = 75; // Ajustado para el encabezado
             const lineHeight = 8;
             
             // Agregar cada línea de datos
