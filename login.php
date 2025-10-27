@@ -154,14 +154,14 @@ if ($_POST) {
         }
         
         .footer-simple a {
-            color: #22c55e;
+            color: #f1f5f9;
             font-weight: bold;
             text-decoration: none;
             transition: color 0.2s ease;
         }
         
         .footer-simple a:hover {
-            color: #16a34a;
+            color: #e2e8f0;
         }
         
         /* MODAL STYLES */
