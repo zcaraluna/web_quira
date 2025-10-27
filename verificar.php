@@ -95,9 +95,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
     
     <style>
         body {
-            background: linear-gradient(135deg, #2E5090 0%, #1a3a70 100%);
+            background: url('assets/media/login/login_background.jpg') center center/cover no-repeat;
             min-height: 100vh;
             padding: 2rem 0;
+            padding-bottom: 50px;
         }
         .verification-container {
             background: white;
@@ -199,11 +200,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
         
         .footer-simple:hover #footer-text {
             color: #2E5090;
-        }
-        
-        /* Safe zone para el footer */
-        body {
-            padding-bottom: 50px;
         }
         
         /* Modal s1mple */
