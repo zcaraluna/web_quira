@@ -571,14 +571,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                      
                      // Agregar logo QUIRA en el centro
                      const logoImg = new Image();
+                     logoImg.crossOrigin = 'anonymous';
+                     
                      logoImg.onload = function() {
-                         const logoSize = Math.floor(qrSize * 0.25); // 25% del tamaño del QR
+                         console.log('Logo QUIRA cargado exitosamente');
+                         const logoSize = Math.floor(qrSize * 0.3); // Aumentado a 30% del tamaño del QR
                          const logoX = (qrSize - logoSize) / 2;
                          const logoY = (qrSize - logoSize) / 2;
                          
-                         // Dibujar fondo blanco para el logo
+                         // Dibujar fondo blanco más grande para el logo
                          ctx.fillStyle = '#FFFFFF';
-                         ctx.fillRect(logoX - 2, logoY - 2, logoSize + 4, logoSize + 4);
+                         ctx.fillRect(logoX - 3, logoY - 3, logoSize + 6, logoSize + 6);
                          
                          // Dibujar el logo
                          ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
@@ -592,12 +595,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                      };
                      
                      logoImg.onerror = function() {
-                         console.log('Error cargando logo, usando QR sin logo');
+                         console.log('Error cargando logo QUIRA, usando QR sin logo');
                          // Usar QR sin logo si falla
                          doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize);
                          finalizarPDF(qrY + qrSize + 5);
                      };
                      
+                     // Intentar cargar el logo
                      logoImg.src = 'assets/media/various/quiraXXXL.png';
                  };
                  
