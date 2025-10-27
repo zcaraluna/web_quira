@@ -533,29 +533,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             datos.push(['Observaciones:', '<?= htmlspecialchars($postulante['observaciones']) ?>']);
             <?php endif; ?>
             
-            // Formato simple
-            doc.setFontSize(10);
-            let yPosition = 70; // Ajustado para el encabezado más pequeño
-            const lineHeight = 8;
+            // Debug: verificar datos
+            console.log('Datos a procesar:', datos);
+            console.log('Número de datos:', datos.length);
             
-            // Agregar cada línea de datos
-            datos.forEach(function(item) {
+            // Formato simple - versión debug
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0); // Negro sólido
+            let yPosition = 70;
+            const lineHeight = 10;
+            
+            // Agregar cada línea de datos con debug
+            datos.forEach(function(item, index) {
+                console.log(`Procesando item ${index}:`, item);
+                
                 // Verificar si necesitamos una nueva página
                 if (yPosition > pageHeight - 20) {
                     doc.addPage();
                     yPosition = 20;
                 }
                 
-                // Etiqueta en negrita
+                // Texto simple para debug
                 doc.setFont(undefined, 'bold');
                 doc.text(item[0], 20, yPosition);
                 
-                // Valor en normal con separación adecuada
                 doc.setFont(undefined, 'normal');
-                const labelWidth = doc.getTextWidth(item[0]);
-                doc.text(item[1], 20 + labelWidth + 5, yPosition); // +5 para separación
+                doc.text(item[1], 20, yPosition + 5);
                 
-                yPosition += lineHeight;
+                yPosition += lineHeight + 5;
             });
             
             // Pie de página simple
