@@ -587,9 +587,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 doc.setFontSize(8);
                 doc.setTextColor(128, 128, 128);
                 
-                // Usar posición personalizada si se proporciona, sino usar la posición por defecto con safe zone
-                const safeZone = 15; // Safe zone de 15px desde el borde
-                const footerPosition = footerY ? footerY + 15 : pageHeight - safeZone;
+                // Calcular posición del pie de página
+                let footerPosition;
+                if (footerY) {
+                    // Si se proporciona posición específica, usar esa + espaciado
+                    footerPosition = footerY + 15;
+                } else {
+                    // Usar posición fija desde el borde inferior
+                    footerPosition = pageHeight - 15;
+                }
+                
+                // Asegurar que el pie no se corte
+                if (footerPosition > pageHeight - 10) {
+                    footerPosition = pageHeight - 15;
+                }
+                
+                console.log('Posición del pie:', footerPosition, 'Altura de página:', pageHeight);
+                
                 doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, footerPosition, { align: 'center' });
                 
                 // Descargar el PDF
