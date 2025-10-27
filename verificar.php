@@ -269,6 +269,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                     </div>
                     
                     <div class="data-row">
+                        <span class="data-label">Dispositivo Biométrico:</span>
+                        <span class="data-value"><?= htmlspecialchars($postulante['aparato_nombre']) ?></span>
+                    </div>
+                    
+                    <div class="data-row">
                         <span class="data-label">Capturador de Huella:</span>
                         <span class="data-value">
                             <?php 
