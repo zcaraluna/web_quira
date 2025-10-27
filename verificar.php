@@ -575,15 +575,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                      
                      logoImg.onload = function() {
                          console.log('Logo QUIRA cargado exitosamente');
-                         const logoSize = Math.floor(qrSize * 0.3); // Aumentado a 30% del tamaño del QR
+                         const logoSize = Math.floor(qrSize * 0.3); // 30% del tamaño del QR
                          const logoX = (qrSize - logoSize) / 2;
                          const logoY = (qrSize - logoSize) / 2;
                          
-                         // Dibujar fondo blanco más grande para el logo
+                         // Dibujar fondo blanco más grande para el logo (para logos transparentes)
                          ctx.fillStyle = '#FFFFFF';
-                         ctx.fillRect(logoX - 3, logoY - 3, logoSize + 6, logoSize + 6);
+                         ctx.fillRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
                          
-                         // Dibujar el logo
+                         // Dibujar borde gris para mejor definición
+                         ctx.strokeStyle = '#E0E0E0';
+                         ctx.lineWidth = 1;
+                         ctx.strokeRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
+                         
+                         // Dibujar el logo (mantendrá su transparencia pero sobre fondo blanco)
                          ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
                          
                          // Convertir canvas a imagen y agregar al PDF
