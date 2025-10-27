@@ -430,7 +430,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
     <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
     <!-- QR Code Library -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
     
     <script>
         // Modal s1mple
@@ -541,47 +541,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 yPosition += lineHeight + 5;
             });
             
-            // Generar código QR con logo QUIRA en el centro
-            try {
-                // Crear canvas temporal para el QR
-                const canvas = document.createElement('canvas');
-                const qrSize = 80;
-                canvas.width = qrSize;
-                canvas.height = qrSize;
-                
-                // Generar QR con los datos del postulante
-                const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
-                
-                QRCode.toCanvas(canvas, qrData, {
-                    width: qrSize,
-                    margin: 1,
-                    color: {
-                        dark: '#2E5090', // Color azul corporativo
-                        light: '#FFFFFF'
-                    }
-                }, function (error) {
-                    if (error) {
-                        console.error('Error generando QR:', error);
-                        // Continuar sin QR
-                        finalizarPDF();
-                        return;
-                    }
+            // Debug: verificar si QRCode está disponible
+            console.log('QRCode disponible:', typeof QRCode);
+            
+            // Generar código QR simple
+            if (typeof QRCode !== 'undefined') {
+                try {
+                    // Crear canvas temporal para el QR
+                    const canvas = document.createElement('canvas');
+                    const qrSize = 80;
                     
-                    // Agregar logo QUIRA en el centro del QR
-                    const ctx = canvas.getContext('2d');
-                    const logoSize = 20;
-                    const logoX = (qrSize - logoSize) / 2;
-                    const logoY = (qrSize - logoSize) / 2;
+                    // Generar QR con los datos del postulante
+                    const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
                     
-                    // Crear imagen del logo
-                    const logoImg = new Image();
-                    logoImg.onload = function() {
-                        // Dibujar fondo blanco para el logo
-                        ctx.fillStyle = '#FFFFFF';
-                        ctx.fillRect(logoX - 2, logoY - 2, logoSize + 4, logoSize + 4);
+                    console.log('Generando QR con datos:', qrData);
+                    
+                    QRCode.toCanvas(canvas, qrData, {
+                        width: qrSize,
+                        margin: 1,
+                        color: {
+                            dark: '#2E5090',
+                            light: '#FFFFFF'
+                        }
+                    }, function (error) {
+                        if (error) {
+                            console.error('Error generando QR:', error);
+                            finalizarPDF();
+                            return;
+                        }
                         
-                        // Dibujar el logo
-                        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+                        console.log('QR generado exitosamente');
                         
                         // Convertir canvas a imagen y agregar al PDF
                         const qrImageData = canvas.toDataURL('image/png');
@@ -589,19 +578,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                         
                         // Finalizar PDF
                         finalizarPDF();
-                    };
-                    logoImg.onerror = function() {
-                        // Si falla el logo, usar QR sin logo
-                        const qrImageData = canvas.toDataURL('image/png');
-                        doc.addImage(qrImageData, 'PNG', pageWidth/2 - qrSize/2, yPosition + 10, qrSize, qrSize);
-                        finalizarPDF();
-                    };
-                    logoImg.src = 'assets/media/various/quiraXXXL.png';
-                });
-                
-            } catch (error) {
-                console.error('Error con QR:', error);
-                // Continuar sin QR
+                    });
+                    
+                } catch (error) {
+                    console.error('Error con QR:', error);
+                    finalizarPDF();
+                }
+            } else {
+                console.error('QRCode no está disponible');
                 finalizarPDF();
             }
             
