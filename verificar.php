@@ -495,15 +495,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(16); // Aumentado de 12 a 16
             doc.setFont(undefined, 'bold');
-            doc.text('Sistema QUIRA', pageWidth/2, 32, { align: 'center' });
+            doc.text('Sistema QUIRA', pageWidth/2, 35, { align: 'center' }); // Separación del logo
             
             doc.setFontSize(12); // Aumentado de 9 a 12
-            doc.text('Datos del Postulante', pageWidth/2, 42, { align: 'center' });
-            
-            // Línea divisoria simple
-            doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.5);
-            doc.line(20, 60, pageWidth - 20, 60);
+            doc.text('Datos del Postulante', pageWidth/2, 45, { align: 'center' });
             
             // Datos del postulante
             const datos = [
@@ -540,7 +535,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             // Formato simple - versión debug
             doc.setFontSize(12);
             doc.setTextColor(0, 0, 0); // Negro sólido
-            let yPosition = 70;
+            let yPosition = 60; // Ajustado para eliminar espacio innecesario
             const lineHeight = 10;
             
             // Agregar cada línea de datos con debug
