@@ -465,12 +465,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 const img = new Image();
                 img.src = 'assets/media/various/quiraXXXL.png';
                 
-                // Esperar a que cargue la imagen
-                await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = reject;
-                });
-                
                 // Agregar logo al PDF (escalado apropiadamente)
                 const logoWidth = 25;
                 const logoHeight = 25; // Cuadrado para evitar achatamiento
