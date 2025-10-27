@@ -433,6 +433,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
 
     <!-- jsPDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.plugin.addimage.min.js"></script>
     
     <script>
         // Modal s1mple
@@ -452,7 +453,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
         });
 
         // Función para descargar PDF
-        function descargarPDF() {
+        async function descargarPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -464,11 +465,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             doc.setFillColor(46, 80, 144); // #2E5090
             doc.rect(0, 0, pageWidth, 50, 'F');
             
-            // Logo QUIRA (exactamente como en la página)
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(20);
-            doc.setFont(undefined, 'bold');
-            doc.text('QUIRA', pageWidth/2, 20, { align: 'center' });
+            // Intentar cargar el logo de QUIRA
+            try {
+                // Crear una imagen del logo QUIRA
+                const logoText = 'QUIRA';
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(24);
+                doc.setFont(undefined, 'bold');
+                doc.text(logoText, pageWidth/2, 18, { align: 'center' });
+            } catch (error) {
+                console.log('Error cargando logo:', error);
+                // Fallback al texto
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(20);
+                doc.setFont(undefined, 'bold');
+                doc.text('QUIRA', pageWidth/2, 20, { align: 'center' });
+            }
             
             // Títulos del header
             doc.setFontSize(14);
@@ -516,7 +528,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 ['Fecha de Nacimiento:', '<?= date('d/m/Y', strtotime($postulante['fecha_nacimiento'])) ?>'],
                 ['Edad:', '<?= htmlspecialchars($postulante['edad']) ?> años'],
                 ['Sexo:', '<?= htmlspecialchars($postulante['sexo']) ?>'],
-                ['Unidad:', '<?= htmlspecialchars($postulante['unidad']) ?>'],
+                ['Unidad:', '<?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?>'],
                 ['Capturador de Huella:', '<?php 
                     $capturador = '';
                     if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']) {
@@ -538,7 +550,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             // Formato exacto como en la página web
             doc.setFontSize(10);
             let yPosition = cardY + 35;
-            const lineHeight = 10;
+            const lineHeight = 12; // Aumentado para evitar solapamiento
             const leftMargin = cardX + 15;
             const rightMargin = cardX + cardWidth - 15;
             
@@ -564,7 +576,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 // Línea divisoria sutil (como en la página web)
                 doc.setDrawColor(233, 236, 239);
                 doc.setLineWidth(0.1);
-                doc.line(leftMargin, yPosition + 3, rightMargin, yPosition + 3);
+                doc.line(leftMargin, yPosition + 4, rightMargin, yPosition + 4);
                 
                 yPosition += lineHeight;
             });
