@@ -394,11 +394,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 </div>
                 
                 <div class="text-center mt-4">
-                    <a href="verificar.php" class="btn btn-outline-primary mr-2">
+                    <button type="button" class="btn btn-success mr-2" onclick="descargarPDF()">
+                        <i class="fas fa-download mr-2"></i>Descargar PDF
+                    </button>
+                    <a href="verificar.php" class="btn btn-outline-primary">
                         <i class="fas fa-search mr-2"></i>Nueva Consulta
-                    </a>
-                    <a href="login.php" class="back-link">
-                        <i class="fas fa-arrow-left mr-2"></i>Volver al Login
                     </a>
                 </div>
                 <?php endif; ?>
@@ -434,6 +434,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
         </div>
     </div>
 
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <script>
         // Modal s1mple
         document.getElementById('footer-link').addEventListener('click', function() {
@@ -450,6 +453,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 closeModal();
             }
         });
+
+        // Función para descargar PDF
+        function descargarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Configuración del documento
+            doc.setFontSize(20);
+            doc.setTextColor(46, 80, 144); // Color #2E5090
+            doc.text('Sistema Quira', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Verificación de Datos de Postulante', 105, 30, { align: 'center' });
+            
+            // Línea divisoria
+            doc.setDrawColor(46, 80, 144);
+            doc.setLineWidth(0.5);
+            doc.line(20, 35, 190, 35);
+            
+            // Datos del postulante
+            const datos = [
+                ['Nombre Completo:', '<?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>'],
+                ['Cédula de Identidad:', '<?= htmlspecialchars($postulante['cedula']) ?>'],
+                ['Teléfono:', '<?= htmlspecialchars($postulante['telefono']) ?>'],
+                ['Dispositivo/Dedo Registrado:', '<?= htmlspecialchars($postulante['aparato_nombre']) ?> / <?= htmlspecialchars(getDedoNombre($postulante['dedo_registrado'])) ?>'],
+                ['Fecha de Nacimiento:', '<?= date('d/m/Y', strtotime($postulante['fecha_nacimiento'])) ?>'],
+                ['Edad:', '<?= htmlspecialchars($postulante['edad']) ?> años'],
+                ['Sexo:', '<?= htmlspecialchars($postulante['sexo']) ?>'],
+                ['Unidad:', '<?= htmlspecialchars($postulante['unidad']) ?>'],
+                ['Capturador de Huella:', '<?php 
+                    $capturador = '';
+                    if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']) {
+                        $capturador = $postulante['capturador_grado'] . ' ' . $postulante['capturador_nombre'] . ' ' . $postulante['capturador_apellido'];
+                    } else {
+                        $capturador = 'Oficial Ayudante JOSE MERLO';
+                    }
+                    echo htmlspecialchars($capturador);
+                ?>'],
+                ['Registrador:', '<?= htmlspecialchars($postulante['registrado_por']) ?>'],
+                ['Fecha y Hora de Registro:', '<?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>']
+            ];
+            
+            // Agregar observaciones si existen
+            <?php if ($postulante['observaciones']): ?>
+            datos.push(['Observaciones:', '<?= htmlspecialchars($postulante['observaciones']) ?>']);
+            <?php endif; ?>
+            
+            // Configurar fuente para los datos
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            
+            let yPosition = 50;
+            
+            // Agregar cada línea de datos
+            datos.forEach(function(item) {
+                // Etiqueta en negrita
+                doc.setFont(undefined, 'bold');
+                doc.text(item[0], 20, yPosition);
+                
+                // Valor en normal
+                doc.setFont(undefined, 'normal');
+                doc.text(item[1], 20 + doc.getTextWidth(item[0] + ': '), yPosition);
+                
+                yPosition += 8;
+            });
+            
+            // Pie de página
+            doc.setFontSize(8);
+            doc.setTextColor(128, 128, 128);
+            doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), 105, 280, { align: 'center' });
+            doc.text('Sistema Quira - Academia Nacional de Policía', 105, 285, { align: 'center' });
+            
+            // Descargar el PDF
+            const nombreArchivo = 'Datos_Postulante_<?= htmlspecialchars($postulante['cedula']) ?>_<?= date('Y-m-d') ?>.pdf';
+            doc.save(nombreArchivo);
+        }
     </script>
 </body>
 </html>
