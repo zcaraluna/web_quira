@@ -27,18 +27,14 @@ function getDedoNombre($codigo) {
 
 // Función para generar PDF del lado del servidor
 function generarPDF($postulante) {
-    // Configurar headers para PDF
-    header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="Datos_Postulante_' . $postulante['cedula'] . '_' . date('Y-m-d') . '.pdf"');
+    // Redirigir a la página con auto-generación de PDF
+    $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $path = dirname($_SERVER['REQUEST_URI']);
     
-    // Generar PDF usando TCPDF o similar
-    // Por ahora, redirigir a la página con parámetros para generar PDF
-    $url = $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-    $url = str_replace('?pdf=1', '', $url);
-    $url = str_replace('&pdf=1', '', $url);
+    $url = $protocol . '://' . $host . $path . '/verificar.php?cedula=' . $postulante['cedula'] . '&auto_pdf=1';
     
-    // Redirigir a la página normal con los datos
-    header('Location: ' . $url . '?cedula=' . $postulante['cedula'] . '&auto_pdf=1');
+    header('Location: ' . $url);
     exit;
 }
 
@@ -595,7 +591,7 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
              try {
                  const qrSize = 35; // Reducido de 50 a 35
                  // Generar QR con URL que genere el mismo PDF
-                 const qrData = `<?= $_SERVER['HTTP_HOST'] ?><?= $_SERVER['REQUEST_URI'] ?>?cedula=<?= htmlspecialchars($postulante['cedula']) ?>&pdf=1`;
+                 const qrData = `<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') ?>://<?= $_SERVER['HTTP_HOST'] ?><?= dirname($_SERVER['REQUEST_URI']) ?>/verificar.php?cedula=<?= htmlspecialchars($postulante['cedula']) ?>&auto_pdf=1`;
                  
                  console.log('Generando QR con datos:', qrData);
                  
