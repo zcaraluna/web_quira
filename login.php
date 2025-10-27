@@ -330,7 +330,7 @@ if ($_POST) {
 
     <!-- Footer -->
     <div class="footer-simple">
-        <span>Powered by <a href="#" id="footer-link">s1mple</a></span>
+        <span style="color: #f1f5f9;">Powered by <a href="#" id="footer-link">s1mple</a></span>
     </div>
 
     <!-- Modal -->
