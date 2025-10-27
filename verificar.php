@@ -394,12 +394,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 </div>
                 
                 <div class="text-center mt-4">
-                    <button type="button" class="btn btn-success mr-2" onclick="descargarPDF()">
+                    <button type="button" class="btn btn-success" onclick="descargarPDF()">
                         <i class="fas fa-download mr-2"></i>Descargar PDF
                     </button>
-                    <a href="verificar.php" class="btn btn-outline-primary">
-                        <i class="fas fa-search mr-2"></i>Nueva Consulta
-                    </a>
                 </div>
                 <?php endif; ?>
             </div>
@@ -460,18 +457,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             const doc = new jsPDF();
             
             // Configuración del documento
-            doc.setFontSize(20);
-            doc.setTextColor(46, 80, 144); // Color #2E5090
-            doc.text('Sistema Quira', 105, 20, { align: 'center' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
             
-            doc.setFontSize(14);
-            doc.setTextColor(0, 0, 0);
-            doc.text('Verificación de Datos de Postulante', 105, 30, { align: 'center' });
+            // Fondo azul del encabezado (simulando el header de la página)
+            doc.setFillColor(46, 80, 144); // #2E5090
+            doc.rect(0, 0, pageWidth, 40, 'F');
             
-            // Línea divisoria
+            // Logo/título en el header
+            doc.setTextColor(255, 255, 255); // Blanco
+            doc.setFontSize(24);
+            doc.setFont(undefined, 'bold');
+            doc.text('QUIRA', pageWidth/2, 15, { align: 'center' });
+            
+            doc.setFontSize(16);
+            doc.text('Sistema Quira', pageWidth/2, 25, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.text('Verificación de Datos de Postulantes', pageWidth/2, 33, { align: 'center' });
+            
+            // Tarjeta blanca (simulando el contenedor de datos)
+            const cardX = 20;
+            const cardY = 50;
+            const cardWidth = pageWidth - 40;
+            const cardHeight = 200;
+            
+            // Sombra de la tarjeta
+            doc.setFillColor(200, 200, 200, 0.3);
+            doc.rect(cardX + 2, cardY + 2, cardWidth, cardHeight, 'F');
+            
+            // Tarjeta principal
+            doc.setFillColor(255, 255, 255);
+            doc.rect(cardX, cardY, cardWidth, cardHeight, 'F');
+            
+            // Borde de la tarjeta
             doc.setDrawColor(46, 80, 144);
             doc.setLineWidth(0.5);
-            doc.line(20, 35, 190, 35);
+            doc.rect(cardX, cardY, cardWidth, cardHeight);
+            
+            // Título dentro de la tarjeta
+            doc.setTextColor(46, 80, 144);
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('Datos del Postulante', cardX + 10, cardY + 15);
+            
+            // Línea divisoria debajo del título
+            doc.setDrawColor(46, 80, 144);
+            doc.setLineWidth(0.5);
+            doc.line(cardX + 10, cardY + 18, cardX + cardWidth - 10, cardY + 18);
             
             // Datos del postulante
             const datos = [
@@ -505,26 +538,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             doc.setFontSize(10);
             doc.setTextColor(0, 0, 0);
             
-            let yPosition = 50;
+            let yPosition = cardY + 30;
+            const lineHeight = 8;
+            const leftMargin = cardX + 10;
+            const rightMargin = cardX + cardWidth - 10;
             
             // Agregar cada línea de datos
             datos.forEach(function(item) {
+                // Verificar si necesitamos una nueva página
+                if (yPosition > cardY + cardHeight - 20) {
+                    doc.addPage();
+                    yPosition = 30;
+                }
+                
                 // Etiqueta en negrita
                 doc.setFont(undefined, 'bold');
-                doc.text(item[0], 20, yPosition);
+                doc.setTextColor(73, 80, 87); // Color gris para las etiquetas
+                doc.text(item[0], leftMargin, yPosition);
                 
                 // Valor en normal
                 doc.setFont(undefined, 'normal');
-                doc.text(item[1], 20 + doc.getTextWidth(item[0] + ': '), yPosition);
+                doc.setTextColor(0, 0, 0);
+                const labelWidth = doc.getTextWidth(item[0]);
+                doc.text(item[1], leftMargin + labelWidth, yPosition);
                 
-                yPosition += 8;
+                // Línea divisoria sutil
+                doc.setDrawColor(233, 236, 239);
+                doc.setLineWidth(0.1);
+                doc.line(leftMargin, yPosition + 2, rightMargin, yPosition + 2);
+                
+                yPosition += lineHeight;
             });
             
-            // Pie de página
+            // Pie de página con estilo corporativo
             doc.setFontSize(8);
             doc.setTextColor(128, 128, 128);
-            doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), 105, 280, { align: 'center' });
-            doc.text('Sistema Quira - Academia Nacional de Policía', 105, 285, { align: 'center' });
+            doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, pageHeight - 15, { align: 'center' });
+            doc.text('Sistema Quira - Academia Nacional de Policía', pageWidth/2, pageHeight - 10, { align: 'center' });
             
             // Descargar el PDF
             const nombreArchivo = 'Datos_Postulante_<?= htmlspecialchars($postulante['cedula']) ?>_<?= date('Y-m-d') ?>.pdf';
