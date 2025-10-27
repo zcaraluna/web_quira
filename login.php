@@ -162,6 +162,11 @@ if ($_POST) {
             transition: color 0.2s ease;
         }
         
+        .footer-simple #footer-simple {
+            color: #2E5090;
+            font-weight: bold;
+        }
+        
         .footer-simple:hover #footer-text {
             color: #2E5090;
         }
@@ -332,7 +337,7 @@ if ($_POST) {
 
     <!-- Footer -->
     <div class="footer-simple" id="footer-link">
-        <span id="footer-text">Powered by s1mple</span>
+        <span id="footer-text">Powered by </span><span id="footer-simple">s1mple</span>
     </div>
 
     <!-- Modal -->
