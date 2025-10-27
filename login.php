@@ -180,18 +180,18 @@ if ($_POST) {
         }
         
         .modal-container {
-            max-width: 14rem;
+            max-width: 28rem;
             width: 100%;
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
             border: 2px solid #22c55e;
             border-radius: 1rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 1.75rem;
+            padding: 0.875rem;
         }
         
         .modal-header {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.75rem;
         }
         
         .modal-title {
@@ -217,15 +217,15 @@ if ($_POST) {
         .modal-body {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            gap: 0.375rem;
+            margin-bottom: 0.75rem;
         }
         
         .info-card {
             background: #334155;
             border: 1px solid #475569;
             border-radius: 0.5rem;
-            padding: 0.75rem;
+            padding: 0.5rem;
         }
         
         .info-label {
