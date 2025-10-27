@@ -478,9 +478,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 });
                 
                 // Agregar logo al PDF (escalado apropiadamente)
-                const logoWidth = 30;
-                const logoHeight = 20;
-                doc.addImage(img, 'PNG', pageWidth/2 - logoWidth/2, 5, logoWidth, logoHeight);
+                const logoWidth = 20;
+                const logoHeight = 15;
+                doc.addImage(img, 'PNG', pageWidth/2 - logoWidth/2, 8, logoWidth, logoHeight);
                 
             } catch (error) {
                 console.log('Error cargando logo:', error);
@@ -493,12 +493,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             
             // Títulos del encabezado
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
+            doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
-            doc.text('Sistema QUIRA', pageWidth/2, 30, { align: 'center' });
+            doc.text('Sistema QUIRA', pageWidth/2, 28, { align: 'center' });
             
-            doc.setFontSize(10);
-            doc.text('Datos del Postulante', pageWidth/2, 40, { align: 'center' });
+            doc.setFontSize(9);
+            doc.text('Datos del Postulante', pageWidth/2, 38, { align: 'center' });
             
             // Línea divisoria simple
             doc.setDrawColor(0, 0, 0);
@@ -535,7 +535,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             
             // Formato simple
             doc.setFontSize(10);
-            let yPosition = 75; // Ajustado para el encabezado
+            let yPosition = 70; // Ajustado para el encabezado más pequeño
             const lineHeight = 8;
             
             // Agregar cada línea de datos
