@@ -4942,8 +4942,5 @@ $distribucion_unidad = $pdo->query("
             </div>
         </div>
     </footer>
-    
-    <!-- Footer fijo y modal del desarrollador -->
-    <?php include 'includes/developer-footer.php'; ?>
 </body>
 </html>
