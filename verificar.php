@@ -172,6 +172,101 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             color: #1a3a70;
             text-decoration: none;
         }
+        
+        /* Footer s1mple */
+        .footer-simple {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 8px 20px;
+            z-index: 40;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .footer-simple #footer-text {
+            color: #94a3b8;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-simple #footer-simple {
+            color: #2E5090;
+            font-weight: bold;
+        }
+        
+        .footer-simple:hover #footer-text {
+            color: #2E5090;
+        }
+        
+        /* Safe zone para el footer */
+        body {
+            padding-bottom: 50px;
+        }
+        
+        /* Modal s1mple */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header h1 {
+            color: #2E5090;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .modal-divider {
+            width: 50px;
+            height: 3px;
+            background: #2E5090;
+            margin: 1rem auto;
+        }
+        
+        .modal-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-content p {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-close {
+            background: #2E5090;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        
+        .btn-close:hover {
+            background: #1a3a70;
+        }
     </style>
 </head>
 <body>
@@ -244,6 +339,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                     </div>
                     
                     <div class="data-row">
+                        <span class="data-label">Dispositivo/Dedo Registrado:</span>
+                        <span class="data-value"><?= htmlspecialchars($postulante['aparato_nombre']) ?> / <?= htmlspecialchars(getDedoNombre($postulante['dedo_registrado'])) ?></span>
+                    </div>
+                    
+                    <div class="data-row">
                         <span class="data-label">Fecha de Nacimiento:</span>
                         <span class="data-value"><?= date('d/m/Y', strtotime($postulante['fecha_nacimiento'])) ?></span>
                     </div>
@@ -263,15 +363,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                         <span class="data-value"><?= htmlspecialchars($postulante['unidad']) ?></span>
                     </div>
                     
-                    <div class="data-row">
-                        <span class="data-label">Dedo Registrado:</span>
-                        <span class="data-value"><?= htmlspecialchars(getDedoNombre($postulante['dedo_registrado'])) ?></span>
-                    </div>
-                    
-                    <div class="data-row">
-                        <span class="data-label">Dispositivo Biométrico:</span>
-                        <span class="data-value"><?= htmlspecialchars($postulante['aparato_nombre']) ?></span>
-                    </div>
                     
                     <div class="data-row">
                         <span class="data-label">Capturador de Huella:</span>
@@ -323,5 +414,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
     <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js" integrity="sha256-ZaXnYkHGqIhqTbJ6MB4l9Frs/r7U4jlx7ir8PJYBqbI=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <!-- Footer Simple -->
+    <div class="footer-simple" id="footer-link">
+        <span id="footer-text">Powered by </span><span id="footer-simple">s1mple</span>
+    </div>
+
+    <!-- Modal s1mple -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-container" id="modal-container">
+            <div class="modal-header">
+                <h1 class="modal-title">s1mple</h1>
+                <div class="modal-divider"></div>
+                <p class="modal-subtitle">From BITCAN</p>
+            </div>
+            <div class="modal-content">
+                <p>Desarrollado por el equipo de BITCAN</p>
+                <p>Soluciones tecnológicas innovadoras</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-close" onclick="closeModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal s1mple
+        document.getElementById('footer-link').addEventListener('click', function() {
+            document.getElementById('modal-overlay').style.display = 'flex';
+        });
+
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modal-overlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -511,6 +511,11 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
             color: #2E5090;
         }
         
+        /* Safe zone para el footer */
+        body {
+            padding-bottom: 50px;
+        }
+        
         /* MODAL STYLES */
         .modal-overlay {
             position: fixed;
