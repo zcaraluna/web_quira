@@ -252,7 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                     
                     <div class="data-row">
                         <span class="data-label">UID K40:</span>
-                        <span class="data-value"><?= htmlspecialchars($postulante['uid_k40']) ?></span>
+                        <span class="data-value">K40 <?= htmlspecialchars($postulante['uid_k40']) ?></span>
                     </div>
                     
                     <div class="data-row">

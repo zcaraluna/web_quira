@@ -33,7 +33,7 @@ try {
     $sexo = 'Masculino';
     $dedo_registrado = 'ID'; // Dedo índice derecho
     $aparato_id = 1; // ID del aparato biométrico (asumiendo que existe uno con ID 1)
-    $uid_k40 = 'K40 4';
+    $uid_k40 = 4; // UID numérico para K40
     $aparato_nombre = 'Dispositivo Biométrico Principal';
     $fecha_ultima_edicion = $fecha_registro;
     $capturador_id = 2; // ID del capturador (asumiendo que existe un usuario con ID 2)
@@ -69,7 +69,7 @@ try {
         echo "   - Capturador: Oficial Ayudante JOSE MERLO\n";
         echo "   - Registrador: $registrado_por\n";
         echo "   - Dedo registrado: $dedo_registrado\n";
-        echo "   - UID K40: $uid_k40\n";
+        echo "   - UID K40: K40 $uid_k40\n";
         echo "   - Fecha de registro: $fecha_registro\n";
         echo "\n🔍 Ahora puedes usar la página verificar.php para consultar estos datos.\n";
     } else {
