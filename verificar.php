@@ -306,11 +306,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                     </button>
                 </form>
                 
-                <div class="text-center mt-4">
-                    <a href="login.php" class="back-link">
-                        <i class="fas fa-arrow-left mr-2"></i>Volver al Login
-                    </a>
-                </div>
                 
                 <?php else: ?>
                 <!-- Mostrar datos del postulante -->
