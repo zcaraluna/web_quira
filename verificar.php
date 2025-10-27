@@ -32,7 +32,7 @@ function generarPDF($postulante) {
     $host = $_SERVER['HTTP_HOST'];
     $path = dirname($_SERVER['REQUEST_URI']);
     
-    $url = $protocol . '://' . $host . $path . '/verificar.php?cedula=' . $postulante['cedula'] . '&auto_pdf=1';
+    $url = $protocol . '://' . $host . $path . '/verificar.php?cedula=' . $postulante['cedula'] . '&qr=1';
     
     header('Location: ' . $url);
     exit;
@@ -74,8 +74,8 @@ if (isset($_GET['pdf']) && isset($_GET['cedula'])) {
     }
 }
 
-// Procesar consulta por CI (POST o GET con auto_pdf)
-if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset($_GET['cedula']) && isset($_GET['auto_pdf']))) {
+// Procesar consulta por CI (POST o GET con qr)
+if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset($_GET['cedula']) && isset($_GET['qr']))) {
     $cedula = isset($_POST['cedula']) ? trim($_POST['cedula']) : trim($_GET['cedula']);
     
     if (empty($cedula)) {
@@ -104,9 +104,9 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
             if (!$postulante) {
                 $mensaje = 'No se encontraron datos para la cédula ingresada';
                 $tipo_mensaje = 'warning';
-            } elseif (isset($_GET['auto_pdf'])) {
-                // Auto-generar PDF si viene del QR
-                echo "<script>window.onload = function() { descargarPDF(); }</script>";
+            } elseif (isset($_GET['qr'])) {
+                // Mostrar datos normalmente si viene del QR (sin auto-descarga)
+                // El usuario puede decidir si quiere descargar el PDF
             }
             
         } catch (Exception $e) {
@@ -590,8 +590,8 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
              // Generar código QR usando servicio online
              try {
                  const qrSize = 35; // Reducido de 50 a 35
-                 // Generar QR con URL que genere el mismo PDF
-                 const qrData = `<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') ?>://<?= $_SERVER['HTTP_HOST'] ?><?= dirname($_SERVER['REQUEST_URI']) ?>/verificar.php?cedula=<?= htmlspecialchars($postulante['cedula']) ?>&auto_pdf=1`;
+                 // Generar QR con URL que muestre los datos del postulante
+                 const qrData = `<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') ?>://<?= $_SERVER['HTTP_HOST'] ?><?= dirname($_SERVER['REQUEST_URI']) ?>/verificar.php?cedula=<?= htmlspecialchars($postulante['cedula']) ?>&qr=1`;
                  
                  console.log('Generando QR con datos:', qrData);
                  
