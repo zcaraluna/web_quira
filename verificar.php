@@ -539,45 +539,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 yPosition += lineHeight + 5;
             });
             
-            // Generar código QR usando servicio online
-            try {
-                const qrSize = 120; // Aumentado de 80 a 120
-                const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
-                
-                console.log('Generando QR con datos:', qrData);
-                
-                // Usar servicio de QR online
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&color=2E5090&bgcolor=FFFFFF`;
-                
-                // Crear imagen del QR
-                const qrImg = new Image();
-                qrImg.crossOrigin = 'anonymous';
-                
-                qrImg.onload = function() {
-                    console.log('QR cargado exitosamente');
-                    
-                    // Agregar QR al PDF con mejor posicionamiento
-                    const qrX = pageWidth/2 - qrSize/2; // Centrado horizontalmente
-                    const qrY = yPosition + 5; // Reducido espacio superior
-                    doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize);
-                    
-                    // Finalizar PDF con posición ajustada
-                    finalizarPDF(qrY + qrSize + 5); // Espacio reducido después del QR
-                };
-                
-                qrImg.onerror = function() {
-                    console.error('Error cargando QR desde servicio online');
-                    // Continuar sin QR
-                    finalizarPDF();
-                };
-                
-                qrImg.src = qrUrl;
-                
-            } catch (error) {
-                console.error('Error con QR:', error);
-                // Continuar sin QR
-                finalizarPDF();
-            }
+             // Generar código QR usando servicio online
+             try {
+                 const qrSize = 50; // Reducido de 80 a 50
+                 const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
+                 
+                 console.log('Generando QR con datos:', qrData);
+                 
+                 // Usar servicio de QR online
+                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&color=2E5090&bgcolor=FFFFFF`;
+                 
+                 // Crear imagen del QR
+                 const qrImg = new Image();
+                 qrImg.crossOrigin = 'anonymous';
+                 
+                 qrImg.onload = function() {
+                     console.log('QR cargado exitosamente');
+                     
+                     // Agregar QR al PDF con mejor posicionamiento
+                     const qrX = pageWidth/2 - qrSize/2; // Centrado horizontalmente
+                     const qrY = yPosition + 5; // Reducido espacio superior
+                     doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize);
+                     
+                     // Finalizar PDF con posición ajustada
+                     finalizarPDF(qrY + qrSize + 5); // Espacio reducido después del QR
+                 };
+                 
+                 qrImg.onerror = function() {
+                     console.error('Error cargando QR desde servicio online');
+                     // Continuar sin QR
+                     finalizarPDF();
+                 };
+                 
+                 qrImg.src = qrUrl;
+                 
+             } catch (error) {
+                 console.error('Error con QR:', error);
+                 // Continuar sin QR
+                 finalizarPDF();
+             }
             
             // Función para finalizar el PDF
             function finalizarPDF(footerY = null) {
