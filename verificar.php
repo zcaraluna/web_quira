@@ -516,10 +516,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 doc.setFont(undefined, 'bold');
                 doc.text(item[0], 20, yPosition);
                 
-                // Valor en normal
+                // Valor en normal con separación adecuada
                 doc.setFont(undefined, 'normal');
                 const labelWidth = doc.getTextWidth(item[0]);
-                doc.text(item[1], 20 + labelWidth, yPosition);
+                doc.text(item[1], 20 + labelWidth + 5, yPosition); // +5 para separación
                 
                 yPosition += lineHeight;
             });
