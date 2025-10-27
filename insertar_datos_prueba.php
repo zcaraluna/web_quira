@@ -18,6 +18,16 @@ try {
         exit;
     }
     
+    // Verificar usuarios existentes
+    $stmt = $pdo->query("SELECT id FROM usuarios ORDER BY id LIMIT 1");
+    $primer_usuario = $stmt->fetch();
+    $usuario_registrador = $primer_usuario ? $primer_usuario['id'] : null;
+    
+    if (!$usuario_registrador) {
+        echo "❌ No se encontraron usuarios en la base de datos. Debe crear al menos un usuario primero.\n";
+        exit;
+    }
+    
     // Datos del postulante de prueba
     $nombre = 'GUILLERMO';
     $apellido = 'RECALDE VALDEZ';
@@ -27,16 +37,15 @@ try {
     $unidad = 'Academia Nacional de Policía "Gral. JOSE E. DIAZ"';
     $observaciones = 'Postulante de prueba para verificación';
     $fecha_registro = date('Y-m-d H:i:s'); // Fecha y hora actual
-    $usuario_registrador = 1; // ID del usuario que registra (asumiendo que existe un usuario con ID 1)
     $registrado_por = 'Oficial Segundo JOSE DIAZ';
     $edad = 26; // Calculado basado en fecha de nacimiento
     $sexo = 'Masculino';
     $dedo_registrado = 'ID'; // Dedo índice derecho
-    $aparato_id = 1; // ID del aparato biométrico (asumiendo que existe uno con ID 1)
+    $aparato_id = null; // No especificar aparato específico
     $uid_k40 = 4; // UID numérico para K40
-    $aparato_nombre = 'Dispositivo Biométrico Principal';
+    $aparato_nombre = 'Dispositivo de Prueba';
     $fecha_ultima_edicion = $fecha_registro;
-    $capturador_id = 2; // ID del capturador (asumiendo que existe un usuario con ID 2)
+    $capturador_id = $usuario_registrador; // Usar el mismo usuario como capturador
     
     // Insertar el postulante
     $stmt = $pdo->prepare("
