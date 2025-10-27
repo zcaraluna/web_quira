@@ -447,7 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
         });
 
         // Función para descargar PDF
-        async function descargarPDF() {
+        function descargarPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -552,6 +552,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             // Descargar el PDF
             const nombreArchivo = 'Datos_Postulante_<?= htmlspecialchars($postulante['cedula']) ?>_<?= date('Y-m-d') ?>.pdf';
             doc.save(nombreArchivo);
+        }
     </script>
 </body>
 </html>
