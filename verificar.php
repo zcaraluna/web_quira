@@ -453,73 +453,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
         });
 
         // Función para descargar PDF
-        async function descargarPDF() {
+        function descargarPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Configuración del documento
+            // Configuración básica del documento
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             
-            // Fondo azul del encabezado (exactamente como la página web)
-            doc.setFillColor(46, 80, 144); // #2E5090
-            doc.rect(0, 0, pageWidth, 50, 'F');
+            // Título simple
+            doc.setFontSize(16);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Datos del Postulante', pageWidth/2, 20, { align: 'center' });
             
-            // Intentar cargar el logo de QUIRA
-            try {
-                // Crear una imagen del logo QUIRA
-                const logoText = 'QUIRA';
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(24);
-                doc.setFont(undefined, 'bold');
-                doc.text(logoText, pageWidth/2, 18, { align: 'center' });
-            } catch (error) {
-                console.log('Error cargando logo:', error);
-                // Fallback al texto
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(20);
-                doc.setFont(undefined, 'bold');
-                doc.text('QUIRA', pageWidth/2, 20, { align: 'center' });
-            }
-            
-            // Títulos del header
-            doc.setFontSize(14);
-            doc.text('Sistema Quira', pageWidth/2, 30, { align: 'center' });
-            
-            doc.setFontSize(10);
-            doc.text('Verificación de Datos de Postulantes', pageWidth/2, 40, { align: 'center' });
-            
-            // Tarjeta blanca (exactamente como el contenedor de la página)
-            const cardX = 15;
-            const cardY = 60;
-            const cardWidth = pageWidth - 30;
-            const cardHeight = 180;
-            
-            // Sombra de la tarjeta (como en la página web)
-            doc.setFillColor(0, 0, 0, 0.1);
-            doc.rect(cardX + 3, cardY + 3, cardWidth, cardHeight, 'F');
-            
-            // Tarjeta principal blanca
-            doc.setFillColor(255, 255, 255);
-            doc.rect(cardX, cardY, cardWidth, cardHeight, 'F');
-            
-            // Borde de la tarjeta (como en la página web)
-            doc.setDrawColor(46, 80, 144);
+            // Línea divisoria simple
+            doc.setDrawColor(0, 0, 0);
             doc.setLineWidth(0.5);
-            doc.rect(cardX, cardY, cardWidth, cardHeight);
+            doc.line(20, 25, pageWidth - 20, 25);
             
-            // Título "Datos del Postulante" (exactamente como en la página)
-            doc.setTextColor(46, 80, 144);
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text('Datos del Postulante', cardX + 15, cardY + 20);
-            
-            // Línea divisoria azul (como en la página web)
-            doc.setDrawColor(46, 80, 144);
-            doc.setLineWidth(0.5);
-            doc.line(cardX + 15, cardY + 23, cardX + cardWidth - 15, cardY + 23);
-            
-            // Datos del postulante (exactamente como se muestran en la página)
+            // Datos del postulante
             const datos = [
                 ['Nombre Completo:', '<?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>'],
                 ['Cédula de Identidad:', '<?= htmlspecialchars($postulante['cedula']) ?>'],
@@ -547,41 +499,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             datos.push(['Observaciones:', '<?= htmlspecialchars($postulante['observaciones']) ?>']);
             <?php endif; ?>
             
-            // Formato exacto como en la página web
+            // Formato simple
             doc.setFontSize(10);
-            let yPosition = cardY + 35;
-            const lineHeight = 12; // Aumentado para evitar solapamiento
-            const leftMargin = cardX + 15;
-            const rightMargin = cardX + cardWidth - 15;
+            let yPosition = 40;
+            const lineHeight = 8;
             
-            // Agregar cada línea de datos (exactamente como en la página web)
+            // Agregar cada línea de datos
             datos.forEach(function(item) {
                 // Verificar si necesitamos una nueva página
-                if (yPosition > cardY + cardHeight - 15) {
+                if (yPosition > pageHeight - 20) {
                     doc.addPage();
-                    yPosition = 30;
+                    yPosition = 20;
                 }
                 
-                // Etiqueta en negrita (como en la página web)
+                // Etiqueta en negrita
                 doc.setFont(undefined, 'bold');
-                doc.setTextColor(73, 80, 87); // Color exacto de las etiquetas en la página
-                doc.text(item[0], leftMargin, yPosition);
+                doc.text(item[0], 20, yPosition);
                 
-                // Valor en normal (como en la página web)
+                // Valor en normal
                 doc.setFont(undefined, 'normal');
-                doc.setTextColor(33, 37, 41); // Color exacto de los valores en la página
                 const labelWidth = doc.getTextWidth(item[0]);
-                doc.text(item[1], leftMargin + labelWidth, yPosition);
-                
-                // Línea divisoria sutil (como en la página web)
-                doc.setDrawColor(233, 236, 239);
-                doc.setLineWidth(0.1);
-                doc.line(leftMargin, yPosition + 4, rightMargin, yPosition + 4);
+                doc.text(item[1], 20 + labelWidth, yPosition);
                 
                 yPosition += lineHeight;
             });
             
-            // Pie de página (solo la fecha de generación)
+            // Pie de página simple
             doc.setFontSize(8);
             doc.setTextColor(128, 128, 128);
             doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, pageHeight - 10, { align: 'center' });
