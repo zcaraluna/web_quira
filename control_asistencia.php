@@ -158,6 +158,147 @@ function obtener_info_dispositivo($pdo, $serial_number) {
             margin-bottom: 0.25rem;
             font-size: 0.9rem;
         }
+        
+        /* FOOTER STYLES */
+        .footer-simple {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 8px 20px;
+            z-index: 40;
+            text-align: center;
+        }
+        
+        .footer-simple {
+            cursor: pointer;
+        }
+        
+        .footer-simple #footer-text {
+            color: #94a3b8;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-simple #footer-simple {
+            color: #2E5090;
+            font-weight: bold;
+        }
+        
+        .footer-simple:hover #footer-text {
+            color: #2E5090;
+        }
+        
+        /* MODAL STYLES */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 70;
+            padding: 16px;
+        }
+        
+        .modal-container {
+            max-width: 28rem;
+            width: 100%;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border: 2px solid #2E5090;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 0.875rem;
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .modal-title {
+            font-size: 1.875rem;
+            font-weight: bold;
+            color: #2E5090;
+            letter-spacing: 0.1em;
+            margin: 0;
+        }
+        
+        .modal-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #2E5090 50%, transparent 100%);
+            margin: 0.75rem 0;
+        }
+        
+        .modal-subtitle {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin: 0;
+        }
+        
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .info-card {
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+        }
+        
+        .info-label {
+            color: #64748b;
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .info-content {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+        
+        .info-content-small {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            line-height: 1.4;
+        }
+        
+        .info-content-blue {
+            color: #2E5090;
+            font-weight: bold;
+        }
+        
+        .modal-footer {
+            text-align: center;
+        }
+        
+        .btn-close {
+            background: #2E5090;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.625rem 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .btn-close:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -1987,6 +2128,90 @@ function obtener_info_dispositivo($pdo, $serial_number) {
         window.buscarEnDashboard = buscarEnDashboard;
         
     });
+    </script>
+
+    <!-- Footer Simple -->
+    <div class="footer-simple" id="footer-link">
+        <span id="footer-text">Powered by </span><span id="footer-simple">s1mple</span>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-container" id="modal-container">
+            <div class="modal-header">
+                <h1 class="modal-title">s1mple</h1>
+                <div class="modal-divider"></div>
+                <p class="modal-subtitle">From BITCAN</p>
+            </div>
+            
+            <div class="modal-body">
+                <div class="info-card">
+                    <div class="info-label">Desarrollador</div>
+                    <div class="info-content">GUILLERMO ANDRÉS</div>
+                    <div class="info-content">RECALDE VALDEZ</div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-label">Contacto</div>
+                    <div class="info-content-small">recaldev.ga@bitcan.com.py</div>
+                    <div class="info-content-small">+595 973 408 754</div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-label">Servicios</div>
+                    <div class="info-content-small">Desarrollo de sistemas de gestión y empresariales a medida</div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-label">Proyecto</div>
+                    <div class="info-content">Sistema QUIRA</div>
+                    <div class="info-content-small">Sistema Que Identifica, Registra y Autentica</div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-label">Versión</div>
+                    <div class="info-content">Beta 2.0.0</div>
+                    <div class="info-content-small">26/10/2025</div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-close" id="btn-close">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const footerLink = document.getElementById('footer-link');
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContainer = document.getElementById('modal-container');
+            const btnClose = document.getElementById('btn-close');
+            
+            // Open modal when clicking footer
+            footerLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                modalOverlay.style.display = 'flex';
+            });
+            
+            // Close modal when clicking overlay
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    modalOverlay.style.display = 'none';
+                }
+            });
+            
+            // Close modal when clicking close button
+            btnClose.addEventListener('click', function() {
+                modalOverlay.style.display = 'none';
+            });
+            
+            // Prevent modal from closing when clicking inside modal content
+            modalContainer.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
     </script>
 </body>
 </html>
