@@ -429,8 +429,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
     <!-- jsPDF Library -->
     <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
-    <!-- QR Code Library -->
-    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
     
     <script>
         // Modal s1mple
@@ -541,51 +539,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 yPosition += lineHeight + 5;
             });
             
-            // Debug: verificar si QRCode está disponible
-            console.log('QRCode disponible:', typeof QRCode);
-            
-            // Generar código QR simple
-            if (typeof QRCode !== 'undefined') {
-                try {
-                    // Crear canvas temporal para el QR
-                    const canvas = document.createElement('canvas');
-                    const qrSize = 80;
+            // Generar código QR usando servicio online
+            try {
+                const qrSize = 80;
+                const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
+                
+                console.log('Generando QR con datos:', qrData);
+                
+                // Usar servicio de QR online
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&color=2E5090&bgcolor=FFFFFF`;
+                
+                // Crear imagen del QR
+                const qrImg = new Image();
+                qrImg.crossOrigin = 'anonymous';
+                
+                qrImg.onload = function() {
+                    console.log('QR cargado exitosamente');
                     
-                    // Generar QR con los datos del postulante
-                    const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
+                    // Agregar QR al PDF
+                    doc.addImage(qrImg, 'PNG', pageWidth/2 - qrSize/2, yPosition + 10, qrSize, qrSize);
                     
-                    console.log('Generando QR con datos:', qrData);
-                    
-                    QRCode.toCanvas(canvas, qrData, {
-                        width: qrSize,
-                        margin: 1,
-                        color: {
-                            dark: '#2E5090',
-                            light: '#FFFFFF'
-                        }
-                    }, function (error) {
-                        if (error) {
-                            console.error('Error generando QR:', error);
-                            finalizarPDF();
-                            return;
-                        }
-                        
-                        console.log('QR generado exitosamente');
-                        
-                        // Convertir canvas a imagen y agregar al PDF
-                        const qrImageData = canvas.toDataURL('image/png');
-                        doc.addImage(qrImageData, 'PNG', pageWidth/2 - qrSize/2, yPosition + 10, qrSize, qrSize);
-                        
-                        // Finalizar PDF
-                        finalizarPDF();
-                    });
-                    
-                } catch (error) {
-                    console.error('Error con QR:', error);
+                    // Finalizar PDF
                     finalizarPDF();
-                }
-            } else {
-                console.error('QRCode no está disponible');
+                };
+                
+                qrImg.onerror = function() {
+                    console.error('Error cargando QR desde servicio online');
+                    // Continuar sin QR
+                    finalizarPDF();
+                };
+                
+                qrImg.src = qrUrl;
+                
+            } catch (error) {
+                console.error('Error con QR:', error);
+                // Continuar sin QR
                 finalizarPDF();
             }
             
