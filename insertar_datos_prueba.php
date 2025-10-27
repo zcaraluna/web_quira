@@ -28,6 +28,18 @@ try {
         exit;
     }
     
+    // Verificar dispositivos biométricos existentes
+    $stmt = $pdo->query("SELECT id, nombre, serial FROM aparatos_biometricos WHERE nombre = 'ANAPOL 1' LIMIT 1");
+    $dispositivo = $stmt->fetch();
+    
+    if (!$dispositivo) {
+        echo "❌ No se encontró el dispositivo 'ANAPOL 1'. Ejecute primero 'php crear_dispositivos_prueba.php'.\n";
+        exit;
+    }
+    
+    $aparato_id = $dispositivo['id'];
+    $aparato_nombre = $dispositivo['nombre'];
+    
     // Datos del postulante de prueba
     $nombre = 'GUILLERMO';
     $apellido = 'RECALDE VALDEZ';
@@ -41,9 +53,7 @@ try {
     $edad = 26; // Calculado basado en fecha de nacimiento
     $sexo = 'Masculino';
     $dedo_registrado = 'ID'; // Dedo índice derecho
-    $aparato_id = null; // No especificar aparato específico
     $uid_k40 = 4; // UID numérico para K40
-    $aparato_nombre = 'Dispositivo de Prueba';
     $fecha_ultima_edicion = $fecha_registro;
     $capturador_id = $usuario_registrador; // Usar el mismo usuario como capturador
     

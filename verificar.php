@@ -7,6 +7,24 @@
 
 require_once 'config.php';
 
+// Función para convertir código de dedo a nombre descriptivo
+function getDedoNombre($codigo) {
+    $dedos = [
+        'PD' => 'Pulgar Derecho',
+        'ID' => 'Índice Derecho',
+        'MD' => 'Medio Derecho',
+        'AD' => 'Anular Derecho',
+        'MeD' => 'Meñique Derecho',
+        'PI' => 'Pulgar Izquierdo',
+        'II' => 'Índice Izquierdo',
+        'MI' => 'Medio Izquierdo',
+        'AI' => 'Anular Izquierdo',
+        'MeI' => 'Meñique Izquierdo'
+    ];
+    
+    return $dedos[$codigo] ?? $codigo;
+}
+
 $mensaje = '';
 $tipo_mensaje = '';
 $postulante = null;
@@ -247,12 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                     
                     <div class="data-row">
                         <span class="data-label">Dedo Registrado:</span>
-                        <span class="data-value"><?= htmlspecialchars($postulante['dedo_registrado']) ?></span>
-                    </div>
-                    
-                    <div class="data-row">
-                        <span class="data-label">UID K40:</span>
-                        <span class="data-value">K40 <?= htmlspecialchars($postulante['uid_k40']) ?></span>
+                        <span class="data-value"><?= htmlspecialchars(getDedoNombre($postulante['dedo_registrado'])) ?></span>
                     </div>
                     
                     <div class="data-row">
