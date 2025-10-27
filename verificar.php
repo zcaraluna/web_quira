@@ -541,7 +541,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             
              // Generar código QR usando servicio online
              try {
-                 const qrSize = 50; // Reducido de 80 a 50
+                 const qrSize = 35; // Reducido de 50 a 35
                  const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
                  
                  console.log('Generando QR con datos:', qrData);
