@@ -25,13 +25,62 @@ function getDedoNombre($codigo) {
     return $dedos[$codigo] ?? $codigo;
 }
 
+// Función para generar PDF del lado del servidor
+function generarPDF($postulante) {
+    // Configurar headers para PDF
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="Datos_Postulante_' . $postulante['cedula'] . '_' . date('Y-m-d') . '.pdf"');
+    
+    // Generar PDF usando TCPDF o similar
+    // Por ahora, redirigir a la página con parámetros para generar PDF
+    $url = $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    $url = str_replace('?pdf=1', '', $url);
+    $url = str_replace('&pdf=1', '', $url);
+    
+    // Redirigir a la página normal con los datos
+    header('Location: ' . $url . '?cedula=' . $postulante['cedula'] . '&auto_pdf=1');
+    exit;
+}
+
 $mensaje = '';
 $tipo_mensaje = '';
 $postulante = null;
 
-// Procesar consulta por CI
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
-    $cedula = trim($_POST['cedula']);
+// Verificar si se solicita PDF directamente (desde QR)
+if (isset($_GET['pdf']) && isset($_GET['cedula'])) {
+    $cedula = trim($_GET['cedula']);
+    try {
+        $pdo = getDBConnection();
+        
+        // Buscar postulante por cédula
+        $stmt = $pdo->prepare("
+            SELECT 
+                p.*,
+                u.nombre as capturador_nombre,
+                u.apellido as capturador_apellido,
+                u.grado as capturador_grado,
+                a.nombre as aparato_nombre_actual
+            FROM postulantes p
+            LEFT JOIN usuarios u ON p.capturador_id = u.id
+            LEFT JOIN aparatos_biometricos a ON p.aparato_id = a.id
+            WHERE p.cedula = ?
+        ");
+        $stmt->execute([$cedula]);
+        $postulante = $stmt->fetch();
+        
+        if ($postulante) {
+            // Generar PDF directamente
+            generarPDF($postulante);
+            exit;
+        }
+    } catch (Exception $e) {
+        // Error al generar PDF
+    }
+}
+
+// Procesar consulta por CI (POST o GET con auto_pdf)
+if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset($_GET['cedula']) && isset($_GET['auto_pdf']))) {
+    $cedula = isset($_POST['cedula']) ? trim($_POST['cedula']) : trim($_GET['cedula']);
     
     if (empty($cedula)) {
         $mensaje = 'Por favor ingrese su número de cédula';
@@ -59,6 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             if (!$postulante) {
                 $mensaje = 'No se encontraron datos para la cédula ingresada';
                 $tipo_mensaje = 'warning';
+            } elseif (isset($_GET['auto_pdf'])) {
+                // Auto-generar PDF si viene del QR
+                echo "<script>window.onload = function() { descargarPDF(); }</script>";
             }
             
         } catch (Exception $e) {
@@ -542,7 +594,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
              // Generar código QR usando servicio online
              try {
                  const qrSize = 35; // Reducido de 50 a 35
-                 const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
+                 // Generar QR con URL que genere el mismo PDF
+                 const qrData = `<?= $_SERVER['HTTP_HOST'] ?><?= $_SERVER['REQUEST_URI'] ?>?cedula=<?= htmlspecialchars($postulante['cedula']) ?>&pdf=1`;
                  
                  console.log('Generando QR con datos:', qrData);
                  
