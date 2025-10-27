@@ -180,7 +180,7 @@ if ($_POST) {
         }
         
         .modal-container {
-            max-width: 28rem;
+            max-width: 14rem;
             width: 100%;
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
             border: 2px solid #22c55e;
