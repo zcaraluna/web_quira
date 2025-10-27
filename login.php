@@ -362,14 +362,14 @@ if ($_POST) {
                 
                 <div class="info-card">
                     <div class="info-label">Proyecto</div>
-                    <div class="info-content info-content-blue">aXeso</div>
-                    <div class="info-content-small">Sistema de Control de Acceso</div>
+                    <div class="info-content">Sistema QUIRA</div>
+                    <div class="info-content-small">Sistema Que Identifica, Registra y Autentica</div>
                 </div>
                 
                 <div class="info-card">
                     <div class="info-label">Versión</div>
-                    <div class="info-content">Beta 1.0.0</div>
-                    <div class="info-content-small">16/10/2025</div>
+                    <div class="info-content">Beta 2.0.0</div>
+                    <div class="info-content-small">26/10/2025</div>
                 </div>
             </div>
             
