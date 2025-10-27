@@ -560,54 +560,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                  qrImg.onload = function() {
                      console.log('QR cargado exitosamente');
                      
-                     // Crear canvas para agregar logo QUIRA en el centro
-                     const canvas = document.createElement('canvas');
-                     canvas.width = qrSize;
-                     canvas.height = qrSize;
-                     const ctx = canvas.getContext('2d');
+                     // Agregar QR al PDF con mejor posicionamiento
+                     doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize);
                      
-                     // Dibujar el QR en el canvas
-                     ctx.drawImage(qrImg, 0, 0, qrSize, qrSize);
-                     
-                     // Agregar logo QUIRA en el centro
-                     const logoImg = new Image();
-                     logoImg.crossOrigin = 'anonymous';
-                     
-                     logoImg.onload = function() {
-                         console.log('Logo QUIRA cargado exitosamente');
-                         const logoSize = Math.floor(qrSize * 0.3); // 30% del tamaño del QR
-                         const logoX = (qrSize - logoSize) / 2;
-                         const logoY = (qrSize - logoSize) / 2;
-                         
-                         // Dibujar fondo blanco más grande para el logo (para logos transparentes)
-                         ctx.fillStyle = '#FFFFFF';
-                         ctx.fillRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
-                         
-                         // Dibujar borde gris para mejor definición
-                         ctx.strokeStyle = '#E0E0E0';
-                         ctx.lineWidth = 1;
-                         ctx.strokeRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
-                         
-                         // Dibujar el logo (mantendrá su transparencia pero sobre fondo blanco)
-                         ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-                         
-                         // Convertir canvas a imagen y agregar al PDF
-                         const qrWithLogoData = canvas.toDataURL('image/png');
-                         doc.addImage(qrWithLogoData, 'PNG', qrX, qrY, qrSize, qrSize);
-                         
-                         // Finalizar PDF con posición ajustada
-                         finalizarPDF(qrY + qrSize + 5);
-                     };
-                     
-                     logoImg.onerror = function() {
-                         console.log('Error cargando logo QUIRA, usando QR sin logo');
-                         // Usar QR sin logo si falla
-                         doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize);
-                         finalizarPDF(qrY + qrSize + 5);
-                     };
-                     
-                     // Intentar cargar el logo
-                     logoImg.src = 'assets/media/various/quiraXXXL.png';
+                     // Finalizar PDF con posición ajustada
+                     finalizarPDF(qrY + qrSize + 5);
                  };
                  
                  qrImg.onerror = function() {
