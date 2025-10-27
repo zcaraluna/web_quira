@@ -541,7 +541,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             
             // Generar código QR usando servicio online
             try {
-                const qrSize = 80;
+                const qrSize = 120; // Aumentado de 80 a 120
                 const qrData = `POSTULANTE QUIRA\nCI: <?= htmlspecialchars($postulante['cedula']) ?>\nNombre: <?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>\nFecha: <?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>`;
                 
                 console.log('Generando QR con datos:', qrData);
@@ -556,11 +556,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
                 qrImg.onload = function() {
                     console.log('QR cargado exitosamente');
                     
-                    // Agregar QR al PDF
-                    doc.addImage(qrImg, 'PNG', pageWidth/2 - qrSize/2, yPosition + 10, qrSize, qrSize);
+                    // Agregar QR al PDF con mejor posicionamiento
+                    const qrX = pageWidth/2 - qrSize/2; // Centrado horizontalmente
+                    const qrY = yPosition + 5; // Reducido espacio superior
+                    doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize);
                     
-                    // Finalizar PDF
-                    finalizarPDF();
+                    // Finalizar PDF con posición ajustada
+                    finalizarPDF(qrY + qrSize + 5); // Espacio reducido después del QR
                 };
                 
                 qrImg.onerror = function() {
@@ -578,11 +580,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) {
             }
             
             // Función para finalizar el PDF
-            function finalizarPDF() {
+            function finalizarPDF(footerY = null) {
                 // Pie de página simple
                 doc.setFontSize(8);
                 doc.setTextColor(128, 128, 128);
-                doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, pageHeight - 10, { align: 'center' });
+                
+                // Usar posición personalizada si se proporciona, sino usar la posición por defecto
+                const footerPosition = footerY ? footerY + 10 : pageHeight - 10;
+                doc.text('Documento generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES'), pageWidth/2, footerPosition, { align: 'center' });
                 
                 // Descargar el PDF
                 const nombreArchivo = 'Datos_Postulante_<?= htmlspecialchars($postulante['cedula']) ?>_<?= date('Y-m-d') ?>.pdf';
