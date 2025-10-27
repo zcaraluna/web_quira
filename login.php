@@ -183,7 +183,7 @@ if ($_POST) {
             max-width: 28rem;
             width: 100%;
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
-            border: 2px solid #22c55e;
+            border: 2px solid #2E5090;
             border-radius: 1rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             padding: 0.875rem;
@@ -197,14 +197,14 @@ if ($_POST) {
         .modal-title {
             font-size: 1.875rem;
             font-weight: bold;
-            color: #22c55e;
+            color: #2E5090;
             letter-spacing: 0.1em;
             margin: 0;
         }
         
         .modal-divider {
             height: 2px;
-            background: linear-gradient(90deg, transparent 0%, #22c55e 50%, transparent 100%);
+            background: linear-gradient(90deg, transparent 0%, #2E5090 50%, transparent 100%);
             margin: 0.75rem 0;
         }
         
@@ -249,8 +249,8 @@ if ($_POST) {
             line-height: 1.4;
         }
         
-        .info-content-green {
-            color: #22c55e;
+        .info-content-blue {
+            color: #2E5090;
             font-weight: bold;
         }
         
@@ -259,7 +259,7 @@ if ($_POST) {
         }
         
         .btn-close {
-            background: #22c55e;
+            background: #2E5090;
             color: white;
             font-weight: bold;
             border: none;
@@ -362,7 +362,7 @@ if ($_POST) {
                 
                 <div class="info-card">
                     <div class="info-label">Proyecto</div>
-                    <div class="info-content info-content-green">aXeso</div>
+                    <div class="info-content info-content-blue">aXeso</div>
                     <div class="info-content-small">Sistema de Control de Acceso</div>
                 </div>
                 
