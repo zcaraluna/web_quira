@@ -1431,7 +1431,7 @@ $distribucion_unidad = $pdo->query("
                                                     <tr>
                                                         <td><?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?></td>
                                                         <td><?= htmlspecialchars($postulante['cedula']) ?></td>
-                                                        <td><span class="badge badge-primary"><?= htmlspecialchars($postulante['unidad']) ?></span></td>
+                                                        <td><span class="badge badge-primary"><?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?></span></td>
                                                         <td><?= date('d/m/Y H:i', strtotime($postulante['fecha_registro'])) ?></td>
                                                     </tr>
                                                     <?php endforeach; ?>
@@ -1449,7 +1449,7 @@ $distribucion_unidad = $pdo->query("
                                     <div class="card-body">
                                         <?php foreach (array_slice($distribucion_unidad, 0, 5) as $unidad): ?>
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="font-size-sm"><?= htmlspecialchars($unidad['unidad']) ?></span>
+                                            <span class="font-size-sm"><?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?></span>
                                             <span class="badge badge-primary"><?= $unidad['total'] ?></span>
                                         </div>
                                         <?php endforeach; ?>
@@ -1680,7 +1680,7 @@ $distribucion_unidad = $pdo->query("
                                                 <?php foreach ($unidades as $unidad): ?>
                                                 <option value="<?= htmlspecialchars($unidad['unidad']) ?>" 
                                                         <?= $filtro_unidad === $unidad['unidad'] ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($unidad['unidad']) ?>
+                                                    <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
                                                 </option>
                                                 <?php endforeach; ?>
                                             </select>
@@ -1794,7 +1794,7 @@ $distribucion_unidad = $pdo->query("
                                                     </td>
                                                     <td>
                                                         <?php if ($postulante['unidad']): ?>
-                                                            <span class="badge badge-info"><?= htmlspecialchars($postulante['unidad']) ?></span>
+                                                            <span class="badge badge-info"><?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?></span>
                                                         <?php else: ?>
                                                             <span class="badge badge-secondary">Sin unidad</span>
                                                         <?php endif; ?>
@@ -2308,7 +2308,7 @@ $distribucion_unidad = $pdo->query("
                                                                     <tbody>
                                                                         <?php foreach ($postulantes_por_unidad_fecha as $unidad): ?>
                                                                         <tr>
-                                                                            <td><?= htmlspecialchars($unidad['unidad']) ?></td>
+                                                                            <td><?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?></td>
                                                                             <td><span class="badge badge-primary"><?= $unidad['cantidad'] ?></span></td>
                                                                         </tr>
                                                                         <?php endforeach; ?>
@@ -3804,7 +3804,7 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "<?= htmlspecialchars($unidad['unidad']) ?>",
+                                                            text: "<?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>",
                                                             size: 20
                                                         })
                                                     ]
@@ -4279,7 +4279,7 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "UNIDAD: <?= htmlspecialchars($unidad) ?>",
+                                                            text: "UNIDAD: <?= str_replace('&quot;', '"', htmlspecialchars($unidad)) ?>",
                                                             bold: true,
                                                             size: 22,
                                                             color: "2E5090"
@@ -4520,7 +4520,7 @@ $distribucion_unidad = $pdo->query("
                             <tbody>
                                 <?php foreach ($postulantes_por_unidad_fecha as $unidad): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($unidad['unidad']) ?></td>
+                                    <td><?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?></td>
                                     <td><?= $unidad['cantidad'] ?></td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -4605,7 +4605,7 @@ $distribucion_unidad = $pdo->query("
                         ?>
                         <div class="unidad-section" style="margin-bottom: 30px;">
                             <h4 style="color: #2E5090; background-color: #E8F0FE; padding: 10px; margin: 0 0 15px 0; border-left: 4px solid #2E5090;">
-                                UNIDAD: <?= htmlspecialchars($unidad) ?> (<?= count($postulantes_unidad) ?> postulantes)
+                                UNIDAD: <?= str_replace('&quot;', '"', htmlspecialchars($unidad)) ?> (<?= count($postulantes_unidad) ?> postulantes)
                             </h4>
                             <table>
                                 <thead>
