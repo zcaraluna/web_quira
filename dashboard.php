@@ -1262,10 +1262,8 @@ $distribucion_unidad = $pdo->query("
                                 <i class="fa fa-fw fa-user mr-1"></i> <?= htmlspecialchars($_SESSION['nombre'] . ' ' . $_SESSION['apellido']) ?> <i class="fa fa-fw fa-chevron-down ml-1"></i>
                             </button>
                             <div class="dropdown-menu dropdown-menu-right font-size-sm" aria-labelledby="dropdownMenuButton">
-                                <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
                                 <a class="dropdown-item" href="configuracion_cuenta.php"><i class="fas fa-cog mr-2"></i>Configuración de Cuenta</a>
                                 <div class="dropdown-divider"></div>
-                                <?php endif; ?>
                                 <a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión</a>
                             </div>
                         </div>
