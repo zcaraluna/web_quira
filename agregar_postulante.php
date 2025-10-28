@@ -1091,9 +1091,9 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                     console.log(`Usuarios obtenidos: ${users.users.length} de ${totalUsuarios}`);
                     
                     // Si el número de usuarios obtenidos es menor al total, 
-                    // asumir que el siguiente ID disponible es el total + 1
+                    // asumir que el siguiente ID disponible es el total (no +1)
                     if (users.users.length < totalUsuarios) {
-                        const siguienteID = totalUsuarios + 1;
+                        const siguienteID = totalUsuarios;
                         console.log(`Usando siguiente ID disponible: ${siguienteID} (basado en total del dispositivo)`);
                         document.getElementById('id_k40').value = siguienteID;
                         ultimoUID = siguienteID;
@@ -1107,7 +1107,7 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                     console.log(`UIDs obtenidos: [${todosUIDs.join(', ')}]`);
                 } else {
                     // Si no se pueden obtener usuarios, usar el contador del dispositivo
-                    const siguienteID = totalUsuarios + 1;
+                    const siguienteID = totalUsuarios;
                     console.log(`No se pudieron obtener usuarios, usando siguiente ID: ${siguienteID}`);
                     document.getElementById('id_k40').value = siguienteID;
                     ultimoUID = siguienteID;
@@ -1772,13 +1772,13 @@ Por favor verifique:
                                 if (ultimoUsuario) {
                                     usuarioUID = ultimoUsuario.uid;
                                 } else {
-                                    // Si no se encontró usuario disponible, usar el siguiente ID
-                                    usuarioUID = totalUsuarios + 1;
+                                    // Si no se encontró usuario disponible, usar el total de usuarios
+                                    usuarioUID = totalUsuarios;
                                     console.log(`Usando siguiente ID disponible: ${usuarioUID}`);
                                 }
                             } else {
-                                // Si no se pueden obtener usuarios, usar el siguiente ID
-                                usuarioUID = totalUsuarios + 1;
+                                // Si no se pueden obtener usuarios, usar el total de usuarios
+                                usuarioUID = totalUsuarios;
                                 console.log(`No se pudieron obtener usuarios, usando siguiente ID: ${usuarioUID}`);
                             }
                         } else {
