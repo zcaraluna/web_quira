@@ -399,7 +399,7 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
                     
                     <div class="data-row">
                         <span class="data-label">Unidad:</span>
-                        <span class="data-value"><?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?></span>
+                        <span class="data-value"><?= htmlspecialchars($postulante['unidad']) ?></span>
                     </div>
                     
                     

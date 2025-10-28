@@ -302,7 +302,7 @@
                                     </div>
                                     <div class="info-row">
                                         <div class="info-label">Unidad:</div>
-                                        <div class="info-value"><?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?: 'No especificada' ?></div>
+                                        <div class="info-value"><?= htmlspecialchars($postulante['unidad']) ?: 'No especificada' ?></div>
                                     </div>
                                     <div class="info-row">
                                         <div class="info-label">Dedo Registrado:</div>
