@@ -2107,7 +2107,7 @@ $distribucion_unidad = $pdo->query("
                                     <div class="col-lg-12 mb-5">
                                         <div class="card">
                                             <div class="card-header d-flex justify-content-between align-items-center">
-                                                <h6 class="mb-0">Registros por Día (Últimos 30 días)</h6>
+                                                <h6 class="mb-0">Registros por Día</h6>
                                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirModalRegistrosDia()">
                                                     <i class="fas fa-expand-arrows-alt"></i> Ampliar
                                                 </button>
@@ -2118,6 +2118,20 @@ $distribucion_unidad = $pdo->query("
                                         </div>
                                     </div>
 
+                                </div>
+
+                                <!-- Gráfico de Distribución por Unidad -->
+                                <div class="row">
+                                    <div class="col-lg-12 mb-5">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Distribución por Unidad</h6>
+                                            </div>
+                                            <div class="card-body" style="padding: 2rem;">
+                                                <canvas id="graficoUnidades" height="400"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="row">
@@ -4700,6 +4714,88 @@ $distribucion_unidad = $pdo->query("
                 }
             }
             
+            // Gráfico de distribución por unidad
+            const ctxUnidades = document.getElementById('graficoUnidades');
+            if (ctxUnidades) {
+                const datosUnidades = <?= json_encode($distribucion_unidades) ?>;
+                if (datosUnidades && datosUnidades.length > 0) {
+                    // Crear etiquetas truncadas para mejor visualización
+                    const labelsTruncados = datosUnidades.map(d => {
+                        let label = d.unidad;
+                        if (label.length > 20) {
+                            const words = label.split(' ');
+                            let truncated = '';
+                            for (let word of words) {
+                                if ((truncated + ' ' + word).trim().length <= 20) {
+                                    truncated += (truncated ? ' ' : '') + word;
+                                } else {
+                                    break;
+                                }
+                            }
+                            return truncated + '...';
+                        }
+                        return label;
+                    });
+                    
+                    new Chart(ctxUnidades, {
+                        type: 'bar',
+                        data: {
+                            labels: labelsTruncados,
+                            datasets: [{
+                                label: 'Postulantes',
+                                data: datosUnidades.map(d => d.cantidad),
+                                backgroundColor: [
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                                    '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384',
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+                                ],
+                                borderColor: [
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                                    '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384',
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const originalLabel = datosUnidades[context.dataIndex].unidad;
+                                            const value = context.parsed.y;
+                                            const total = datosUnidades.reduce((sum, d) => sum + d.cantidad, 0);
+                                            const percentage = ((value / total) * 100).toFixed(1);
+                                            return `${originalLabel}: ${value} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 0
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    ctxUnidades.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-chart-bar fa-2x mb-2"></i><br>No hay datos disponibles</div>';
+                }
+            }
             
             // Gráfico de dedos
             const ctxDedos = document.getElementById('graficoDedos');
