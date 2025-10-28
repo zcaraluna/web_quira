@@ -2119,12 +2119,12 @@ $distribucion_unidad = $pdo->query("
 
                                     <!-- Distribución por Unidades -->
                                     <div class="col-lg-4 mb-5">
-                                        <div class="card" style="min-height: 450px;">
+                                        <div class="card" style="min-height: 500px;">
                                             <div class="card-header">
                                                 <h6 class="mb-0">Top 10 Unidades</h6>
                                             </div>
-                                            <div class="card-body" style="padding: 2rem;">
-                                                <canvas id="graficoUnidades" height="400"></canvas>
+                                            <div class="card-body" style="padding: 1.5rem;">
+                                                <canvas id="graficoUnidades" height="350"></canvas>
                                             </div>
                                         </div>
                                     </div>
@@ -4732,7 +4732,53 @@ $distribucion_unidad = $pdo->query("
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    position: 'bottom'
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 15,
+                                        font: {
+                                            size: 11
+                                        },
+                                        generateLabels: function(chart) {
+                                            const data = chart.data;
+                                            if (data.labels.length && data.datasets.length) {
+                                                return data.labels.map((label, i) => {
+                                                    const dataset = data.datasets[0];
+                                                    const value = dataset.data[i];
+                                                    const total = dataset.data.reduce((a, b) => a + b, 0);
+                                                    const percentage = ((value / total) * 100).toFixed(1);
+                                                    
+                                                    // Truncar el nombre si es muy largo
+                                                    let displayLabel = label;
+                                                    if (label.length > 35) {
+                                                        displayLabel = label.substring(0, 32) + '...';
+                                                    }
+                                                    
+                                                    return {
+                                                        text: `${displayLabel} (${value} - ${percentage}%)`,
+                                                        fillStyle: dataset.backgroundColor[i],
+                                                        strokeStyle: dataset.backgroundColor[i],
+                                                        lineWidth: 2,
+                                                        pointStyle: 'rect',
+                                                        hidden: false,
+                                                        index: i
+                                                    };
+                                                });
+                                            }
+                                            return [];
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((value / total) * 100).toFixed(1);
+                                            return `${label}: ${value} (${percentage}%)`;
+                                        }
+                                    }
                                 }
                             }
                         }
