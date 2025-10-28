@@ -4725,10 +4725,28 @@ $distribucion_unidad = $pdo->query("
             if (ctxUnidades) {
                 const datosUnidades = <?= json_encode($distribucion_unidades) ?>;
                 if (datosUnidades && datosUnidades.length > 0) {
-                    new Chart(ctxUnidades, {
+                    // Crear etiquetas truncadas para la leyenda
+                    const labelsTruncados = datosUnidades.map(d => {
+                        let label = d.unidad;
+                        if (label.length > 35) {
+                            const words = label.split(' ');
+                            let truncated = '';
+                            for (let word of words) {
+                                if ((truncated + ' ' + word).trim().length <= 35) {
+                                    truncated += (truncated ? ' ' : '') + word;
+                                } else {
+                                    break;
+                                }
+                            }
+                            return truncated + '...';
+                        }
+                        return label;
+                    });
+                    
+                    window.graficoUnidades = new Chart(ctxUnidades, {
                         type: 'doughnut',
                         data: {
-                            labels: datosUnidades.map(d => d.unidad),
+                            labels: labelsTruncados,
                             datasets: [{
                                 data: datosUnidades.map(d => d.cantidad),
                                 backgroundColor: [
@@ -4758,32 +4776,13 @@ $distribucion_unidad = $pdo->query("
                                                     const total = dataset.data.reduce((a, b) => a + b, 0);
                                                     const percentage = ((value / total) * 100).toFixed(1);
                                                     
-                                                    // Truncar el nombre si es muy largo y agregar puntos suspensivos
-                                                    let displayLabel = label;
-                                                    if (label.length > 30) {
-                                                        // Truncar en la última palabra completa antes de 30 caracteres
-                                                        const words = label.split(' ');
-                                                        let truncated = '';
-                                                        for (let word of words) {
-                                                            if ((truncated + ' ' + word).trim().length <= 30) {
-                                                                truncated += (truncated ? ' ' : '') + word;
-                                                            } else {
-                                                                break;
-                                                            }
-                                                        }
-                                                        displayLabel = truncated + '...';
-                                                    }
-                                                    
-                                                    // Verificar si el elemento está oculto
-                                                    const isHidden = dataset.hidden && dataset.hidden[i];
-                                                    
                                                     return {
-                                                        text: `${displayLabel} (${value} - ${percentage}%)`,
+                                                        text: `${label} (${value} - ${percentage}%)`,
                                                         fillStyle: dataset.backgroundColor[i],
                                                         strokeStyle: dataset.backgroundColor[i],
                                                         lineWidth: 2,
                                                         pointStyle: 'rect',
-                                                        hidden: isHidden,
+                                                        hidden: false,
                                                         index: i
                                                     };
                                                 });
@@ -4807,11 +4806,11 @@ $distribucion_unidad = $pdo->query("
                                 tooltip: {
                                     callbacks: {
                                         label: function(context) {
-                                            const label = context.label || '';
+                                            const originalLabel = datosUnidades[context.dataIndex].unidad;
                                             const value = context.parsed;
                                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                             const percentage = ((value / total) * 100).toFixed(1);
-                                            return `${label}: ${value} (${percentage}%)`;
+                                            return `${originalLabel}: ${value} (${percentage}%)`;
                                         }
                                     }
                                 }
