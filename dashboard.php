@@ -1327,10 +1327,10 @@ $distribucion_unidad = $pdo->query("
                                     <i class="fas fa-fw fa-chart-bar mr-2"></i>
                                     Estadísticas
                                 </a>
+                                <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
                                 <div class="font-size-sm text-uppercase text-black-50 font-weight-bold mb-3 mt-4">
                                     Sistema
                                 </div>
-                                <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
                                 <a class="nav-link mb-2" href="#configuracion" onclick="showSection('configuracion')">
                                     <i class="fas fa-fw fa-cog mr-2"></i>
                                     Configuración
