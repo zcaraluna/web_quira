@@ -547,7 +547,15 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
                 ['Edad:', '<?= htmlspecialchars($postulante['edad']) ?> años'],
                 ['Sexo:', '<?= htmlspecialchars($postulante['sexo']) ?>'],
                 ['Unidad:', '<?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?>'],
-                ['Capturador de Huella:', 'Oficial Ayudante JOSE MERLO'],
+                ['Capturador de Huella:', '<?php 
+                    $capturador_pdf = '';
+                    if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']) {
+                        $capturador_pdf = $postulante['capturador_grado'] . ' ' . $postulante['capturador_nombre'] . ' ' . $postulante['capturador_apellido'];
+                    } else {
+                        $capturador_pdf = 'Oficial Ayudante JOSE MERLO';
+                    }
+                    echo htmlspecialchars($capturador_pdf);
+                ?>'],
                 ['Registrador:', '<?= htmlspecialchars($postulante['registrado_por']) ?>'],
                 ['Fecha y Hora de Registro:', '<?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>']
             ];
