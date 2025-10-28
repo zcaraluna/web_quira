@@ -229,10 +229,19 @@
             .btn-close:hover {
                 opacity: 0.9;
             }
+            
+            /* Safe zone para evitar superposición con footer */
+            body {
+                padding-bottom: 80px;
+            }
+            
+            .container {
+                margin-bottom: 80px !important;
+            }
         </style>
     </head>
     <body>
-        <div class="container mt-2">
+        <div class="container mt-2" style="margin-bottom: 80px;">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
                     <!-- Header centrado -->

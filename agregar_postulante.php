@@ -510,7 +510,11 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
         
         /* Safe zone para el footer */
         body {
-            padding-bottom: 50px;
+            padding-bottom: 80px;
+        }
+        
+        .container {
+            margin-bottom: 80px !important;
         }
         
         /* MODAL STYLES */
@@ -638,7 +642,7 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
         </div>
     </div>
 
-    <div class="container mt-4">
+    <div class="container mt-4" style="margin-bottom: 80px;">
         <div class="row">
             <div class="col-12">
                 <!-- Header -->

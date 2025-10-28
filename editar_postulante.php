@@ -362,6 +362,15 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
             color: #2E5090;
         }
         
+        /* Safe zone para evitar superposición con footer */
+        body {
+            padding-bottom: 80px;
+        }
+        
+        .container {
+            margin-bottom: 80px !important;
+        }
+        
         /* MODAL STYLES */
         .modal-overlay {
             position: fixed;
@@ -487,7 +496,7 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
         </div>
     </div>
 
-    <div class="container mt-4">
+    <div class="container mt-4" style="margin-bottom: 80px;">
         <div class="row">
             <div class="col-12">
                 <!-- Header -->

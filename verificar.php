@@ -250,6 +250,15 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
             color: #2E5090;
         }
         
+        /* Safe zone para evitar superposición con footer */
+        body {
+            padding-bottom: 80px;
+        }
+        
+        .container {
+            margin-bottom: 80px !important;
+        }
+        
         /* Modal s1mple */
         .modal-overlay {
             display: none;
@@ -314,7 +323,7 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" style="margin-bottom: 80px;">
         <div class="verification-container">
             <div class="verification-header">
                 <img src="assets/media/various/quiraXXXL.png" alt="Quira Logo" style="height: 60px; width: auto; margin-bottom: 15px;">
