@@ -5089,6 +5089,7 @@ $distribucion_unidad = $pdo->query("
                                                 const value = dataset.data[i];
                                                 const total = dataset.data.reduce((a, b) => a + b, 0);
                                                 const percentage = ((value / total) * 100).toFixed(1);
+                                                const isHidden = dataset.hidden && dataset.hidden[i];
                                                 
                                                 return {
                                                     text: `${label} (${value} - ${percentage}%)`,
@@ -5096,13 +5097,25 @@ $distribucion_unidad = $pdo->query("
                                                     strokeStyle: dataset.backgroundColor[i],
                                                     lineWidth: 2,
                                                     pointStyle: 'rect',
-                                                    hidden: false,
+                                                    hidden: isHidden,
                                                     index: i
                                                 };
                                             });
                                         }
                                         return [];
                                     }
+                                },
+                                onClick: function(e, legendItem, legend) {
+                                    const index = legendItem.index;
+                                    const chart = legend.chart;
+                                    const dataset = chart.data.datasets[0];
+                                    
+                                    if (dataset.hidden === undefined) {
+                                        dataset.hidden = {};
+                                    }
+                                    
+                                    dataset.hidden[index] = !dataset.hidden[index];
+                                    chart.update();
                                 }
                             },
                             tooltip: {
