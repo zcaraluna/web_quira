@@ -1133,15 +1133,6 @@ $distribucion_unidad = $pdo->query("
             color: #2E5090;
         }
         
-        /* Estilos para mejorar la leyenda del gráfico de unidades */
-        #graficoUnidades {
-            max-height: 300px;
-        }
-        
-        /* Asegurar que la leyenda tenga suficiente espacio */
-        .card-body canvas {
-            margin-bottom: 20px;
-        }
         
         /* MODAL STYLES */
         .modal-overlay {
@@ -2127,17 +2118,6 @@ $distribucion_unidad = $pdo->query("
                                         </div>
                                     </div>
 
-                                    <!-- Distribución por Unidades -->
-                                    <div class="col-lg-4 mb-5">
-                                        <div class="card" style="min-height: 450px;">
-                                            <div class="card-header">
-                                                <h6 class="mb-0">Top 10 Unidades</h6>
-                                            </div>
-                                            <div class="card-body" style="padding: 2rem;">
-                                                <canvas id="graficoUnidades" height="400"></canvas>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <div class="row">
@@ -4720,107 +4700,6 @@ $distribucion_unidad = $pdo->query("
                 }
             }
             
-            // Gráfico de unidades
-            const ctxUnidades = document.getElementById('graficoUnidades');
-            if (ctxUnidades) {
-                const datosUnidades = <?= json_encode($distribucion_unidades) ?>;
-                if (datosUnidades && datosUnidades.length > 0) {
-                    // Crear etiquetas truncadas para la leyenda
-                    const labelsTruncados = datosUnidades.map(d => {
-                        let label = d.unidad;
-                        if (label.length > 35) {
-                            const words = label.split(' ');
-                            let truncated = '';
-                            for (let word of words) {
-                                if ((truncated + ' ' + word).trim().length <= 35) {
-                                    truncated += (truncated ? ' ' : '') + word;
-                                } else {
-                                    break;
-                                }
-                            }
-                            return truncated + '...';
-                        }
-                        return label;
-                    });
-                    
-                    window.graficoUnidades = new Chart(ctxUnidades, {
-                        type: 'doughnut',
-                        data: {
-                            labels: labelsTruncados,
-                            datasets: [{
-                                data: datosUnidades.map(d => d.cantidad),
-                                backgroundColor: [
-                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                                    '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
-                                ]
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        usePointStyle: true,
-                                        padding: 15,
-                                        font: {
-                                            size: 12
-                                        },
-                                        generateLabels: function(chart) {
-                                            const data = chart.data;
-                                            if (data.labels.length && data.datasets.length) {
-                                                return data.labels.map((label, i) => {
-                                                    const dataset = data.datasets[0];
-                                                    const value = dataset.data[i];
-                                                    const total = dataset.data.reduce((a, b) => a + b, 0);
-                                                    const percentage = ((value / total) * 100).toFixed(1);
-                                                    
-                                                    return {
-                                                        text: `${label} (${value} - ${percentage}%)`,
-                                                        fillStyle: dataset.backgroundColor[i],
-                                                        strokeStyle: dataset.backgroundColor[i],
-                                                        lineWidth: 2,
-                                                        pointStyle: 'rect',
-                                                        hidden: false,
-                                                        index: i
-                                                    };
-                                                });
-                                            }
-                                            return [];
-                                        },
-                                        onClick: function(e, legendItem, legend) {
-                                            const index = legendItem.index;
-                                            const chart = legend.chart;
-                                            const dataset = chart.data.datasets[0];
-                                            
-                                            if (dataset.hidden === undefined) {
-                                                dataset.hidden = {};
-                                            }
-                                            
-                                            dataset.hidden[index] = !dataset.hidden[index];
-                                            chart.update();
-                                        }
-                                    }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const originalLabel = datosUnidades[context.dataIndex].unidad;
-                                            const value = context.parsed;
-                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            const percentage = ((value / total) * 100).toFixed(1);
-                                            return `${originalLabel}: ${value} (${percentage}%)`;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } else {
-                    ctxUnidades.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-chart-pie fa-2x mb-2"></i><br>No hay datos disponibles</div>';
-                }
-            }
             
             // Gráfico de dedos
             const ctxDedos = document.getElementById('graficoDedos');
