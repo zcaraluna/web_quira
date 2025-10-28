@@ -153,9 +153,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (strlen($telefono) > 20) {
             throw new Exception('El teléfono no puede tener más de 20 caracteres');
         }
-        if (strlen($unidad) > 50) {
-            throw new Exception('La unidad no puede tener más de 50 caracteres');
-        }
         if (strlen($dedo_registrado) > 50) {
             throw new Exception('El dedo registrado no puede tener más de 50 caracteres');
         }
