@@ -1062,6 +1062,29 @@ $distribucion_unidad = $pdo->query("
         #modalRegistrosDia .modal-footer {
             flex-shrink: 0;
         }
+        
+        /* Estilos para el modal de unidades */
+        #modalUnidades .modal-dialog {
+            max-height: 90vh;
+            height: 90vh;
+        }
+        
+        #modalUnidades .modal-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #modalUnidades .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(90vh - 120px);
+        }
+        
+        #modalUnidades .modal-header,
+        #modalUnidades .modal-footer {
+            flex-shrink: 0;
+        }
         .card {
             border: none;
             border-radius: 15px;
@@ -2119,12 +2142,15 @@ $distribucion_unidad = $pdo->query("
 
                                     <!-- Distribución por Unidades -->
                                     <div class="col-lg-4 mb-5">
-                                        <div class="card" style="min-height: 500px;">
-                                            <div class="card-header">
+                                        <div class="card" style="min-height: 450px;">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
                                                 <h6 class="mb-0">Top 10 Unidades</h6>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirModalUnidades()">
+                                                    <i class="fas fa-expand-arrows-alt"></i> Ampliar
+                                                </button>
                                             </div>
-                                            <div class="card-body" style="padding: 1.5rem;">
-                                                <canvas id="graficoUnidades" height="350"></canvas>
+                                            <div class="card-body" style="padding: 2rem;">
+                                                <canvas id="graficoUnidades" height="400"></canvas>
                                             </div>
                                         </div>
                                     </div>
@@ -4732,53 +4758,7 @@ $distribucion_unidad = $pdo->query("
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        usePointStyle: true,
-                                        padding: 15,
-                                        font: {
-                                            size: 11
-                                        },
-                                        generateLabels: function(chart) {
-                                            const data = chart.data;
-                                            if (data.labels.length && data.datasets.length) {
-                                                return data.labels.map((label, i) => {
-                                                    const dataset = data.datasets[0];
-                                                    const value = dataset.data[i];
-                                                    const total = dataset.data.reduce((a, b) => a + b, 0);
-                                                    const percentage = ((value / total) * 100).toFixed(1);
-                                                    
-                                                    // Truncar el nombre si es muy largo
-                                                    let displayLabel = label;
-                                                    if (label.length > 35) {
-                                                        displayLabel = label.substring(0, 32) + '...';
-                                                    }
-                                                    
-                                                    return {
-                                                        text: `${displayLabel} (${value} - ${percentage}%)`,
-                                                        fillStyle: dataset.backgroundColor[i],
-                                                        strokeStyle: dataset.backgroundColor[i],
-                                                        lineWidth: 2,
-                                                        pointStyle: 'rect',
-                                                        hidden: false,
-                                                        index: i
-                                                    };
-                                                });
-                                            }
-                                            return [];
-                                        }
-                                    }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const label = context.label || '';
-                                            const value = context.parsed;
-                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            const percentage = ((value / total) * 100).toFixed(1);
-                                            return `${label}: ${value} (${percentage}%)`;
-                                        }
-                                    }
+                                    position: 'bottom'
                                 }
                             }
                         }
@@ -4941,6 +4921,20 @@ $distribucion_unidad = $pdo->query("
             }, 300);
         }
         
+        // Función para abrir modal de unidades
+        function abrirModalUnidades() {
+            $('#modalUnidades').modal('show');
+            
+            // Crear gráfico ampliado cuando se abre el modal
+            setTimeout(function() {
+                try {
+                    crearGraficoUnidadesModal();
+                } catch (error) {
+                    console.error('Error al crear gráfico de unidades en modal:', error);
+                }
+            }, 300);
+        }
+        
         // Función para crear el gráfico en el modal
         function crearGraficoRegistrosDiaModal() {
             const ctx = document.getElementById('graficoRegistrosDiaModal');
@@ -5046,6 +5040,89 @@ $distribucion_unidad = $pdo->query("
                 ctx.getContext('2d').fillText('No hay datos disponibles', ctx.width / 2, ctx.height / 2);
             }
         }
+        
+        // Función para crear el gráfico de unidades en el modal
+        function crearGraficoUnidadesModal() {
+            const ctx = document.getElementById('graficoUnidadesModal');
+            if (!ctx) return;
+            
+            // Destruir gráfico existente si existe
+            if (window.graficoUnidadesModal && typeof window.graficoUnidadesModal.destroy === 'function') {
+                window.graficoUnidadesModal.destroy();
+            }
+            
+            // Limpiar el canvas
+            const context = ctx.getContext('2d');
+            context.clearRect(0, 0, ctx.width, ctx.height);
+            
+            const datosUnidades = <?= json_encode($distribucion_unidades) ?>;
+            if (datosUnidades && datosUnidades.length > 0) {
+                window.graficoUnidadesModal = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: datosUnidades.map(d => d.unidad),
+                        datasets: [{
+                            data: datosUnidades.map(d => d.cantidad),
+                            backgroundColor: [
+                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                                '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: {
+                                        size: 14
+                                    },
+                                    generateLabels: function(chart) {
+                                        const data = chart.data;
+                                        if (data.labels.length && data.datasets.length) {
+                                            return data.labels.map((label, i) => {
+                                                const dataset = data.datasets[0];
+                                                const value = dataset.data[i];
+                                                const total = dataset.data.reduce((a, b) => a + b, 0);
+                                                const percentage = ((value / total) * 100).toFixed(1);
+                                                
+                                                return {
+                                                    text: `${label} (${value} - ${percentage}%)`,
+                                                    fillStyle: dataset.backgroundColor[i],
+                                                    strokeStyle: dataset.backgroundColor[i],
+                                                    lineWidth: 2,
+                                                    pointStyle: 'rect',
+                                                    hidden: false,
+                                                    index: i
+                                                };
+                                            });
+                                        }
+                                        return [];
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                ctx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-chart-pie fa-2x mb-2"></i><br>No hay datos disponibles</div>';
+            }
+        }
     </script>
 
     <!-- Modal para Registros por Día -->
@@ -5076,6 +5153,39 @@ $distribucion_unidad = $pdo->query("
         </div>
     </div>
 
+    <!-- Modal para Unidades -->
+    <div class="modal fade" id="modalUnidades" tabindex="-1" role="dialog" aria-labelledby="modalUnidadesLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalUnidadesLabel">Top 10 Unidades - Vista Ampliada</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Distribución de Postulantes por Unidad</h6>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <small class="text-muted">Total de unidades: <?= count($distribucion_unidades) ?></small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div style="height: 500px;">
+                                <canvas id="graficoUnidadesModal"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer Institucional -->
     <footer class="bg-light py-5 mt-5">
