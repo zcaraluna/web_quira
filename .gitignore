@@ -60,7 +60,7 @@ expandir_*.php
 build/
 dist/
 *.spec
-*.exe
+#*.exe
 *.pkg
 *.toc
 *.pyc
