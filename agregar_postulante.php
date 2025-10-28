@@ -1070,25 +1070,50 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
     // Obtener último UID del dispositivo
     async function obtenerUltimoUID() {
         try {
-            console.log('Obteniendo usuarios del dispositivo...');
-            // Obtener TODOS los usuarios del dispositivo (sin límite)
-            const users = await zktecoBridge.getUsers();
-            console.log('Users response:', users);
+            console.log('Obteniendo información del dispositivo...');
+            // Primero obtener información del dispositivo para saber el total de usuarios
+            const deviceInfo = await zktecoBridge.getDeviceInfo();
+            console.log('Device info response:', deviceInfo);
             
-            if (users && users.users && users.users.length > 0) {
-                // Encontrar el UID más alto entre TODOS los usuarios
-                const uidMasAlto = Math.max(...users.users.map(u => parseInt(u.uid)));
-                document.getElementById('id_k40').value = uidMasAlto;
-                ultimoUID = uidMasAlto;
+            if (deviceInfo && deviceInfo.user_count) {
+                // Usar el contador del dispositivo como base
+                const totalUsuarios = deviceInfo.user_count;
+                console.log(`Total de usuarios en el dispositivo: ${totalUsuarios}`);
                 
-                console.log(`ID más alto detectado en K40 (todos los usuarios): ${uidMasAlto}`);
-                console.log(`Usuarios encontrados: ${users.users.length}`);
+                // Intentar obtener usuarios del dispositivo
+                const users = await zktecoBridge.getUsers();
+                console.log('Users response:', users);
                 
-                // Mostrar todos los UIDs para debug
-                const todosUIDs = users.users.map(u => u.uid).sort((a, b) => a - b);
-                console.log(`Todos los UIDs en el dispositivo: [${todosUIDs.join(', ')}]`);
+                if (users && users.users && users.users.length > 0) {
+                    // Encontrar el UID más alto entre los usuarios obtenidos
+                    const uidMasAlto = Math.max(...users.users.map(u => parseInt(u.uid)));
+                    console.log(`ID más alto detectado en K40: ${uidMasAlto}`);
+                    console.log(`Usuarios obtenidos: ${users.users.length} de ${totalUsuarios}`);
+                    
+                    // Si el número de usuarios obtenidos es menor al total, 
+                    // asumir que el siguiente ID disponible es el total + 1
+                    if (users.users.length < totalUsuarios) {
+                        const siguienteID = totalUsuarios + 1;
+                        console.log(`Usando siguiente ID disponible: ${siguienteID} (basado en total del dispositivo)`);
+                        document.getElementById('id_k40').value = siguienteID;
+                        ultimoUID = siguienteID;
+                    } else {
+                        document.getElementById('id_k40').value = uidMasAlto;
+                        ultimoUID = uidMasAlto;
+                    }
+                    
+                    // Mostrar todos los UIDs para debug
+                    const todosUIDs = users.users.map(u => u.uid).sort((a, b) => a - b);
+                    console.log(`UIDs obtenidos: [${todosUIDs.join(', ')}]`);
+                } else {
+                    // Si no se pueden obtener usuarios, usar el contador del dispositivo
+                    const siguienteID = totalUsuarios + 1;
+                    console.log(`No se pudieron obtener usuarios, usando siguiente ID: ${siguienteID}`);
+                    document.getElementById('id_k40').value = siguienteID;
+                    ultimoUID = siguienteID;
+                }
             } else {
-                console.log('No hay usuarios registrados en el K40');
+                console.log('No se pudo obtener información del dispositivo');
                 document.getElementById('id_k40').value = '';
                 ultimoUID = null;
             }
@@ -1719,35 +1744,46 @@ Por favor verifique:
                 try {
                     // Si no se proporcionó un ID específico, buscar uno disponible
                     if (!usuarioUID) {
-                        console.log('Obteniendo lista de usuarios del dispositivo...');
-                        // Obtener usuarios del dispositivo (sin límite)
-                        const users = await zktecoBridge.getUsers();
+                        console.log('Obteniendo información del dispositivo...');
+                        // Primero obtener información del dispositivo
+                        const deviceInfo = await zktecoBridge.getDeviceInfo();
                         
-                        if (!users.users || users.users.length === 0) {
-                            console.log('❌ No hay usuarios registrados en el K40');
-                            alert('No hay usuarios registrados en el K40.');
-                            return;
-                        }
-                        
-                        console.log(`Usuarios encontrados en K40: ${users.users.length}`);
-                        
-                        // Buscar usuario disponible (sin nombre asignado)
-                        const usuariosSinId = users.users.filter(u => !u.name || u.name.startsWith("NN-"));
-                        let ultimoUsuario;
-                        
-                        if (usuariosSinId.length > 0) {
-                            ultimoUsuario = usuariosSinId[usuariosSinId.length - 1];
-                            console.log(`Usuario disponible encontrado: UID ${ultimoUsuario.uid}`);
+                        if (deviceInfo && deviceInfo.user_count) {
+                            const totalUsuarios = deviceInfo.user_count;
+                            console.log(`Total de usuarios en el dispositivo: ${totalUsuarios}`);
+                            
+                            // Intentar obtener usuarios del dispositivo
+                            const users = await zktecoBridge.getUsers();
+                            console.log(`Usuarios obtenidos: ${users.users ? users.users.length : 0} de ${totalUsuarios}`);
+                            
+                            if (users.users && users.users.length > 0) {
+                                // Buscar usuario disponible (sin nombre asignado)
+                                const usuariosSinId = users.users.filter(u => !u.name || u.name.startsWith("NN-"));
+                                let ultimoUsuario;
+                                
+                                if (usuariosSinId.length > 0) {
+                                    ultimoUsuario = usuariosSinId[usuariosSinId.length - 1];
+                                    console.log(`Usuario disponible encontrado: UID ${ultimoUsuario.uid}`);
+                                } else {
+                                    ultimoUsuario = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
+                                    console.log(`Usando último usuario: UID ${ultimoUsuario.uid}`);
+                                }
+                                
+                                if (ultimoUsuario) {
+                                    usuarioUID = ultimoUsuario.uid;
+                                } else {
+                                    // Si no se encontró usuario disponible, usar el siguiente ID
+                                    usuarioUID = totalUsuarios + 1;
+                                    console.log(`Usando siguiente ID disponible: ${usuarioUID}`);
+                                }
+                            } else {
+                                // Si no se pueden obtener usuarios, usar el siguiente ID
+                                usuarioUID = totalUsuarios + 1;
+                                console.log(`No se pudieron obtener usuarios, usando siguiente ID: ${usuarioUID}`);
+                            }
                         } else {
-                            ultimoUsuario = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
-                            console.log(`Usando último usuario: UID ${ultimoUsuario.uid}`);
-                        }
-                        
-                        if (ultimoUsuario) {
-                            usuarioUID = ultimoUsuario.uid;
-                        } else {
-                            console.log('❌ No se encontró usuario disponible');
-                            alert('No se encontró un usuario registrado recientemente en el K40.');
+                            console.log('❌ No se pudo obtener información del dispositivo');
+                            alert('No se pudo obtener información del dispositivo biométrico.');
                             return;
                         }
                     }
