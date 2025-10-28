@@ -1720,8 +1720,8 @@ Por favor verifique:
                     // Si no se proporcionó un ID específico, buscar uno disponible
                     if (!usuarioUID) {
                         console.log('Obteniendo lista de usuarios del dispositivo...');
-                        // Obtener usuarios del dispositivo
-                        const users = await zktecoBridge.getUsers(5);
+                        // Obtener usuarios del dispositivo (sin límite)
+                        const users = await zktecoBridge.getUsers();
                         
                         if (!users.users || users.users.length === 0) {
                             console.log('❌ No hay usuarios registrados en el K40');
@@ -1754,7 +1754,7 @@ Por favor verifique:
                     
                      // Verificar si el usuario ya tiene nombre asignado (solo si no se proporcionó ID específico)
                      if (!idK40) {
-                         const users = await zktecoBridge.getUsers(5);
+                         const users = await zktecoBridge.getUsers();
                          const usuarioExistente = users.users.find(u => parseInt(u.uid) === usuarioUID);
                          
                          if (usuarioExistente && usuarioExistente.name && !usuarioExistente.name.startsWith("NN-")) {

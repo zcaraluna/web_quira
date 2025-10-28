@@ -269,7 +269,7 @@ class ZKTecoBridge {
     /**
      * Obtener lista de usuarios del dispositivo
      */
-    async getUsers(limit = 100) {
+    async getUsers(limit = null) {
         return new Promise((resolve, reject) => {
             // const timeout = setTimeout(() => {
             //     reject(new Error('Timeout al obtener usuarios'));
@@ -281,7 +281,8 @@ class ZKTecoBridge {
                 resolve(data || { users: [] });
             });
             
-            this.sendCommand('get_users', { limit });
+            const commandData = limit !== null ? { limit } : {};
+            this.sendCommand('get_users', commandData);
         });
     }
     
