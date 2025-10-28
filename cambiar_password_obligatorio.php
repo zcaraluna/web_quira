@@ -30,36 +30,26 @@ $error = '';
 $success = '';
 
 if ($_POST) {
-    $password_actual = $_POST['password_actual'] ?? '';
     $password_nueva = $_POST['password_nueva'] ?? '';
     $password_confirmar = $_POST['password_confirmar'] ?? '';
     
-    if (empty($password_actual) || empty($password_nueva) || empty($password_confirmar)) {
+    if (empty($password_nueva) || empty($password_confirmar)) {
         $error = 'Todos los campos son obligatorios';
     } elseif ($password_nueva !== $password_confirmar) {
         $error = 'Las contraseñas nuevas no coinciden';
     } elseif (strlen($password_nueva) < 6) {
         $error = 'La nueva contraseña debe tener al menos 6 caracteres';
     } else {
-        // Verificar contraseña actual
-        $stmt = $pdo->prepare("SELECT contrasena FROM usuarios WHERE id = ?");
-        $stmt->execute([$_SESSION['user_id']]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Actualizar contraseña y marcar primer_inicio como false
+        $password_hash = password_hash($password_nueva, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE usuarios SET contrasena = ?, primer_inicio = false WHERE id = ?");
+        $stmt->execute([$password_hash, $_SESSION['user_id']]);
         
-        if ($user && password_verify($password_actual, $user['contrasena'])) {
-            // Actualizar contraseña y marcar primer_inicio como false
-            $password_hash = password_hash($password_nueva, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE usuarios SET contrasena = ?, primer_inicio = false WHERE id = ?");
-            $stmt->execute([$password_hash, $_SESSION['user_id']]);
-            
-            // Actualizar sesión
-            $_SESSION['primer_inicio'] = false;
-            
-            $success = 'Contraseña cambiada exitosamente. Redirigiendo al dashboard...';
-            echo "<script>setTimeout(function(){ window.location.href = 'dashboard.php'; }, 2000);</script>";
-        } else {
-            $error = 'La contraseña actual es incorrecta';
-        }
+        // Actualizar sesión
+        $_SESSION['primer_inicio'] = false;
+        
+        $success = 'Contraseña cambiada exitosamente. Redirigiendo al dashboard...';
+        echo "<script>setTimeout(function(){ window.location.href = 'dashboard.php'; }, 2000);</script>";
     }
 }
 ?>
@@ -294,13 +284,13 @@ if ($_POST) {
                 <div class="password-container">
                     <div class="password-header">
                         <img src="assets/media/various/quiraXXXL.png" alt="Quira Logo" style="height: 60px; width: auto; margin-bottom: 15px;">
-                        <h4 class="mb-0">Cambio de Contraseña Obligatorio</h4>
-                        <p class="mb-0 opacity-75">Debe cambiar su contraseña para continuar</p>
+                        <h4 class="mb-0">Configurar Nueva Contraseña</h4>
+                        <p class="mb-0 opacity-75">Establezca su nueva contraseña para continuar</p>
                     </div>
                     <div class="password-body">
                         <div class="warning-box">
-                            <i class="fas fa-exclamation-triangle text-warning mr-2"></i>
-                            <strong>Importante:</strong> Por seguridad, debe cambiar su contraseña antes de acceder al sistema.
+                            <i class="fas fa-info-circle text-info mr-2"></i>
+                            <strong>Información:</strong> Establezca una contraseña segura para acceder al sistema.
                         </div>
                         
                         <?php if ($error): ?>
@@ -318,14 +308,6 @@ if ($_POST) {
                         <?php endif; ?>
                         
                         <form method="POST">
-                            <div class="form-group">
-                                <label for="password_actual" class="font-weight-bold">
-                                    <i class="fas fa-lock mr-2"></i>Contraseña Actual
-                                </label>
-                                <input type="password" class="form-control" id="password_actual" name="password_actual" 
-                                       placeholder="Ingrese su contraseña actual" required>
-                            </div>
-                            
                             <div class="form-group">
                                 <label for="password_nueva" class="font-weight-bold">
                                     <i class="fas fa-key mr-2"></i>Nueva Contraseña
