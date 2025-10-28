@@ -3804,7 +3804,7 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "<?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>",
+                                                            text: "<?= str_replace('&quot;', '\"', htmlspecialchars($unidad['unidad'])) ?>",
                                                             size: 20
                                                         })
                                                     ]
@@ -4279,7 +4279,7 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "UNIDAD: <?= str_replace('&quot;', '"', htmlspecialchars($unidad)) ?>",
+                                                            text: "UNIDAD: <?= str_replace('&quot;', '\"', htmlspecialchars($unidad)) ?>",
                                                             bold: true,
                                                             size: 22,
                                                             color: "2E5090"
