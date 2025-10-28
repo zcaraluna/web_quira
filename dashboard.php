@@ -2308,7 +2308,7 @@ $distribucion_unidad = $pdo->query("
                                                                     <tbody>
                                                                         <?php foreach ($postulantes_por_unidad_fecha as $unidad): ?>
                                                                         <tr>
-                                                                            <td><?= htmlspecialchars($unidad['unidad']) ?></td>
+                                                                            <td><?= $unidad['unidad'] ?></td>
                                                                             <td><span class="badge badge-primary"><?= $unidad['cantidad'] ?></span></td>
                                                                         </tr>
                                                                         <?php endforeach; ?>
@@ -3804,7 +3804,7 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "<?= htmlspecialchars($unidad['unidad']) ?>",
+                                                            text: "<?= $unidad['unidad'] ?>",
                                                             size: 20
                                                         })
                                                     ]
@@ -4279,7 +4279,7 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "UNIDAD: <?= htmlspecialchars($unidad) ?>",
+                                                            text: "UNIDAD: <?= $unidad ?>",
                                                             bold: true,
                                                             size: 22,
                                                             color: "2E5090"
@@ -4520,7 +4520,7 @@ $distribucion_unidad = $pdo->query("
                             <tbody>
                                 <?php foreach ($postulantes_por_unidad_fecha as $unidad): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($unidad['unidad']) ?></td>
+                                    <td><?= $unidad['unidad'] ?></td>
                                     <td><?= $unidad['cantidad'] ?></td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -4605,7 +4605,7 @@ $distribucion_unidad = $pdo->query("
                         ?>
                         <div class="unidad-section" style="margin-bottom: 30px;">
                             <h4 style="color: #2E5090; background-color: #E8F0FE; padding: 10px; margin: 0 0 15px 0; border-left: 4px solid #2E5090;">
-                                UNIDAD: <?= htmlspecialchars($unidad) ?> (<?= count($postulantes_unidad) ?> postulantes)
+                                UNIDAD: <?= $unidad ?> (<?= count($postulantes_unidad) ?> postulantes)
                             </h4>
                             <table>
                                 <thead>
