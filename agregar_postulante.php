@@ -623,9 +623,17 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
             cursor: pointer;
         }
         
-        .btn-close:hover {
-            opacity: 0.9;
-        }
+            .btn-close:hover {
+                opacity: 0.9;
+            }
+            
+            /* Estilo para campos de solo lectura */
+            .form-control[readonly] {
+                background-color: #f8f9fa;
+                border-color: #e9ecef;
+                color: #6c757d;
+                cursor: not-allowed;
+            }
     </style>
 </head>
 <body>
@@ -697,8 +705,8 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                         <input type="number" class="form-control" id="id_k40" name="id_k40" 
                                                value="<?= htmlspecialchars($_POST['id_k40'] ?? '') ?>" 
                                                min="1" max="9999" placeholder="Se asigna automáticamente"
-                                               onchange="verificarUsuarioExistente(this.value)">
-                                        <small class="form-text text-muted">Se asigna automáticamente, pero puede ser modificado</small>
+                                               readonly>
+                                        <small class="form-text text-muted">Se asigna automáticamente por el sistema</small>
                                         <div id="usuario-existente-info" class="mt-2" style="display: none;">
                                             <!-- Aquí se mostrará la información del usuario existente -->
                                         </div>
