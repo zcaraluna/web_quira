@@ -4760,9 +4760,22 @@ $distribucion_unidad = $pdo->query("
                                                     
                                                     // Truncar el nombre si es muy largo y agregar puntos suspensivos
                                                     let displayLabel = label;
-                                                    if (label.length > 25) {
-                                                        displayLabel = label.substring(0, 25) + '...';
+                                                    if (label.length > 30) {
+                                                        // Truncar en la última palabra completa antes de 30 caracteres
+                                                        const words = label.split(' ');
+                                                        let truncated = '';
+                                                        for (let word of words) {
+                                                            if ((truncated + ' ' + word).trim().length <= 30) {
+                                                                truncated += (truncated ? ' ' : '') + word;
+                                                            } else {
+                                                                break;
+                                                            }
+                                                        }
+                                                        displayLabel = truncated + '...';
                                                     }
+                                                    
+                                                    // Verificar si el elemento está oculto
+                                                    const isHidden = dataset.hidden && dataset.hidden[i];
                                                     
                                                     return {
                                                         text: `${displayLabel} (${value} - ${percentage}%)`,
@@ -4770,12 +4783,24 @@ $distribucion_unidad = $pdo->query("
                                                         strokeStyle: dataset.backgroundColor[i],
                                                         lineWidth: 2,
                                                         pointStyle: 'rect',
-                                                        hidden: false,
+                                                        hidden: isHidden,
                                                         index: i
                                                     };
                                                 });
                                             }
                                             return [];
+                                        },
+                                        onClick: function(e, legendItem, legend) {
+                                            const index = legendItem.index;
+                                            const chart = legend.chart;
+                                            const dataset = chart.data.datasets[0];
+                                            
+                                            if (dataset.hidden === undefined) {
+                                                dataset.hidden = {};
+                                            }
+                                            
+                                            dataset.hidden[index] = !dataset.hidden[index];
+                                            chart.update();
                                         }
                                     }
                                 },
