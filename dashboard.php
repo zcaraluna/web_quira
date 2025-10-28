@@ -1262,8 +1262,10 @@ $distribucion_unidad = $pdo->query("
                                 <i class="fa fa-fw fa-user mr-1"></i> <?= htmlspecialchars($_SESSION['nombre'] . ' ' . $_SESSION['apellido']) ?> <i class="fa fa-fw fa-chevron-down ml-1"></i>
                             </button>
                             <div class="dropdown-menu dropdown-menu-right font-size-sm" aria-labelledby="dropdownMenuButton">
+                                <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
                                 <a class="dropdown-item" href="configuracion_cuenta.php"><i class="fas fa-cog mr-2"></i>Configuración de Cuenta</a>
                                 <div class="dropdown-divider"></div>
+                                <?php endif; ?>
                                 <a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión</a>
                             </div>
                         </div>
@@ -1330,10 +1332,12 @@ $distribucion_unidad = $pdo->query("
                                 <div class="font-size-sm text-uppercase text-black-50 font-weight-bold mb-3 mt-4">
                                     Sistema
                                 </div>
+                                <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
                                 <a class="nav-link mb-2" href="#configuracion" onclick="showSection('configuracion')">
                                     <i class="fas fa-fw fa-cog mr-2"></i>
                                     Configuración
                                 </a>
+                                <?php endif; ?>
                             </nav>
                         </div>
                     </div>
@@ -2431,6 +2435,7 @@ $distribucion_unidad = $pdo->query("
                         </div>
                     </div>
 
+                    <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
                     <div id="configuracion-section" class="content-section">
                         <div class="card">
                             <div class="card-header">
@@ -2441,6 +2446,7 @@ $distribucion_unidad = $pdo->query("
                             </div>
                         </div>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
