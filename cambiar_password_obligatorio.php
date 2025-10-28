@@ -94,6 +94,7 @@ if ($_POST) {
             min-height: 100vh;
             display: flex;
             align-items: center;
+            padding-bottom: 80px; /* Safe zone para el footer */
         }
         .password-container {
             background: white;
@@ -287,7 +288,7 @@ if ($_POST) {
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" style="margin-bottom: 80px;">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-5">
                 <div class="password-container">
