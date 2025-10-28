@@ -2104,7 +2104,7 @@ $distribucion_unidad = $pdo->query("
                                 <!-- Gráficos y Distribuciones -->
                                 <div class="row">
                                     <!-- Gráfico de Registros por Día -->
-                                    <div class="col-lg-8 mb-5">
+                                    <div class="col-lg-12 mb-5">
                                         <div class="card">
                                             <div class="card-header d-flex justify-content-between align-items-center">
                                                 <h6 class="mb-0">Registros por Día (Últimos 30 días)</h6>
