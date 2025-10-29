@@ -5366,8 +5366,8 @@ $distribucion_unidad = $pdo->query("
                             <div class="card h-100 text-center export-option" onclick="confirmarExportacion('pdf')" style="cursor: pointer;">
                                 <div class="card-body">
                                     <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
-                                    <h6 class="card-title">PDF (.pdf)</h6>
-                                    <p class="card-text small text-muted">Formato ideal para impresión y presentaciones</p>
+                                    <h6 class="card-title">PDF (.html)</h6>
+                                    <p class="card-text small text-muted">Formato HTML optimizado para imprimir como PDF</p>
                                 </div>
                             </div>
                         </div>
@@ -5377,6 +5377,12 @@ $distribucion_unidad = $pdo->query("
                         <i class="fas fa-info-circle mr-2"></i>
                         <strong>Nota:</strong> La exportación incluirá todos los filtros aplicados actualmente. 
                         Total de registros a exportar: <span id="total-exportar"><?= $total_records ?></span>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-2">
+                        <i class="fas fa-print mr-2"></i>
+                        <strong>Para PDF:</strong> El archivo se descargará como HTML. Para convertirlo a PDF, 
+                        ábrelo en el navegador y usa <strong>Ctrl+P</strong> → <strong>Destino: Guardar como PDF</strong>
                     </div>
                 </div>
                 <div class="modal-footer">

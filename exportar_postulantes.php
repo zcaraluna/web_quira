@@ -209,30 +209,38 @@ function exportarCSV($postulantes, $timestamp) {
 function exportarExcel($postulantes, $timestamp, $fecha_actual) {
     $filename = "postulantes_export_{$timestamp}.xlsx";
     
-    // Crear un archivo Excel simple usando HTML
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    // Crear un archivo Excel usando formato HTML que Excel puede abrir
+    header('Content-Type: application/vnd.ms-excel');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
     
-    echo '<?xml version="1.0" encoding="UTF-8"?>';
-    echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">';
-    echo '<Worksheet ss:Name="Postulantes">';
-    echo '<Table>';
+    // Crear BOM para UTF-8
+    echo "\xEF\xBB\xBF";
+    
+    echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+    echo '<head>';
+    echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
+    echo '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Postulantes</x:Name><x:WorksheetOptions><x:DefaultRowHeight>285</x:DefaultRowHeight></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
+    echo '</head>';
+    echo '<body>';
+    
+    echo '<table border="1" cellpadding="0" cellspacing="0">';
     
     // Encabezados
-    echo '<Row>';
+    echo '<tr style="background-color: #4472C4; color: white; font-weight: bold;">';
     $headers = [
         'ID', 'Nombre', 'Apellido', 'Cédula', 'Fecha Nacimiento', 'Edad', 'Sexo', 
         'Teléfono', 'Unidad', 'Dedo Registrado', 'Aparato', 'Registrado Por', 
         'Capturador', 'Fecha Registro', 'Observaciones'
     ];
     foreach ($headers as $header) {
-        echo '<Cell><Data ss:Type="String">' . htmlspecialchars($header) . '</Data></Cell>';
+        echo '<td style="padding: 8px; border: 1px solid #000;">' . htmlspecialchars($header) . '</td>';
     }
-    echo '</Row>';
+    echo '</tr>';
     
     // Datos
     foreach ($postulantes as $postulante) {
-        echo '<Row>';
+        echo '<tr>';
         $datos = [
             $postulante['id'],
             limpiarTexto($postulante['nombre']),
@@ -252,39 +260,91 @@ function exportarExcel($postulantes, $timestamp, $fecha_actual) {
         ];
         
         foreach ($datos as $dato) {
-            $tipo = is_numeric($dato) ? 'Number' : 'String';
-            echo '<Cell><Data ss:Type="' . $tipo . '">' . htmlspecialchars($dato) . '</Data></Cell>';
+            echo '<td style="padding: 8px; border: 1px solid #000;">' . htmlspecialchars($dato) . '</td>';
         }
-        echo '</Row>';
+        echo '</tr>';
     }
     
-    echo '</Table>';
-    echo '</Worksheet>';
-    echo '</Workbook>';
+    echo '</table>';
+    echo '</body>';
+    echo '</html>';
     exit;
 }
 
 function exportarPDF($postulantes, $timestamp, $fecha_actual) {
     $filename = "postulantes_export_{$timestamp}.pdf";
     
-    // Crear PDF simple usando HTML
-    header('Content-Type: application/pdf');
+    // Crear PDF usando HTML que se puede imprimir como PDF
+    header('Content-Type: text/html; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
+    
+    // Crear BOM para UTF-8
+    echo "\xEF\xBB\xBF";
     
     $html = '<!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>Exportación de Postulantes</title>
+        <title>Exportación de Postulantes - Sistema QUIRA</title>
         <style>
-            body { font-family: Arial, sans-serif; font-size: 10px; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .header h1 { color: #333; margin: 0; }
-            .header p { color: #666; margin: 5px 0; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #ddd; padding: 4px; text-align: left; }
-            th { background-color: #f2f2f2; font-weight: bold; }
-            .footer { margin-top: 20px; text-align: center; font-size: 8px; color: #666; }
+            @page { 
+                margin: 1cm; 
+                size: A4 landscape;
+            }
+            body { 
+                font-family: Arial, sans-serif; 
+                font-size: 8px; 
+                margin: 0;
+                padding: 0;
+            }
+            .header { 
+                text-align: center; 
+                margin-bottom: 15px; 
+                border-bottom: 2px solid #2E5090;
+                padding-bottom: 10px;
+            }
+            .header h1 { 
+                color: #2E5090; 
+                margin: 0; 
+                font-size: 16px;
+            }
+            .header p { 
+                color: #666; 
+                margin: 3px 0; 
+                font-size: 10px;
+            }
+            table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-top: 10px;
+                font-size: 7px;
+            }
+            th, td { 
+                border: 1px solid #333; 
+                padding: 2px; 
+                text-align: left; 
+                vertical-align: top;
+            }
+            th { 
+                background-color: #2E5090; 
+                color: white; 
+                font-weight: bold;
+                font-size: 7px;
+            }
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            .footer { 
+                margin-top: 15px; 
+                text-align: center; 
+                font-size: 8px; 
+                color: #666;
+                border-top: 1px solid #ccc;
+                padding-top: 5px;
+            }
+            .page-break {
+                page-break-before: always;
+            }
         </style>
     </head>
     <body>
@@ -297,24 +357,46 @@ function exportarPDF($postulantes, $timestamp, $fecha_actual) {
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Cédula</th>
-                    <th>Fecha Nac.</th>
-                    <th>Edad</th>
-                    <th>Sexo</th>
-                    <th>Teléfono</th>
-                    <th>Unidad</th>
-                    <th>Dedo</th>
-                    <th>Aparato</th>
-                    <th>Registrado Por</th>
-                    <th>Fecha Reg.</th>
+                    <th style="width: 3%;">ID</th>
+                    <th style="width: 8%;">Nombre</th>
+                    <th style="width: 8%;">Apellido</th>
+                    <th style="width: 6%;">Cédula</th>
+                    <th style="width: 6%;">Fecha Nac.</th>
+                    <th style="width: 3%;">Edad</th>
+                    <th style="width: 3%;">Sexo</th>
+                    <th style="width: 6%;">Teléfono</th>
+                    <th style="width: 12%;">Unidad</th>
+                    <th style="width: 4%;">Dedo</th>
+                    <th style="width: 8%;">Aparato</th>
+                    <th style="width: 8%;">Registrado Por</th>
+                    <th style="width: 6%;">Fecha Reg.</th>
+                    <th style="width: 8%;">Observaciones</th>
                 </tr>
             </thead>
             <tbody>';
     
+    $contador = 0;
     foreach ($postulantes as $postulante) {
+        // Agregar salto de página cada 30 registros
+        if ($contador > 0 && $contador % 30 == 0) {
+            $html .= '</tbody></table><div class="page-break"></div><table><thead><tr>
+                <th style="width: 3%;">ID</th>
+                <th style="width: 8%;">Nombre</th>
+                <th style="width: 8%;">Apellido</th>
+                <th style="width: 6%;">Cédula</th>
+                <th style="width: 6%;">Fecha Nac.</th>
+                <th style="width: 3%;">Edad</th>
+                <th style="width: 3%;">Sexo</th>
+                <th style="width: 6%;">Teléfono</th>
+                <th style="width: 12%;">Unidad</th>
+                <th style="width: 4%;">Dedo</th>
+                <th style="width: 8%;">Aparato</th>
+                <th style="width: 8%;">Registrado Por</th>
+                <th style="width: 6%;">Fecha Reg.</th>
+                <th style="width: 8%;">Observaciones</th>
+            </tr></thead><tbody>';
+        }
+        
         $html .= '<tr>
             <td>' . $postulante['id'] . '</td>
             <td>' . htmlspecialchars(limpiarTexto($postulante['nombre'])) . '</td>
@@ -329,7 +411,9 @@ function exportarPDF($postulantes, $timestamp, $fecha_actual) {
             <td>' . htmlspecialchars(limpiarTexto(obtenerNombreAparato($postulante))) . '</td>
             <td>' . htmlspecialchars(limpiarTexto($postulante['registrado_por'] ?: '')) . '</td>
             <td>' . formatearFecha($postulante['fecha_registro']) . '</td>
+            <td>' . htmlspecialchars(limpiarTexto($postulante['observaciones'] ?: '')) . '</td>
         </tr>';
+        $contador++;
     }
     
     $html .= '</tbody>
@@ -337,6 +421,7 @@ function exportarPDF($postulantes, $timestamp, $fecha_actual) {
         
         <div class="footer">
             <p>Generado por Sistema QUIRA - ' . $fecha_actual . '</p>
+            <p>Para imprimir como PDF: Ctrl+P → Destino: Guardar como PDF</p>
         </div>
     </body>
     </html>';
