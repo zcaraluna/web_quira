@@ -1623,13 +1623,13 @@ Por favor verifique:
                       const ultimo = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
                       if (ultimo.name && !ultimo.name.startsWith("NN-")) {
                           ultimoUsuario = ` | Último: ${ultimo.uid}:${ultimo.name}`;
-                          // NO mostrar advertencia automáticamente - solo informar
-                          // La advertencia se mostrará solo si el usuario intenta usar un ID específico que ya tiene nombre
+                          // Mostrar advertencia si el último usuario tiene nombre asignado
+                          mostrarAdvertenciaUltimoUsuario(ultimo.uid, ultimo.name);
                       } else {
                           ultimoUsuario = ` | Último: ${ultimo.uid} (sin nombre)`;
+                          // Ocultar advertencia si no hay problema
+                          ocultarAdvertenciaUltimoUsuario();
                       }
-                      // Ocultar advertencia del último usuario ya que no es un problema automático
-                      ocultarAdvertenciaUltimoUsuario();
                   }
                   
                   const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
