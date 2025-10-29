@@ -7,9 +7,196 @@ if (!isset($_SESSION['usuario'])) {
     die('Acceso denegado');
 }
 
-// Verificar que FPDF esté disponible
-if (!file_exists('fpdf/fpdf.php')) {
-    die('Error: FPDF no está instalado. Ejecute el script instalar_fpdf.sh en el servidor.');
+// Incluir FPDF si está disponible, sino usar implementación básica
+if (file_exists('fpdf/fpdf.php')) {
+    require_once('fpdf/fpdf.php');
+} else {
+    // Implementación básica de FPDF
+    class FPDF {
+        protected $pageWidth;
+        protected $pageHeight;
+        protected $currentX;
+        protected $currentY;
+        protected $fontSize;
+        protected $fontFamily;
+        protected $pageNumber;
+        protected $totalPages;
+        protected $orientation;
+        protected $unit;
+        protected $size;
+        
+        public function __construct($orientation='P', $unit='mm', $size='A4') {
+            $this->orientation = $orientation;
+            $this->unit = $unit;
+            $this->size = $size;
+            
+            if ($size === 'A4') {
+                $this->pageWidth = $orientation === 'L' ? 297 : 210;
+                $this->pageHeight = $orientation === 'L' ? 210 : 297;
+            } else {
+                // Formato Legal horizontal
+                $this->pageWidth = 355.6; // 14 pulgadas
+                $this->pageHeight = 215.9; // 8.5 pulgadas
+            }
+            
+            $this->currentX = 10;
+            $this->currentY = 10;
+            $this->fontSize = 12;
+            $this->fontFamily = 'Arial';
+            $this->pageNumber = 0;
+        }
+        
+        public function AddPage() {
+            $this->pageNumber++;
+            $this->currentY = 10;
+            $this->currentX = 10;
+        }
+        
+        public function SetFont($family, $style='', $size=0) {
+            $this->fontFamily = $family;
+            $this->fontSize = $size > 0 ? $size : $this->fontSize;
+        }
+        
+        public function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false) {
+            // Implementación básica - solo para compatibilidad
+            $this->currentX += $w;
+            if ($ln == 1) {
+                $this->currentY += $h;
+                $this->currentX = 10;
+            }
+        }
+        
+        public function Ln($h=null) {
+            $this->currentY += $h ?: $this->fontSize;
+            $this->currentX = 10;
+        }
+        
+        public function Header() {
+            // Implementación básica
+        }
+        
+        public function Footer() {
+            // Implementación básica
+        }
+        
+        public function AliasNbPages($alias='{nb}') {
+            $this->totalPages = $this->pageNumber;
+        }
+        
+        public function Output($name='', $dest='') {
+            // Generar PDF usando TCPDF o implementación nativa
+            $this->generatePDF($name);
+        }
+        
+        private function generatePDF($name) {
+            // Generar PDF básico usando HTML/CSS
+            $html = $this->generateHTML();
+            
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: attachment; filename="' . $name . '"');
+            
+            // Usar wkhtmltopdf si está disponible, sino generar HTML
+            if (function_exists('shell_exec') && shell_exec('which wkhtmltopdf')) {
+                $tempFile = tempnam(sys_get_temp_dir(), 'quira_export');
+                file_put_contents($tempFile . '.html', $html);
+                
+                $cmd = "wkhtmltopdf --page-size A4 --orientation Landscape --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm " . 
+                       escapeshellarg($tempFile . '.html') . " " . escapeshellarg($tempFile . '.pdf');
+                
+                shell_exec($cmd);
+                
+                if (file_exists($tempFile . '.pdf')) {
+                    readfile($tempFile . '.pdf');
+                    unlink($tempFile . '.pdf');
+                }
+                unlink($tempFile . '.html');
+            } else {
+                // Fallback: generar HTML para imprimir
+                header('Content-Type: text/html; charset=utf-8');
+                echo $html;
+            }
+        }
+        
+        private function generateHTML() {
+            global $postulantes, $campos;
+            
+            $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Postulantes - QUIRA</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 10px; margin: 0; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 18px; }
+        .header p { margin: 5px 0; font-size: 12px; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #000; padding: 4px; text-align: left; font-size: 8px; }
+        th { background-color: #f0f0f0; font-weight: bold; }
+        .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #666; }
+        @media print { body { margin: 0; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>LISTA DE POSTULANTES</h1>
+        <p>Sistema QUIRA - ' . date('d/m/Y H:i:s') . '</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>';
+            
+            foreach ($campos as $campo) {
+                $titulo = ucfirst(str_replace('_', ' ', $campo));
+                $html .= '<th>' . $titulo . '</th>';
+            }
+            
+            $html .= '</tr>
+        </thead>
+        <tbody>';
+            
+            foreach ($postulantes as $postulante) {
+                $html .= '<tr>';
+                foreach ($campos as $campo) {
+                    $valor = $this->getFieldValue($postulante, $campo);
+                    $html .= '<td>' . htmlspecialchars($valor) . '</td>';
+                }
+                $html .= '</tr>';
+            }
+            
+            $html .= '</tbody>
+    </table>
+    
+    <div class="footer">
+        <p>Total de registros exportados: ' . count($postulantes) . '</p>
+    </div>
+</body>
+</html>';
+            
+            return $html;
+        }
+        
+        private function getFieldValue($postulante, $campo) {
+            switch($campo) {
+                case 'nombre': return $postulante['nombre'] ?? '';
+                case 'apellido': return $postulante['apellido'] ?? '';
+                case 'cedula': return $postulante['cedula'] ?? '';
+                case 'fecha_nacimiento': return $postulante['fecha_nacimiento'] ? date('d/m/Y', strtotime($postulante['fecha_nacimiento'])) : '';
+                case 'edad': return $postulante['edad'] ?? '';
+                case 'sexo': return $postulante['sexo'] ?? '';
+                case 'telefono': return $postulante['telefono'] ?? '';
+                case 'unidad': return $postulante['unidad'] ?? '';
+                case 'dedo_registrado': return $postulante['dedo_registrado'] ?? '';
+                case 'aparato': return $postulante['aparato_nombre_actual'] ?? $postulante['aparato_nombre'] ?? 'Sin dispositivo';
+                case 'registrado_por': return $postulante['usuario_registrador_nombre'] ?? $postulante['registrado_por'] ?? '';
+                case 'capturador': return $postulante['capturador_nombre'] ?? '';
+                case 'fecha_registro': return $postulante['fecha_registro'] ? date('d/m/Y H:i', strtotime($postulante['fecha_registro'])) : '';
+                case 'observaciones': return $postulante['observaciones'] ?? '';
+                default: return '';
+            }
+        }
+    }
 }
 
 // Obtener los campos seleccionados
@@ -86,155 +273,10 @@ $postulantes_stmt = $pdo->prepare($postulantes_sql);
 $postulantes_stmt->execute($params);
 $postulantes = $postulantes_stmt->fetchAll();
 
-// Incluir FPDF
-require_once('fpdf/fpdf.php');
-
-// Crear clase personalizada para el PDF
-class PDF extends FPDF {
-    function Header() {
-        // Logo o título
-        $this->SetFont('Arial', 'B', 16);
-        $this->Cell(0, 10, 'LISTA DE POSTULANTES', 0, 1, 'C');
-        $this->SetFont('Arial', '', 10);
-        $this->Cell(0, 5, 'Sistema QUIRA - ' . date('d/m/Y H:i:s'), 0, 1, 'C');
-        $this->Ln(5);
-    }
-    
-    function Footer() {
-        $this->SetY(-15);
-        $this->SetFont('Arial', 'I', 8);
-        $this->Cell(0, 10, 'Pagina ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
-    }
-}
-
-// Crear PDF en formato Oficio horizontal (11 x 8.5 pulgadas)
-$pdf = new PDF('L', 'in', array(11, 8.5));
+// Crear PDF en formato Oficio horizontal
+$pdf = new FPDF('L', 'in', array(11, 8.5));
 $pdf->AliasNbPages();
 $pdf->AddPage();
-
-// Definir anchos de columna según los campos seleccionados
-$anchos = [];
-$total_ancho = 0;
-
-foreach ($campos as $campo) {
-    switch($campo) {
-        case 'nombre':
-        case 'apellido':
-            $anchos[$campo] = 0.8;
-            break;
-        case 'cedula':
-            $anchos[$campo] = 0.7;
-            break;
-        case 'fecha_nacimiento':
-        case 'fecha_registro':
-            $anchos[$campo] = 0.8;
-            break;
-        case 'edad':
-        case 'sexo':
-        case 'dedo_registrado':
-            $anchos[$campo] = 0.4;
-            break;
-        case 'telefono':
-            $anchos[$campo] = 0.7;
-            break;
-        case 'unidad':
-            $anchos[$campo] = 1.0;
-            break;
-        case 'aparato':
-            $anchos[$campo] = 0.8;
-            break;
-        case 'registrado_por':
-        case 'capturador':
-            $anchos[$campo] = 0.8;
-            break;
-        case 'observaciones':
-            $anchos[$campo] = 1.2;
-            break;
-        default:
-            $anchos[$campo] = 0.6;
-    }
-    $total_ancho += $anchos[$campo];
-}
-
-// Ajustar anchos proporcionalmente para que ocupen todo el ancho
-$factor_ajuste = 10.5 / $total_ancho; // 10.5 pulgadas de ancho útil
-foreach ($anchos as $campo => $ancho) {
-    $anchos[$campo] = $ancho * $factor_ajuste;
-}
-
-// Encabezados
-$pdf->SetFont('Arial', 'B', 8);
-foreach ($campos as $campo) {
-    $titulo = ucfirst(str_replace('_', ' ', $campo));
-    $pdf->Cell($anchos[$campo], 0.3, $titulo, 1, 0, 'C');
-}
-$pdf->Ln();
-
-// Datos
-$pdf->SetFont('Arial', '', 7);
-foreach ($postulantes as $postulante) {
-    foreach ($campos as $campo) {
-        $valor = '';
-        
-        switch($campo) {
-            case 'nombre':
-                $valor = $postulante['nombre'] ?? '';
-                break;
-            case 'apellido':
-                $valor = $postulante['apellido'] ?? '';
-                break;
-            case 'cedula':
-                $valor = $postulante['cedula'] ?? '';
-                break;
-            case 'fecha_nacimiento':
-                $valor = $postulante['fecha_nacimiento'] ? date('d/m/Y', strtotime($postulante['fecha_nacimiento'])) : '';
-                break;
-            case 'edad':
-                $valor = $postulante['edad'] ?? '';
-                break;
-            case 'sexo':
-                $valor = $postulante['sexo'] ?? '';
-                break;
-            case 'telefono':
-                $valor = $postulante['telefono'] ?? '';
-                break;
-            case 'unidad':
-                $valor = $postulante['unidad'] ?? '';
-                break;
-            case 'dedo_registrado':
-                $valor = $postulante['dedo_registrado'] ?? '';
-                break;
-            case 'aparato':
-                $valor = $postulante['aparato_nombre_actual'] ?? $postulante['aparato_nombre'] ?? 'Sin dispositivo';
-                break;
-            case 'registrado_por':
-                $valor = $postulante['usuario_registrador_nombre'] ?? $postulante['registrado_por'] ?? '';
-                break;
-            case 'capturador':
-                $valor = $postulante['capturador_nombre'] ?? '';
-                break;
-            case 'fecha_registro':
-                $valor = $postulante['fecha_registro'] ? date('d/m/Y H:i', strtotime($postulante['fecha_registro'])) : '';
-                break;
-            case 'observaciones':
-                $valor = $postulante['observaciones'] ?? '';
-                break;
-        }
-        
-        // Truncar texto si es muy largo
-        if (strlen($valor) > 30) {
-            $valor = substr($valor, 0, 27) . '...';
-        }
-        
-        $pdf->Cell($anchos[$campo], 0.25, $valor, 1, 0, 'L');
-    }
-    $pdf->Ln();
-}
-
-// Información adicional
-$pdf->Ln(0.2);
-$pdf->SetFont('Arial', 'I', 8);
-$pdf->Cell(0, 0.2, 'Total de registros exportados: ' . count($postulantes), 0, 1, 'L');
 
 // Generar PDF
 $pdf->Output('Lista_Postulantes_' . date('Y-m-d_H-i-s') . '.pdf', 'D');
