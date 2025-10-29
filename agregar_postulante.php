@@ -705,7 +705,7 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                         <input type="number" class="form-control" id="id_k40" name="id_k40" 
                                                value="<?= htmlspecialchars($_POST['id_k40'] ?? '') ?>" 
                                                min="1" max="9999" placeholder="Se asigna automáticamente">
-                                        <small class="form-text text-muted">Se asigna automáticamente, pero puede ser editado manualmente</small>
+                                        <small class="form-text text-muted">Se asigna automáticamente, pero puede ser editado si es necesario</small>
                                         <div id="usuario-existente-info" class="mt-2" style="display: none;">
                                             <!-- Aquí se mostrará la información del usuario existente -->
                                         </div>
@@ -1019,11 +1019,6 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
         try {
             console.log('Inicializando dispositivo real...');
             
-            // Ocultar cualquier advertencia previa
-            ocultarAdvertenciaUltimoUsuario();
-            ocultarAdvertenciaUsuarioManual();
-            ocultarAdvertenciaIdAdelantado();
-            
             // Obtener información del dispositivo
             console.log('Obteniendo información del dispositivo...');
             await loadDeviceInfo();
@@ -1172,11 +1167,7 @@ Por favor verifique:
         }
         
         try {
-            // Obtener información del dispositivo para saber el total real
-            const deviceInfo = await zktecoBridge.getDeviceInfo();
-            const totalUsuarios = deviceInfo ? deviceInfo.user_count : 0;
-            
-            // Obtener usuarios del dispositivo (todos)
+            // Obtener usuarios del dispositivo
             const users = await zktecoBridge.getUsers();
             const usuarioExistente = users.users.find(u => parseInt(u.uid) === parseInt(uid));
             
@@ -1215,21 +1206,20 @@ Por favor verifique:
                 ocultarAdvertenciaIdAdelantado();
             } else {
                 // ID no existe en el dispositivo - verificar si es adelantado
-                // Usar el total de usuarios del dispositivo como máximo permitido
-                const maxUidPermitido = totalUsuarios;
+                const maxUid = Math.max(...users.users.map(u => parseInt(u.uid)), 0);
                 
-                if (parseInt(uid) > maxUidPermitido) {
+                if (parseInt(uid) > maxUid) {
                     // ID adelantado - no permitir
                     infoDiv.innerHTML = `
                         <div class="alert alert-warning alert-sm mb-0">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>ID adelantado:</strong> No puede usar IDs futuros (máximo: ${maxUidPermitido})
+                            <strong>ID adelantado:</strong> No puede usar IDs futuros (máximo: ${maxUid})
                         </div>
                     `;
                     infoDiv.style.display = 'block';
                     
                     // Mostrar advertencia y deshabilitar botón
-                    mostrarAdvertenciaIdAdelantado(uid, maxUidPermitido);
+                    mostrarAdvertenciaIdAdelantado(uid, maxUid);
                 } else {
                     // ID válido (menor o igual al máximo existente)
                     infoDiv.innerHTML = `
@@ -1630,7 +1620,7 @@ Por favor verifique:
             
               // Obtener información del último usuario para mostrar en el status
               try {
-                  const users = await zktecoBridge.getUsers(10);
+                  const users = await zktecoBridge.getUsers();
                   let ultimoUsuario = '';
                   
                   if (users.users && users.users.length > 0) {
@@ -1638,12 +1628,13 @@ Por favor verifique:
                       const ultimo = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
                       if (ultimo.name && !ultimo.name.startsWith("NN-")) {
                           ultimoUsuario = ` | Último: ${ultimo.uid}:${ultimo.name}`;
-                          // NO mostrar advertencia - esto es normal, solo informativo
+                          // Mostrar advertencia si el último usuario tiene nombre
+                          mostrarAdvertenciaUltimoUsuario(ultimo.uid, ultimo.name);
                       } else {
                           ultimoUsuario = ` | Último: ${ultimo.uid} (sin nombre)`;
+                          // Ocultar advertencia si no hay problema
+                          ocultarAdvertenciaUltimoUsuario();
                       }
-                      // Ocultar cualquier advertencia del último usuario
-                      ocultarAdvertenciaUltimoUsuario();
                   }
                   
                   const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
@@ -1753,92 +1744,96 @@ Por favor verifique:
             let k40Actualizado = false;
             let usuarioUID = null;
             
-            // Usar el ID del campo (puede ser automático o manual)
+            // Si el usuario proporcionó un ID específico, usarlo
             if (idK40) {
                 usuarioUID = parseInt(idK40);
-                console.log(`Usando ID del campo: ${usuarioUID}`);
-            } else {
-                // Si no hay ID en el campo, usar el último UID calculado
-                usuarioUID = ultimoUID;
-                console.log(`Usando último UID calculado: ${usuarioUID}`);
+                console.log(`Usando ID proporcionado por el usuario: ${usuarioUID}`);
             }
             
             if (!esModoPrueba && dispositivoConectado && zktecoBridge) {
                 try {
-                    // Verificar que tenemos un UID válido
+                    // Si no se proporcionó un ID específico, buscar uno disponible
                     if (!usuarioUID) {
-                        console.log('❌ No se pudo determinar el UID del usuario');
-                        alert('No se pudo determinar el ID del usuario en el dispositivo.');
-                        return;
+                        console.log('Obteniendo información del dispositivo...');
+                        // Primero obtener información del dispositivo
+                        const deviceInfo = await zktecoBridge.getDeviceInfo();
+                        
+                        if (deviceInfo && deviceInfo.user_count) {
+                            const totalUsuarios = deviceInfo.user_count;
+                            console.log(`Total de usuarios en el dispositivo: ${totalUsuarios}`);
+                            
+                            // Intentar obtener usuarios del dispositivo
+                            const users = await zktecoBridge.getUsers();
+                            console.log(`Usuarios obtenidos: ${users.users ? users.users.length : 0} de ${totalUsuarios}`);
+                            
+                            if (users.users && users.users.length > 0) {
+                                // Buscar usuario disponible (sin nombre asignado)
+                                const usuariosSinId = users.users.filter(u => !u.name || u.name.startsWith("NN-"));
+                                let ultimoUsuario;
+                                
+                                if (usuariosSinId.length > 0) {
+                                    ultimoUsuario = usuariosSinId[usuariosSinId.length - 1];
+                                    console.log(`Usuario disponible encontrado: UID ${ultimoUsuario.uid}`);
+                                } else {
+                                    ultimoUsuario = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
+                                    console.log(`Usando último usuario: UID ${ultimoUsuario.uid}`);
+                                }
+                                
+                                if (ultimoUsuario) {
+                                    usuarioUID = ultimoUsuario.uid;
+                                } else {
+                                    // Si no se encontró usuario disponible, usar el total de usuarios
+                                    usuarioUID = totalUsuarios;
+                                    console.log(`Usando siguiente ID disponible: ${usuarioUID}`);
+                                }
+                            } else {
+                                // Si no se pueden obtener usuarios, usar el total de usuarios
+                                usuarioUID = totalUsuarios;
+                                console.log(`No se pudieron obtener usuarios, usando siguiente ID: ${usuarioUID}`);
+                            }
+                        } else {
+                            console.log('❌ No se pudo obtener información del dispositivo');
+                            alert('No se pudo obtener información del dispositivo biométrico.');
+                            return;
+                        }
                     }
                     
-                     // Verificar si el usuario ya tiene nombre asignado
-                     const users = await zktecoBridge.getUsers();
-                     const usuarioExistente = users.users.find(u => parseInt(u.uid) === usuarioUID);
-                     
-                     if (usuarioExistente && usuarioExistente.name && !usuarioExistente.name.startsWith("NN-")) {
-                         console.log(`❌ Usuario UID ${usuarioUID} ya tiene nombre: ${usuarioExistente.name}`);
+                     // Verificar si el usuario ya tiene nombre asignado (solo si no se proporcionó ID específico)
+                     if (!idK40) {
+                         const users = await zktecoBridge.getUsers();
+                         const usuarioExistente = users.users.find(u => parseInt(u.uid) === usuarioUID);
                          
-                         // Mostrar alerta visual con información del usuario existente
-                         mostrarAlertaUsuarioExistente(usuarioUID, usuarioExistente.name);
-                         return;
-                     }
-                     
-                     // Actualizar usuario en el K40
-                     console.log(`🔄 Actualizando usuario UID ${usuarioUID} en el dispositivo...`);
-                     console.log(`📝 Datos a enviar: UID=${usuarioUID}, Nombre="${nombre} ${apellido}"`);
-                     
-                     let zkResult = null;
-                     
-                     // Intentar primero con setUser (actualizar usuario existente)
-                     try {
-                         console.log('🔄 Intentando con setUser...');
-                         zkResult = await zktecoBridge.setUser(
-                             usuarioUID,
-                             `${nombre} ${apellido}`,
-                             0, // Privilege por defecto
-                             "", // Password
-                             "", // Group ID por defecto
-                             "" // User ID por defecto
-                         );
-                         
-                         console.log('📥 Resultado del setUser:', zkResult);
-                         
-                         if (zkResult.success === true || zkResult.success === undefined) {
-                             k40Actualizado = true;
-                             console.log(`✅ Usuario ${usuarioUID} actualizado con setUser`);
-                         } else {
-                             throw new Error('setUser falló: ' + JSON.stringify(zkResult));
-                         }
-                         
-                     } catch (setUserError) {
-                         console.log('⚠️ setUser falló, intentando con addUser:', setUserError.message);
-                         
-                         // Si setUser falla, intentar con addUser
-                         try {
-                             zkResult = await zktecoBridge.addUser(
-                                 usuarioUID,
-                                 `${nombre} ${apellido}`,
-                                 0, // Privilege por defecto
-                                 "", // Password
-                                 "" // Group ID por defecto
-                             );
+                         if (usuarioExistente && usuarioExistente.name && !usuarioExistente.name.startsWith("NN-")) {
+                             console.log(`❌ Usuario UID ${usuarioUID} ya tiene nombre: ${usuarioExistente.name}`);
                              
-                             console.log('📥 Resultado del addUser:', zkResult);
-                             
-                             if (zkResult.success === true || zkResult.success === undefined) {
-                                 k40Actualizado = true;
-                                 console.log(`✅ Usuario ${usuarioUID} actualizado con addUser`);
-                             } else {
-                                 throw new Error('addUser también falló: ' + JSON.stringify(zkResult));
-                             }
-                             
-                         } catch (addUserError) {
-                             console.log(`❌ Error actualizando usuario en K40:`, addUserError.message);
-                             alert('No se pudo actualizar el usuario en el dispositivo K40. No se guardará en la base de datos.');
+                             // Mostrar alerta visual con información del usuario existente
+                             mostrarAlertaUsuarioExistente(usuarioUID, usuarioExistente.name);
                              return;
-                         }
-                     }
+                        }
+                    }
+                    
+                        // Actualizar usuario en el K40
+                        console.log(`Actualizando usuario UID ${usuarioUID} en el dispositivo...`);
+                        const zkResult = await zktecoBridge.addUser(
+                            usuarioUID,
+                            `${nombre} ${apellido}`,
+                            0, // Privilege por defecto
+                            "",
+                            "" // Group ID por defecto
+                        );
+                        
+                        console.log('Resultado completo del addUser:', zkResult);
+                        console.log('zkResult.success:', zkResult.success);
+                        console.log('Tipo de zkResult.success:', typeof zkResult.success);
+                        
+                        if (zkResult.success === true || zkResult.success === undefined) {
+                            k40Actualizado = true;
+                            console.log(`✅ Usuario ${usuarioUID} actualizado en K40 sin perder la huella`);
+                        } else {
+                            console.log(`❌ Error actualizando usuario en K40:`, zkResult);
+                            alert('No se pudo actualizar el usuario en el dispositivo K40. No se guardará en la base de datos.');
+                            return;
+                        }
                     
                 } catch (error) {
                     console.log(`❌ Error actualizando K40: ${error.message}`);
@@ -1981,24 +1976,6 @@ Por favor verifique:
     document.getElementById('cedula').addEventListener('input', function(e) {
         // Solo permitir números
         e.target.value = e.target.value.replace(/[^0-9]/g, '');
-    });
-    
-    // Validación de ID en K40 en tiempo real
-    document.getElementById('id_k40').addEventListener('input', function(e) {
-        const uid = e.target.value;
-        if (uid && !isNaN(uid) && parseInt(uid) > 0) {
-            // Actualizar la variable global ultimoUID cuando el usuario edita manualmente
-            ultimoUID = parseInt(uid);
-            verificarUsuarioExistente(parseInt(uid));
-        } else {
-            // Limpiar información si el campo está vacío o inválido
-            const infoDiv = document.getElementById('usuario-existente-info');
-            infoDiv.style.display = 'none';
-            infoDiv.innerHTML = '';
-            ocultarAdvertenciaUsuarioManual();
-            ocultarAdvertenciaIdAdelantado();
-            ultimoUID = null;
-        }
     });
     
      // Calcular edad inicial si ya hay una fecha cargada

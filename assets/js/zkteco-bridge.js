@@ -281,7 +281,7 @@ class ZKTecoBridge {
                 resolve(data || { users: [] });
             });
             
-            const commandData = limit !== null ? { limit } : { limit: 9999 };
+            const commandData = limit !== null ? { limit } : {};
             this.sendCommand('get_users', commandData);
         });
     }
@@ -315,34 +315,6 @@ class ZKTecoBridge {
                 privilege: privilege,
                 password: password,
                 group_id: group_id
-            });
-        });
-    }
-    
-    /**
-     * Actualizar usuario existente en el dispositivo
-     */
-    async setUser(uid, name, privilege = 0, password = "", group_id = "", user_id = "") {
-        return new Promise((resolve, reject) => {
-            this.onMessage('set_user_response', (data) => {
-                console.log('Set user response data:', data);
-                if (data && typeof data === 'object') {
-                    resolve({
-                        success: data.success !== false,
-                        ...data
-                    });
-                } else {
-                    resolve({ success: false, error: 'No response' });
-                }
-            });
-            
-            this.sendCommand('set_user', {
-                uid: parseInt(uid),
-                name: name,
-                privilege: privilege,
-                password: password,
-                group_id: group_id,
-                user_id: user_id
             });
         });
     }
