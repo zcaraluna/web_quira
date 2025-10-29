@@ -116,7 +116,7 @@ CHANGELOG
 # ===========================================
 # ARCHIVOS DE INSTALACIÓN Y SCRIPTS
 # ===========================================
-install_*.sh
+#install_*.sh
 install_*.bat
 *.bat
 *.cmd
