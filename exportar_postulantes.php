@@ -19,13 +19,13 @@ if (file_exists('vendor/autoload.php')) {
 
 // Los usuarios con rol USUARIO no pueden exportar
 if ($_SESSION['rol'] === 'USUARIO') {
-    header('Location: dashboard.php');
+    echo '<script>window.location.href = "dashboard.php";</script>';
     exit;
 }
 
 // Verificar que se haya solicitado una exportación
 if (!isset($_GET['exportar']) || $_GET['exportar'] !== '1') {
-    header('Location: dashboard.php');
+    echo '<script>window.location.href = "dashboard.php";</script>';
     exit;
 }
 
