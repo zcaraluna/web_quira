@@ -41,13 +41,12 @@ if (!isset($error_acceso) && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $serial = trim($_POST['serial']);
                 $ip_address = trim($_POST['ip_address']);
                 $puerto = trim($_POST['puerto']);
-                $ubicacion = trim($_POST['ubicacion']);
                 $estado = $_POST['estado'];
                 $activo = 1; // Por defecto todos los dispositivos están activos
                 
                 // Validaciones básicas
-                if (empty($nombre) || empty($serial) || empty($estado)) {
-                    throw new Exception('Los campos nombre, serial y estado son obligatorios');
+                if (empty($nombre) || empty($serial) || empty($ip_address) || empty($puerto) || empty($estado)) {
+                    throw new Exception('Los campos nombre, serial, IP, puerto y estado son obligatorios');
                 }
                 
                 // Verificar si el dispositivo ya existe (por serial)
@@ -58,8 +57,8 @@ if (!isset($error_acceso) && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Crear dispositivo
-                $stmt = $pdo->prepare("INSERT INTO aparatos_biometricos (nombre, serial, ip_address, puerto, ubicacion, estado, fecha_registro, activo) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)");
-                $stmt->execute([$nombre, $serial, $ip_address, $puerto, $ubicacion, $estado, $activo]);
+                $stmt = $pdo->prepare("INSERT INTO aparatos_biometricos (nombre, serial, ip_address, puerto, estado, fecha_registro, activo) VALUES (?, ?, ?, ?, ?, NOW(), ?)");
+                $stmt->execute([$nombre, $serial, $ip_address, $puerto, $estado, $activo]);
                 
                 $mensaje = 'Dispositivo creado exitosamente';
                 $tipo_mensaje = 'success';
@@ -71,13 +70,12 @@ if (!isset($error_acceso) && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $serial = trim($_POST['serial']);
                 $ip_address = trim($_POST['ip_address']);
                 $puerto = trim($_POST['puerto']);
-                $ubicacion = trim($_POST['ubicacion']);
                 $estado = $_POST['estado'];
                 $activo = 1; // Por defecto todos los dispositivos están activos
                 
                 // Validaciones básicas
-                if (empty($nombre) || empty($serial) || empty($estado)) {
-                    throw new Exception('Los campos nombre, serial y estado son obligatorios');
+                if (empty($nombre) || empty($serial) || empty($ip_address) || empty($puerto) || empty($estado)) {
+                    throw new Exception('Los campos nombre, serial, IP, puerto y estado son obligatorios');
                 }
                 
                 // Verificar si el dispositivo ya existe (excluyendo el actual)
@@ -88,8 +86,8 @@ if (!isset($error_acceso) && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Actualizar dispositivo
-                $stmt = $pdo->prepare("UPDATE aparatos_biometricos SET nombre = ?, serial = ?, ip_address = ?, puerto = ?, ubicacion = ?, estado = ?, activo = ? WHERE id = ?");
-                $stmt->execute([$nombre, $serial, $ip_address, $puerto, $ubicacion, $estado, $activo, $id]);
+                $stmt = $pdo->prepare("UPDATE aparatos_biometricos SET nombre = ?, serial = ?, ip_address = ?, puerto = ?, estado = ?, activo = ? WHERE id = ?");
+                $stmt->execute([$nombre, $serial, $ip_address, $puerto, $estado, $activo, $id]);
                 
                 $mensaje = 'Dispositivo actualizado exitosamente';
                 $tipo_mensaje = 'success';
@@ -151,12 +149,12 @@ if (!isset($error_acceso)) {
     // Obtener lista de dispositivos con conteo de postulantes
     $dispositivos = $pdo->query("
         SELECT 
-            a.id, a.nombre, a.serial, a.ip_address, a.puerto, a.ubicacion, 
+            a.id, a.nombre, a.serial, a.ip_address, a.puerto, 
             a.estado, a.fecha_registro, a.activo,
             COUNT(p.id) as postulantes_count
         FROM aparatos_biometricos a
         LEFT JOIN postulantes p ON a.id = p.aparato_id
-        GROUP BY a.id, a.nombre, a.serial, a.ip_address, a.puerto, a.ubicacion, a.estado, a.fecha_registro, a.activo
+        GROUP BY a.id, a.nombre, a.serial, a.ip_address, a.puerto, a.estado, a.fecha_registro, a.activo
         ORDER BY a.fecha_registro DESC
     ")->fetchAll();
     $estados_dispositivos = ['ACTIVO', 'INACTIVO', 'PRUEBA', 'MANTENIMIENTO'];
@@ -379,9 +377,7 @@ if (!isset($error_acceso)) {
                                         <th>Serial</th>
                                         <th>IP Address</th>
                                         <th>Puerto</th>
-                                        <th>Ubicación</th>
                                         <th>Estado</th>
-                                        <th>Activo</th>
                                         <th>Postulantes</th>
                                         <th>Fecha Registro</th>
                                         <th>Acciones</th>
@@ -395,7 +391,6 @@ if (!isset($error_acceso)) {
                                         <td><code><?= htmlspecialchars($dispositivo['serial']) ?></code></td>
                                         <td><?= htmlspecialchars($dispositivo['ip_address']) ?></td>
                                         <td><?= htmlspecialchars($dispositivo['puerto']) ?></td>
-                                        <td><?= htmlspecialchars($dispositivo['ubicacion']) ?></td>
                                         <td>
                                             <?php
                                             $estado_class = '';
@@ -408,13 +403,6 @@ if (!isset($error_acceso)) {
                                             }
                                             ?>
                                             <span class="badge <?= $estado_class ?>"><?= htmlspecialchars($dispositivo['estado']) ?></span>
-                                        </td>
-                                        <td>
-                                            <?php if ($dispositivo['activo']): ?>
-                                                <span class="badge badge-success">Sí</span>
-                                            <?php else: ?>
-                                                <span class="badge badge-secondary">No</span>
-                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <?php if ($dispositivo['postulantes_count'] > 0): ?>
@@ -478,16 +466,12 @@ if (!isset($error_acceso)) {
                             <input type="text" class="form-control" id="serial" name="serial" required>
                         </div>
                         <div class="form-group">
-                            <label for="ip_address">Dirección IP</label>
-                            <input type="text" class="form-control" id="ip_address" name="ip_address" placeholder="192.168.1.100">
+                            <label for="ip_address">Dirección IP *</label>
+                            <input type="text" class="form-control" id="ip_address" name="ip_address" placeholder="192.168.1.100" required>
                         </div>
                         <div class="form-group">
-                            <label for="puerto">Puerto</label>
-                            <input type="number" class="form-control" id="puerto" name="puerto" value="4370">
-                        </div>
-                        <div class="form-group">
-                            <label for="ubicacion">Ubicación</label>
-                            <input type="text" class="form-control" id="ubicacion" name="ubicacion">
+                            <label for="puerto">Puerto *</label>
+                            <input type="number" class="form-control" id="puerto" name="puerto" value="4370" required>
                         </div>
                         <div class="form-group">
                             <label for="estado">Estado *</label>
@@ -531,16 +515,12 @@ if (!isset($error_acceso)) {
                             <input type="text" class="form-control" id="edit_serial" name="serial" required>
                         </div>
                         <div class="form-group">
-                            <label for="edit_ip_address">Dirección IP</label>
-                            <input type="text" class="form-control" id="edit_ip_address" name="ip_address">
+                            <label for="edit_ip_address">Dirección IP *</label>
+                            <input type="text" class="form-control" id="edit_ip_address" name="ip_address" required>
                         </div>
                         <div class="form-group">
-                            <label for="edit_puerto">Puerto</label>
-                            <input type="number" class="form-control" id="edit_puerto" name="puerto">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit_ubicacion">Ubicación</label>
-                            <input type="text" class="form-control" id="edit_ubicacion" name="ubicacion">
+                            <label for="edit_puerto">Puerto *</label>
+                            <input type="number" class="form-control" id="edit_puerto" name="puerto" required>
                         </div>
                         <div class="form-group">
                             <label for="edit_estado">Estado *</label>
@@ -597,7 +577,6 @@ if (!isset($error_acceso)) {
         document.getElementById('edit_serial').value = dispositivo.serial;
         document.getElementById('edit_ip_address').value = dispositivo.ip_address || '';
         document.getElementById('edit_puerto').value = dispositivo.puerto || '';
-        document.getElementById('edit_ubicacion').value = dispositivo.ubicacion || '';
         document.getElementById('edit_estado').value = dispositivo.estado;
         
         $('#modalEditarDispositivo').modal('show');
