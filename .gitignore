@@ -45,8 +45,8 @@ backup/
 # ===========================================
 # ARCHIVOS DE DESARROLLO Y TESTING
 # ===========================================
-test_*.php
-test_*.html
+#test_*.php
+#test_*.html
 debug_*.php
 verificar_*.php
 check_*.php
