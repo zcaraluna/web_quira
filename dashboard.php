@@ -5109,12 +5109,22 @@ $distribucion_unidad = $pdo->query("
 
         // Función para eliminar postulante desde el modal
         function eliminarPostulanteModal() {
-            const postulanteId = document.getElementById('detalle_id').textContent;
-            const postulanteNombre = document.getElementById('detalle_nombre').textContent;
-            const postulanteApellido = document.getElementById('detalle_apellido').textContent;
+            const postulanteId = document.getElementById('detalle_id').textContent.trim();
+            const postulanteNombre = document.getElementById('detalle_nombre').textContent.trim();
+            const postulanteApellido = document.getElementById('detalle_apellido').textContent.trim();
             
-            if (!postulanteId || postulanteId === '-') {
-                alert('Error: No se pudo obtener el ID del postulante');
+            console.log('ID obtenido:', postulanteId);
+            console.log('Nombre obtenido:', postulanteNombre);
+            console.log('Apellido obtenido:', postulanteApellido);
+            
+            if (!postulanteId || postulanteId === '-' || postulanteId === '') {
+                alert('Error: No se pudo obtener el ID del postulante. Asegúrese de que el modal esté completamente cargado.');
+                return;
+            }
+            
+            // Verificar que el ID sea numérico
+            if (!/^\d+$/.test(postulanteId)) {
+                alert('Error: El ID del postulante no es válido. ID obtenido: ' + postulanteId);
                 return;
             }
             
@@ -5127,6 +5137,8 @@ $distribucion_unidad = $pdo->query("
                 btnEliminar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Eliminando...';
                 btnEliminar.disabled = true;
                 
+                console.log('Enviando ID:', postulanteId);
+                
                 // Realizar eliminación via AJAX
                 fetch('eliminar_postulante_modal.php', {
                     method: 'POST',
@@ -5137,6 +5149,7 @@ $distribucion_unidad = $pdo->query("
                 })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Respuesta del servidor:', data);
                     if (data.success) {
                         // Cerrar el modal
                         $('#modalDetallesPostulante').modal('hide');
