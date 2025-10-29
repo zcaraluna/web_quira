@@ -3539,20 +3539,14 @@ $distribucion_unidad = $pdo->query("
             const camposSeleccionados = [];
             const checkboxes = document.querySelectorAll('.campo-exportar:checked');
             
-            console.log('Checkboxes encontrados:', checkboxes.length);
-            console.log('Checkboxes:', checkboxes);
-            
             if (checkboxes.length === 0) {
                 alert('Por favor seleccione al menos un campo para exportar.');
                 return;
             }
             
             checkboxes.forEach(checkbox => {
-                console.log('Campo seleccionado:', checkbox.value);
                 camposSeleccionados.push(checkbox.value);
             });
-            
-            console.log('Campos seleccionados:', camposSeleccionados);
             
             // Obtener los filtros actuales del formulario
             const searchEl = document.getElementById('search');
@@ -3567,13 +3561,13 @@ $distribucion_unidad = $pdo->query("
                 filtro_dedo: dedoEl ? dedoEl.value : ''
             };
             
-            console.log('Filtros:', filtros);
-            
             // Crear formulario temporal para enviar los datos
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'exportar_postulantes_pdf.php';
             form.target = '_blank';
+            form.style.display = 'none';
+            form.setAttribute('enctype', 'application/x-www-form-urlencoded');
             
             // Agregar campos seleccionados
             const camposInput = document.createElement('input');
@@ -3587,23 +3581,36 @@ $distribucion_unidad = $pdo->query("
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;
-                input.value = filtros[key];
+                input.value = filtros[key] || '';
                 form.appendChild(input);
             });
             
-            console.log('Formulario creado:', form);
-            console.log('Datos a enviar:', {
-                campos: JSON.stringify(camposSeleccionados),
-                filtros: filtros
-            });
+            // Verificar que todos los inputs estén en el formulario
+            console.log('Formulario con', form.elements.length, 'elementos');
+            for (let i = 0; i < form.elements.length; i++) {
+                console.log('Input', i, ':', form.elements[i].name, '=', form.elements[i].value);
+            }
             
-            // Agregar al DOM, enviar y remover
+            // Agregar al DOM
             document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
             
-            // Cerrar modal
+            // Cerrar modal primero
             $('#modalExportarPostulantes').modal('hide');
+            
+            // Enviar el formulario después de cerrar el modal
+            setTimeout(() => {
+                form.submit();
+                // Remover después de un tiempo más largo para asegurar que se envíe
+                setTimeout(() => {
+                    try {
+                        if (form.parentNode) {
+                            document.body.removeChild(form);
+                        }
+                    } catch(e) {
+                        console.log('Form ya removido');
+                    }
+                }, 1000);
+            }, 300);
         }
         
         // Funciones para gestión de unidades
