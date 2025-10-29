@@ -3561,56 +3561,55 @@ $distribucion_unidad = $pdo->query("
                 filtro_dedo: dedoEl ? dedoEl.value : ''
             };
             
-            // Crear formulario temporal para enviar los datos
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'exportar_postulantes_pdf.php';
-            form.target = '_blank';
-            form.style.display = 'none';
-            form.setAttribute('enctype', 'application/x-www-form-urlencoded');
+            // Crear FormData para enviar los datos
+            const formData = new FormData();
+            formData.append('campos', JSON.stringify(camposSeleccionados));
+            formData.append('search', filtros.search);
+            formData.append('filtro_unidad', filtros.filtro_unidad);
+            formData.append('filtro_aparato', filtros.filtro_aparato);
+            formData.append('filtro_dedo', filtros.filtro_dedo);
             
-            // Agregar campos seleccionados
-            const camposInput = document.createElement('input');
-            camposInput.type = 'hidden';
-            camposInput.name = 'campos';
-            camposInput.value = JSON.stringify(camposSeleccionados);
-            form.appendChild(camposInput);
-            
-            // Agregar filtros
-            Object.keys(filtros).forEach(key => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = filtros[key] || '';
-                form.appendChild(input);
-            });
-            
-            // Verificar que todos los inputs estén en el formulario
-            console.log('Formulario con', form.elements.length, 'elementos');
-            for (let i = 0; i < form.elements.length; i++) {
-                console.log('Input', i, ':', form.elements[i].name, '=', form.elements[i].value);
-            }
-            
-            // Agregar al DOM
-            document.body.appendChild(form);
-            
-            // Cerrar modal primero
+            // Cerrar modal
             $('#modalExportarPostulantes').modal('hide');
             
-            // Enviar el formulario después de cerrar el modal
-            setTimeout(() => {
-                form.submit();
-                // Remover después de un tiempo más largo para asegurar que se envíe
-                setTimeout(() => {
-                    try {
-                        if (form.parentNode) {
-                            document.body.removeChild(form);
-                        }
-                    } catch(e) {
-                        console.log('Form ya removido');
-                    }
-                }, 1000);
-            }, 300);
+            // Usar fetch para enviar los datos
+            fetch('exportar_postulantes_pdf.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/pdf')) {
+                    // Es un PDF real
+                    return response.blob();
+                } else {
+                    // Es HTML, convertir a blob para descargar
+                    return response.text().then(text => {
+                        return new Blob([text], { type: 'text/html' });
+                    });
+                }
+            })
+            .then(blob => {
+                // Crear URL temporal para el blob
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Determinar extensión según el tipo de contenido
+                const contentType = blob.type;
+                const extension = contentType.includes('pdf') ? '.pdf' : '.html';
+                a.download = 'Lista_Postulantes_' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5) + extension;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al generar el PDF: ' + error.message);
+            });
         }
         
         // Funciones para gestión de unidades

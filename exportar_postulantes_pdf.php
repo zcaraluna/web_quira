@@ -92,29 +92,42 @@ if (file_exists('fpdf/fpdf.php')) {
             // Generar PDF básico usando HTML/CSS
             $html = $this->generateHTML();
             
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="' . $name . '"');
-            
-            // Usar wkhtmltopdf si está disponible, sino generar HTML
-            if (function_exists('shell_exec') && shell_exec('which wkhtmltopdf')) {
+            // Usar wkhtmltopdf si está disponible
+            $wkhtmltopdf = shell_exec('which wkhtmltopdf');
+            if ($wkhtmltopdf && function_exists('shell_exec')) {
                 $tempFile = tempnam(sys_get_temp_dir(), 'quira_export');
                 file_put_contents($tempFile . '.html', $html);
                 
-                $cmd = "wkhtmltopdf --page-size A4 --orientation Landscape --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm " . 
-                       escapeshellarg($tempFile . '.html') . " " . escapeshellarg($tempFile . '.pdf');
+                $cmd = "wkhtmltopdf --page-size Legal --orientation Landscape --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm --disable-smart-shrinking " . 
+                       escapeshellarg($tempFile . '.html') . " " . escapeshellarg($tempFile . '.pdf') . " 2>&1";
                 
-                shell_exec($cmd);
+                $output = shell_exec($cmd);
                 
                 if (file_exists($tempFile . '.pdf')) {
+                    header('Content-Type: application/pdf');
+                    header('Content-Disposition: attachment; filename="' . $name . '"');
+                    header('Content-Length: ' . filesize($tempFile . '.pdf'));
                     readfile($tempFile . '.pdf');
                     unlink($tempFile . '.pdf');
+                    unlink($tempFile . '.html');
+                    return;
                 }
-                unlink($tempFile . '.html');
-            } else {
-                // Fallback: generar HTML para imprimir
-                header('Content-Type: text/html; charset=utf-8');
-                echo $html;
             }
+            
+            // Fallback: generar HTML con estilo para imprimir como PDF
+            header('Content-Type: text/html; charset=utf-8');
+            header('Content-Disposition: attachment; filename="' . str_replace('.pdf', '.html', $name) . '"');
+            
+            // Agregar script para auto-imprimir
+            $html = str_replace('</body>', '
+    <script>
+        window.onload = function() {
+            window.print();
+        };
+    </script>
+</body>', $html);
+            
+            echo $html;
         }
         
         private function generateHTML() {
@@ -199,16 +212,11 @@ if (file_exists('fpdf/fpdf.php')) {
     }
 }
 
-// Debug: Ver qué se está recibiendo
-error_log('DEBUG EXPORTAR: POST data recibido: ' . print_r($_POST, true));
-
 // Obtener los campos seleccionados
 $campos = json_decode($_POST['campos'] ?? '[]', true);
-error_log('DEBUG EXPORTAR: Campos decodificados: ' . print_r($campos, true));
 
 if (empty($campos)) {
-    error_log('DEBUG EXPORTAR: No hay campos seleccionados');
-    die('No se seleccionaron campos para exportar. POST data: ' . print_r($_POST, true));
+    die('No se seleccionaron campos para exportar.');
 }
 
 // Obtener filtros
@@ -284,6 +292,6 @@ $pdf = new FPDF('L', 'in', array(11, 8.5));
 $pdf->AliasNbPages();
 $pdf->AddPage();
 
-// Generar PDF
-$pdf->Output('Lista_Postulantes_' . date('Y-m-d_H-i-s') . '.pdf', 'D');
+// Generar PDF usando el método generatePDF
+$pdf->generatePDF('Lista_Postulantes_' . date('Y-m-d_H-i-s') . '.pdf');
 ?>
