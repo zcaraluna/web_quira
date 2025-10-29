@@ -2920,11 +2920,6 @@ $distribucion_unidad = $pdo->query("
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
-                    <button type="button" class="btn btn-danger" onclick="eliminarPostulanteModal()">
-                        <i class="fas fa-trash mr-1"></i>Eliminar Postulante
-                    </button>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -5105,75 +5100,6 @@ $distribucion_unidad = $pdo->query("
             setTimeout(() => {
                 statusDiv.style.display = 'none';
             }, 3000);
-        }
-
-        // Función para eliminar postulante desde el modal
-        function eliminarPostulanteModal() {
-            const postulanteId = document.getElementById('detalle_id').textContent.trim();
-            const postulanteNombre = document.getElementById('detalle_nombre').textContent.trim();
-            const postulanteApellido = document.getElementById('detalle_apellido').textContent.trim();
-            
-            console.log('ID obtenido:', postulanteId);
-            console.log('Nombre obtenido:', postulanteNombre);
-            console.log('Apellido obtenido:', postulanteApellido);
-            
-            if (!postulanteId || postulanteId === '-' || postulanteId === '') {
-                alert('Error: No se pudo obtener el ID del postulante. Asegúrese de que el modal esté completamente cargado.');
-                return;
-            }
-            
-            // Verificar que el ID sea numérico
-            if (!/^\d+$/.test(postulanteId)) {
-                alert('Error: El ID del postulante no es válido. ID obtenido: ' + postulanteId);
-                return;
-            }
-            
-            const nombreCompleto = `${postulanteNombre} ${postulanteApellido}`;
-            
-            if (confirm(`¿Está seguro de que desea eliminar al postulante "${nombreCompleto}"?\n\nEsta acción no se puede deshacer.`)) {
-                // Mostrar loading
-                const btnEliminar = event.target;
-                const textoOriginal = btnEliminar.innerHTML;
-                btnEliminar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Eliminando...';
-                btnEliminar.disabled = true;
-                
-                console.log('Enviando ID:', postulanteId);
-                
-                // Realizar eliminación via AJAX
-                fetch('eliminar_postulante_modal.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'id=' + encodeURIComponent(postulanteId)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Respuesta del servidor:', data);
-                    if (data.success) {
-                        // Cerrar el modal
-                        $('#modalDetallesPostulante').modal('hide');
-                        
-                        // Mostrar mensaje de éxito
-                        alert('Postulante eliminado exitosamente');
-                        
-                        // Recargar la página para actualizar la lista
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                        // Restaurar botón
-                        btnEliminar.innerHTML = textoOriginal;
-                        btnEliminar.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    alert('Error al eliminar el postulante');
-                    console.error('Error:', error);
-                    // Restaurar botón
-                    btnEliminar.innerHTML = textoOriginal;
-                    btnEliminar.disabled = false;
-                });
-            }
         }
 
     </script>
