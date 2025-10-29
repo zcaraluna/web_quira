@@ -152,7 +152,7 @@ nginx.conf.bak
 # ===========================================
 migrations/
 sql_scripts/
-*.sql
+#*.sql
 agregar_campo_*.sql
 consultar_*.sql
 
