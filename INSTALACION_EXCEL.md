@@ -1,21 +1,29 @@
 # Instalación de PhpSpreadsheet para Excel Real
 
-## Pasos para instalar la librería
+## Pasos para instalar la librería en Ubuntu VPS
 
 ### 1. Instalar Composer (si no lo tienes)
-- Descargar desde: https://getcomposer.org/download/
-- Instalar siguiendo las instrucciones del sitio
+```bash
+# Descargar e instalar Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+sudo chmod +x /usr/local/bin/composer
+
+# Verificar instalación
+composer --version
+```
 
 ### 2. Instalar PhpSpreadsheet
 Ejecutar uno de estos comandos en la carpeta del proyecto:
 
-**Opción A - Usando el archivo .bat (Windows):**
-```
-install_dependencies.bat
+**Opción A - Usando el script de instalación (Recomendado):**
+```bash
+chmod +x install_dependencies.sh
+./install_dependencies.sh
 ```
 
 **Opción B - Usando Composer directamente:**
-```
+```bash
 composer install --no-dev --optimize-autoloader
 ```
 
