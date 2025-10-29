@@ -1820,27 +1820,60 @@ Por favor verifique:
                      }
                      
                      // Actualizar usuario en el K40
-                     console.log(`Actualizando usuario UID ${usuarioUID} en el dispositivo...`);
-                     const zkResult = await zktecoBridge.addUser(
-                         usuarioUID,
-                         `${nombre} ${apellido}`,
-                         0, // Privilege por defecto
-                         "",
-                         "" // Group ID por defecto
-                     );
-                        
-                        console.log('Resultado completo del addUser:', zkResult);
-                        console.log('zkResult.success:', zkResult.success);
-                        console.log('Tipo de zkResult.success:', typeof zkResult.success);
-                        
-                        if (zkResult.success === true || zkResult.success === undefined) {
-                            k40Actualizado = true;
-                            console.log(`✅ Usuario ${usuarioUID} actualizado en K40 sin perder la huella`);
-                        } else {
-                            console.log(`❌ Error actualizando usuario en K40:`, zkResult);
-                            alert('No se pudo actualizar el usuario en el dispositivo K40. No se guardará en la base de datos.');
-                            return;
-                        }
+                     console.log(`🔄 Actualizando usuario UID ${usuarioUID} en el dispositivo...`);
+                     console.log(`📝 Datos a enviar: UID=${usuarioUID}, Nombre="${nombre} ${apellido}"`);
+                     
+                     let zkResult = null;
+                     
+                     // Intentar primero con setUser (actualizar usuario existente)
+                     try {
+                         console.log('🔄 Intentando con setUser...');
+                         zkResult = await zktecoBridge.setUser(
+                             usuarioUID,
+                             `${nombre} ${apellido}`,
+                             0, // Privilege por defecto
+                             "", // Password
+                             "", // Group ID por defecto
+                             "" // User ID por defecto
+                         );
+                         
+                         console.log('📥 Resultado del setUser:', zkResult);
+                         
+                         if (zkResult.success === true || zkResult.success === undefined) {
+                             k40Actualizado = true;
+                             console.log(`✅ Usuario ${usuarioUID} actualizado con setUser`);
+                         } else {
+                             throw new Error('setUser falló: ' + JSON.stringify(zkResult));
+                         }
+                         
+                     } catch (setUserError) {
+                         console.log('⚠️ setUser falló, intentando con addUser:', setUserError.message);
+                         
+                         // Si setUser falla, intentar con addUser
+                         try {
+                             zkResult = await zktecoBridge.addUser(
+                                 usuarioUID,
+                                 `${nombre} ${apellido}`,
+                                 0, // Privilege por defecto
+                                 "", // Password
+                                 "" // Group ID por defecto
+                             );
+                             
+                             console.log('📥 Resultado del addUser:', zkResult);
+                             
+                             if (zkResult.success === true || zkResult.success === undefined) {
+                                 k40Actualizado = true;
+                                 console.log(`✅ Usuario ${usuarioUID} actualizado con addUser`);
+                             } else {
+                                 throw new Error('addUser también falló: ' + JSON.stringify(zkResult));
+                             }
+                             
+                         } catch (addUserError) {
+                             console.log(`❌ Error actualizando usuario en K40:`, addUserError.message);
+                             alert('No se pudo actualizar el usuario en el dispositivo K40. No se guardará en la base de datos.');
+                             return;
+                         }
+                     }
                     
                 } catch (error) {
                     console.log(`❌ Error actualizando K40: ${error.message}`);
