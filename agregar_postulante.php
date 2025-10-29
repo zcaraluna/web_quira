@@ -21,8 +21,11 @@ session_start();
 require_once 'config.php';
 requireLogin();
 
-// Todos los usuarios pueden agregar postulantes
-// (restricción eliminada)
+// Los SUPERVISORES no pueden agregar postulantes
+if ($_SESSION['rol'] === 'SUPERVISOR') {
+    header('Location: dashboard.php');
+    exit;
+}
 
 $mensaje = '';
 $tipo_mensaje = '';

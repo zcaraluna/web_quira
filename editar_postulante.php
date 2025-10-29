@@ -11,8 +11,11 @@ session_start();
 require_once 'config.php';
 requireLogin();
 
-// Todos los usuarios pueden editar postulantes
-// (restricción eliminada)
+// Los SUPERVISORES no pueden editar postulantes
+if ($_SESSION['rol'] === 'SUPERVISOR') {
+    header('Location: dashboard.php');
+    exit;
+}
 
 $mensaje = '';
 $tipo_mensaje = '';

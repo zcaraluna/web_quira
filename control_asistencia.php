@@ -21,8 +21,11 @@ session_start();
 require_once 'config.php';
 requireLogin();
 
-// Verificar permisos - cualquier usuario autenticado puede ver asistencia
-// (ADMIN, SUPERADMIN, USER)
+// Los SUPERVISORES no pueden acceder al control de asistencia
+if ($_SESSION['rol'] === 'SUPERVISOR') {
+    header('Location: dashboard.php');
+    exit;
+}
 
 $mensaje = '';
 $tipo_mensaje = '';

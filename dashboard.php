@@ -440,7 +440,7 @@ if (isset($_SESSION['mensaje_unidades'])) {
 
 
 // Obtener datos de dispositivos si el usuario tiene permisos
-if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN'])) {
+if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN', 'SUPERVISOR'])) {
     $dispositivos = $pdo->query("
         SELECT 
             a.id, a.nombre, a.serial, a.ip_address, a.puerto, 
@@ -619,7 +619,7 @@ foreach ($aparatos_eliminados as $aparato) {
 $dedos = $pdo->query("SELECT DISTINCT dedo_registrado FROM postulantes WHERE dedo_registrado IS NOT NULL AND dedo_registrado != '' ORDER BY dedo_registrado")->fetchAll();
 
 // Obtener datos de unidades si el usuario tiene permisos
-if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN'])) {
+if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN', 'SUPERVISOR'])) {
     $unidades_data = $pdo->query("SELECT id, nombre, activa FROM unidades ORDER BY nombre")->fetchAll();
 }
 
@@ -1305,7 +1305,7 @@ $distribucion_unidad = $pdo->query("
                                     Usuarios
                                 </a>
                                 <?php endif; ?>
-                                <?php if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN'])): ?>
+                                <?php if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN', 'SUPERVISOR'])): ?>
                                 <a class="nav-link mb-2 <?= (isset($mensaje_dispositivos) && !empty($mensaje_dispositivos)) ? 'active' : '' ?>" href="#dispositivos" onclick="showSection('dispositivos')">
                                     <i class="fas fa-fw fa-fingerprint mr-2"></i>
                                     Dispositivos Biométricos
@@ -1315,6 +1315,7 @@ $distribucion_unidad = $pdo->query("
                                     <i class="fas fa-fw fa-user-friends mr-2"></i>
                                     Postulantes
                                 </a>
+                                <?php if (!in_array($_SESSION['rol'], ['SUPERVISOR'])): ?>
                                 <a class="nav-link mb-2" href="agregar_postulante.php">
                                     <i class="fas fa-fw fa-user-plus mr-2"></i>
                                     Agregar Postulante
@@ -1323,7 +1324,8 @@ $distribucion_unidad = $pdo->query("
                                     <i class="fas fa-fw fa-clock mr-2"></i>
                                     Control de Asistencia
                                 </a>
-                                <?php if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN'])): ?>
+                                <?php endif; ?>
+                                <?php if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN', 'SUPERVISOR'])): ?>
                                 <a class="nav-link mb-2 <?= (isset($mensaje_unidades) && !empty($mensaje_unidades)) ? 'active' : '' ?>" href="#unidades" onclick="showSection('unidades')">
                                     <i class="fas fa-fw fa-building mr-2"></i>
                                     Unidades
@@ -1545,14 +1547,16 @@ $distribucion_unidad = $pdo->query("
                     <!-- Other sections will be added here -->
 
                     <!-- Sección de Dispositivos Biométricos -->
-                    <?php if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN'])): ?>
+                    <?php if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN', 'SUPERVISOR'])): ?>
                     <div id="dispositivos-section" class="content-section <?= (isset($mensaje_dispositivos) && !empty($mensaje_dispositivos)) ? 'active' : '' ?>">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">Lista de Dispositivos</h5>
+                                <?php if (!in_array($_SESSION['rol'], ['SUPERVISOR'])): ?>
                                 <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalCrearDispositivo">
                                     <i class="fas fa-plus"></i> Nuevo Dispositivo
                                 </button>
+                                <?php endif; ?>
                             </div>
                             <div class="card-body">
                                 <?php if ($mensaje_dispositivos): ?>
@@ -1576,7 +1580,9 @@ $distribucion_unidad = $pdo->query("
                                                 <th>Estado</th>
                                                 <th>Postulantes</th>
                                                 <th>Fecha Registro</th>
+                                                <?php if (!in_array($_SESSION['rol'], ['SUPERVISOR'])): ?>
                                                 <th>Acciones</th>
+                                                <?php endif; ?>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1608,6 +1614,7 @@ $distribucion_unidad = $pdo->query("
                                                     <?php endif; ?>
                                                 </td>
                                                 <td><?= date('d/m/Y H:i', strtotime($dispositivo['fecha_registro'])) ?></td>
+                                                <?php if (!in_array($_SESSION['rol'], ['SUPERVISOR'])): ?>
                                                 <td>
                                                     <div class="btn-group" role="group">
                                                         <button type="button" class="btn btn-sm btn-outline-primary" 
@@ -1621,6 +1628,7 @@ $distribucion_unidad = $pdo->query("
                                                         </button>
                                                     </div>
                                                 </td>
+                                                <?php endif; ?>
                                             </tr>
                                             <?php endforeach; ?>
                                         </tbody>
@@ -1807,10 +1815,12 @@ $distribucion_unidad = $pdo->query("
                                                                     data-postulante-id="<?= $postulante['id'] ?>">
                                                                 <i class="fas fa-eye"></i> Ver
                                                             </button>
+                                                            <?php if (!in_array($_SESSION['rol'], ['SUPERVISOR'])): ?>
                                                             <a href="editar_postulante.php?id=<?= $postulante['id'] ?>" 
                                                                class="btn btn-sm btn-outline-warning">
                                                                 <i class="fas fa-edit"></i> Editar
                                                             </a>
+                                                            <?php endif; ?>
                                                         </div>
                                                     </td>
                                                 </tr>
