@@ -26,10 +26,25 @@ try {
         $id = $_GET['id'] ?? '';
     }
     
-    if (empty($id) || !is_numeric($id)) {
-        echo json_encode(['success' => false, 'message' => 'ID de postulante inválido']);
+    // Debug: Log del ID recibido
+    error_log("ID recibido en eliminar_postulante_modal.php: " . var_export($id, true));
+    error_log("Tipo de ID: " . gettype($id));
+    error_log("is_numeric check: " . (is_numeric($id) ? 'true' : 'false'));
+    
+    if (empty($id)) {
+        echo json_encode(['success' => false, 'message' => 'ID de postulante vacío']);
         exit;
     }
+    
+    // Limpiar y validar ID
+    $id = trim($id);
+    if (!is_numeric($id) || $id <= 0) {
+        echo json_encode(['success' => false, 'message' => 'ID de postulante inválido: ' . $id]);
+        exit;
+    }
+    
+    // Convertir a entero
+    $id = (int)$id;
     
     // Verificar que el postulante existe
     $stmt = $pdo->prepare("SELECT id, nombre, apellido, cedula FROM postulantes WHERE id = ?");
