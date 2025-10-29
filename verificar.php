@@ -416,13 +416,12 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
                         <span class="data-label">Capturador de Huella:</span>
                         <span class="data-value">
                             <?php 
-                            $capturador = '';
                             if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']) {
                                 $capturador = $postulante['capturador_grado'] . ' ' . $postulante['capturador_nombre'] . ' ' . $postulante['capturador_apellido'];
+                                echo htmlspecialchars($capturador);
                             } else {
-                                $capturador = 'Oficial Ayudante JOSE MERLO'; // Valor por defecto según especificación
+                                echo 'No disponible';
                             }
-                            echo htmlspecialchars($capturador);
                             ?>
                         </span>
                     </div>
@@ -556,14 +555,13 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
                 ['Edad:', '<?= htmlspecialchars($postulante['edad']) ?> años'],
                 ['Sexo:', '<?= htmlspecialchars($postulante['sexo']) ?>'],
                 ['Unidad:', '<?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?>'],
-                ['Capturador de Huella:', '<?php 
-                    $capturador_pdf = '';
+                ['Capturador de Huella:', '<?php
                     if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']) {
                         $capturador_pdf = $postulante['capturador_grado'] . ' ' . $postulante['capturador_nombre'] . ' ' . $postulante['capturador_apellido'];
+                        echo htmlspecialchars($capturador_pdf);
                     } else {
-                        $capturador_pdf = 'Oficial Ayudante JOSE MERLO';
+                        echo 'No disponible';
                     }
-                    echo htmlspecialchars($capturador_pdf);
                 ?>'],
                 ['Registrador:', '<?= htmlspecialchars($postulante['registrado_por']) ?>'],
                 ['Fecha y Hora de Registro:', '<?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>']

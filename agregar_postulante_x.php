@@ -41,12 +41,12 @@ try {
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $nombre = trim($_POST['nombre']);
-        $apellido = trim($_POST['apellido']);
+        $nombre = strtoupper(trim($_POST['nombre']));
+        $apellido = strtoupper(trim($_POST['apellido']));
         $cedula = trim($_POST['cedula']);
         $fecha_nacimiento = $_POST['fecha_nacimiento'];
         $telefono = trim($_POST['telefono']);
-        $unidad = trim($_POST['unidad']);
+        $unidad = strtoupper(trim($_POST['unidad']));
         $sexo = $_POST['sexo'];
         $observaciones = trim($_POST['observaciones']);
         
