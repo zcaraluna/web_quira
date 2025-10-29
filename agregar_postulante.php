@@ -1802,29 +1802,27 @@ Por favor verifique:
                         }
                     }
                     
-                     // Verificar si el usuario ya tiene nombre asignado (solo si no se proporcionó ID específico)
-                     if (!idK40) {
-                         const users = await zktecoBridge.getUsers();
-                         const usuarioExistente = users.users.find(u => parseInt(u.uid) === usuarioUID);
+                     // Verificar si el usuario ya tiene nombre asignado
+                     const users = await zktecoBridge.getUsers();
+                     const usuarioExistente = users.users.find(u => parseInt(u.uid) === usuarioUID);
+                     
+                     if (usuarioExistente && usuarioExistente.name && !usuarioExistente.name.startsWith("NN-")) {
+                         console.log(`❌ Usuario UID ${usuarioUID} ya tiene nombre: ${usuarioExistente.name}`);
                          
-                         if (usuarioExistente && usuarioExistente.name && !usuarioExistente.name.startsWith("NN-")) {
-                             console.log(`❌ Usuario UID ${usuarioUID} ya tiene nombre: ${usuarioExistente.name}`);
-                             
-                             // Mostrar alerta visual con información del usuario existente
-                             mostrarAlertaUsuarioExistente(usuarioUID, usuarioExistente.name);
-                             return;
-                        }
-                    }
-                    
-                        // Actualizar usuario en el K40
-                        console.log(`Actualizando usuario UID ${usuarioUID} en el dispositivo...`);
-                        const zkResult = await zktecoBridge.addUser(
-                            usuarioUID,
-                            `${nombre} ${apellido}`,
-                            0, // Privilege por defecto
-                            "",
-                            "" // Group ID por defecto
-                        );
+                         // Mostrar alerta visual con información del usuario existente
+                         mostrarAlertaUsuarioExistente(usuarioUID, usuarioExistente.name);
+                         return;
+                     }
+                     
+                     // Actualizar usuario en el K40
+                     console.log(`Actualizando usuario UID ${usuarioUID} en el dispositivo...`);
+                     const zkResult = await zktecoBridge.addUser(
+                         usuarioUID,
+                         `${nombre} ${apellido}`,
+                         0, // Privilege por defecto
+                         "",
+                         "" // Group ID por defecto
+                     );
                         
                         console.log('Resultado completo del addUser:', zkResult);
                         console.log('zkResult.success:', zkResult.success);
