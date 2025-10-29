@@ -1103,16 +1103,29 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                     console.log(`ID más alto detectado en K40: ${uidMasAlto}`);
                     console.log(`Usuarios obtenidos: ${users.users.length} de ${totalUsuarios}`);
                     
-                    // Si el número de usuarios obtenidos es menor al total, 
-                    // asumir que el siguiente ID disponible es el total (no +1)
-                    if (users.users.length < totalUsuarios) {
-                        const siguienteID = totalUsuarios;
-                        console.log(`Usando siguiente ID disponible: ${siguienteID} (basado en total del dispositivo)`);
-                        document.getElementById('id_k40').value = siguienteID;
-                        ultimoUID = siguienteID;
+                    // Buscar un ID disponible (sin nombre asignado)
+                    let idDisponible = null;
+                    
+                    // Primero buscar usuarios sin nombre asignado
+                    const usuariosSinNombre = users.users.filter(u => !u.name || u.name.startsWith("NN-"));
+                    if (usuariosSinNombre.length > 0) {
+                        // Usar el primer usuario sin nombre
+                        idDisponible = parseInt(usuariosSinNombre[0].uid);
+                        console.log(`ID disponible encontrado (sin nombre): ${idDisponible}`);
                     } else {
-                        document.getElementById('id_k40').value = uidMasAlto;
-                        ultimoUID = uidMasAlto;
+                        // Si no hay usuarios sin nombre, usar el siguiente ID disponible
+                        idDisponible = uidMasAlto + 1;
+                        console.log(`No hay usuarios sin nombre, usando siguiente ID: ${idDisponible}`);
+                    }
+                    
+                    if (idDisponible) {
+                        document.getElementById('id_k40').value = idDisponible;
+                        ultimoUID = idDisponible;
+                        
+                        // Verificar inmediatamente si el ID asignado ya tiene nombre
+                        setTimeout(() => {
+                            verificarUsuarioExistente(idDisponible);
+                        }, 100);
                     }
                     
                     // Mostrar todos los UIDs para debug
@@ -1623,13 +1636,14 @@ Por favor verifique:
                       const ultimo = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
                       if (ultimo.name && !ultimo.name.startsWith("NN-")) {
                           ultimoUsuario = ` | Último: ${ultimo.uid}:${ultimo.name}`;
-                          // NO mostrar advertencia automáticamente - solo informar
-                          // La advertencia se mostrará solo si el usuario intenta usar un ID específico que ya tiene nombre
+                          // Mostrar advertencia si el último usuario tiene nombre asignado
+                          // Esto indica que no hay usuarios disponibles para asignar automáticamente
+                          mostrarAdvertenciaUltimoUsuario(ultimo.uid, ultimo.name);
                       } else {
                           ultimoUsuario = ` | Último: ${ultimo.uid} (sin nombre)`;
+                          // Ocultar advertencia si el último usuario no tiene nombre
+                          ocultarAdvertenciaUltimoUsuario();
                       }
-                      // Ocultar advertencia del último usuario ya que no es un problema automático
-                      ocultarAdvertenciaUltimoUsuario();
                   }
                   
                   const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
