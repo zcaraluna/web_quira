@@ -1248,6 +1248,38 @@ $distribucion_unidad = $pdo->query("
         .btn-close:hover {
             opacity: 0.9;
         }
+        
+        /* Estilos para el modal de exportación */
+        .export-option {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .export-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #2E5090;
+        }
+        
+        .export-option .card-body {
+            padding: 1.5rem;
+        }
+        
+        .export-option i {
+            transition: transform 0.3s ease;
+        }
+        
+        .export-option:hover i {
+            transform: scale(1.1);
+        }
+        
+        #modalExportarPostulantes .modal-dialog {
+            max-width: 600px;
+        }
+        
+        #modalExportarPostulantes .modal-body {
+            padding: 2rem;
+        }
     </style>
 </head>
 <body>
@@ -3497,8 +3529,56 @@ $distribucion_unidad = $pdo->query("
         }
         
         function exportarPostulantes() {
-            // Función para exportar postulantes (implementar según necesidades)
-            alert('Función de exportación en desarrollo. Por ahora, puedes usar la función de copiar tabla del navegador.');
+            // Mostrar modal de opciones de exportación
+            $('#modalExportarPostulantes').modal('show');
+        }
+        
+        function confirmarExportacion(formato) {
+            // Obtener todos los filtros actuales
+            const search = document.getElementById('search').value;
+            const fechaDesde = document.getElementById('fecha_desde').value;
+            const fechaHasta = document.getElementById('fecha_hasta').value;
+            const unidad = document.getElementById('unidad').value;
+            const aparato = document.getElementById('aparato').value;
+            const dedo = document.getElementById('dedo').value;
+            
+            // Crear URL para exportar
+            const url = new URL('exportar_postulantes.php', window.location.origin);
+            url.searchParams.set('exportar', '1');
+            url.searchParams.set('formato', formato);
+            
+            if (search) url.searchParams.set('search', search);
+            if (fechaDesde) url.searchParams.set('fecha_desde', fechaDesde);
+            if (fechaHasta) url.searchParams.set('fecha_hasta', fechaHasta);
+            if (unidad) url.searchParams.set('unidad', unidad);
+            if (aparato) url.searchParams.set('aparato', aparato);
+            if (dedo) url.searchParams.set('dedo', dedo);
+            
+            // Cerrar modal
+            $('#modalExportarPostulantes').modal('hide');
+            
+            // Mostrar mensaje de procesamiento
+            const mensaje = document.createElement('div');
+            mensaje.className = 'alert alert-info alert-dismissible fade show position-fixed';
+            mensaje.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            mensaje.innerHTML = `
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                Generando archivo ${formato.toUpperCase()}... Por favor espere.
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            `;
+            document.body.appendChild(mensaje);
+            
+            // Abrir en nueva ventana para descarga
+            window.open(url.toString(), '_blank');
+            
+            // Remover mensaje después de 3 segundos
+            setTimeout(() => {
+                if (mensaje.parentNode) {
+                    mensaje.parentNode.removeChild(mensaje);
+                }
+            }, 3000);
         }
         
         // Funciones para gestión de unidades
@@ -5242,6 +5322,66 @@ $distribucion_unidad = $pdo->query("
             
             <div class="modal-footer">
                 <button class="btn-close" id="btn-close">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Exportar Postulantes -->
+    <div class="modal fade" id="modalExportarPostulantes" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-download mr-2"></i>Exportar Postulantes
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Seleccione el formato de exportación para los postulantes filtrados:</p>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center export-option" onclick="confirmarExportacion('excel')" style="cursor: pointer;">
+                                <div class="card-body">
+                                    <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                                    <h6 class="card-title">Excel (.xlsx)</h6>
+                                    <p class="card-text small text-muted">Formato recomendado para análisis de datos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center export-option" onclick="confirmarExportacion('csv')" style="cursor: pointer;">
+                                <div class="card-body">
+                                    <i class="fas fa-file-csv fa-3x text-info mb-3"></i>
+                                    <h6 class="card-title">CSV (.csv)</h6>
+                                    <p class="card-text small text-muted">Formato compatible con cualquier hoja de cálculo</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center export-option" onclick="confirmarExportacion('pdf')" style="cursor: pointer;">
+                                <div class="card-body">
+                                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                                    <h6 class="card-title">PDF (.pdf)</h6>
+                                    <p class="card-text small text-muted">Formato ideal para impresión y presentaciones</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Nota:</strong> La exportación incluirá todos los filtros aplicados actualmente. 
+                        Total de registros a exportar: <span id="total-exportar"><?= $total_records ?></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Cancelar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
