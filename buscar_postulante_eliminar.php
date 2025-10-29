@@ -18,39 +18,41 @@ try {
     $pdo = new PDO("pgsql:host=$host;dbname=$dbname", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
+    // Obtener cédula de POST o GET
+    $cedula = '';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cedula = $_POST['cedula'] ?? '';
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        $cedula = $_GET['cedula'] ?? '';
+    }
+    
+    if (empty($cedula)) {
+        echo json_encode(['success' => false, 'message' => 'Cédula requerida']);
+        exit;
+    }
+    
+    // Buscar postulante por cédula
+    $stmt = $pdo->prepare("
+        SELECT id, nombre, apellido, cedula, unidad, fecha_registro, edad, dedo_registrado, registrado_por
+        FROM postulantes 
+        WHERE cedula = ?
+    ");
+    $stmt->execute([$cedula]);
+    $postulante = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($postulante) {
+        // Formatear fecha
+        $postulante['fecha_registro'] = date('d/m/Y H:i', strtotime($postulante['fecha_registro']));
         
-        if (empty($cedula)) {
-            echo json_encode(['success' => false, 'message' => 'Cédula requerida']);
-            exit;
-        }
-        
-        // Buscar postulante por cédula
-        $stmt = $pdo->prepare("
-            SELECT id, nombre, apellido, cedula, unidad, fecha_registro, edad, dedo_registrado, registrado_por
-            FROM postulantes 
-            WHERE cedula = ?
-        ");
-        $stmt->execute([$cedula]);
-        $postulante = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($postulante) {
-            // Formatear fecha
-            $postulante['fecha_registro'] = date('d/m/Y H:i', strtotime($postulante['fecha_registro']));
-            
-            echo json_encode([
-                'success' => true, 
-                'postulante' => $postulante
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'No se encontró ningún postulante con esa cédula'
-            ]);
-        }
+        echo json_encode([
+            'success' => true, 
+            'postulante' => $postulante
+        ]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'No se encontró ningún postulante con esa cédula'
+        ]);
     }
     
 } catch (PDOException $e) {
