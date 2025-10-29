@@ -1172,8 +1172,12 @@ Por favor verifique:
         }
         
         try {
-            // Obtener usuarios del dispositivo
-            const users = await zktecoBridge.getUsers(10);
+            // Obtener información del dispositivo para saber el total real
+            const deviceInfo = await zktecoBridge.getDeviceInfo();
+            const totalUsuarios = deviceInfo ? deviceInfo.user_count : 0;
+            
+            // Obtener usuarios del dispositivo (todos)
+            const users = await zktecoBridge.getUsers();
             const usuarioExistente = users.users.find(u => parseInt(u.uid) === parseInt(uid));
             
             if (usuarioExistente && usuarioExistente.name && !usuarioExistente.name.startsWith("NN-")) {
@@ -1211,20 +1215,21 @@ Por favor verifique:
                 ocultarAdvertenciaIdAdelantado();
             } else {
                 // ID no existe en el dispositivo - verificar si es adelantado
-                const maxUid = Math.max(...users.users.map(u => parseInt(u.uid)), 0);
+                // Usar el total de usuarios del dispositivo como máximo permitido
+                const maxUidPermitido = totalUsuarios;
                 
-                if (parseInt(uid) > maxUid) {
+                if (parseInt(uid) > maxUidPermitido) {
                     // ID adelantado - no permitir
                     infoDiv.innerHTML = `
                         <div class="alert alert-warning alert-sm mb-0">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>ID adelantado:</strong> No puede usar IDs futuros (máximo: ${maxUid})
+                            <strong>ID adelantado:</strong> No puede usar IDs futuros (máximo: ${maxUidPermitido})
                         </div>
                     `;
                     infoDiv.style.display = 'block';
                     
                     // Mostrar advertencia y deshabilitar botón
-                    mostrarAdvertenciaIdAdelantado(uid, maxUid);
+                    mostrarAdvertenciaIdAdelantado(uid, maxUidPermitido);
                 } else {
                     // ID válido (menor o igual al máximo existente)
                     infoDiv.innerHTML = `

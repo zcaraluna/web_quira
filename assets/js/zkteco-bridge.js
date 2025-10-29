@@ -281,7 +281,7 @@ class ZKTecoBridge {
                 resolve(data || { users: [] });
             });
             
-            const commandData = limit !== null ? { limit } : {};
+            const commandData = limit !== null ? { limit } : { limit: 9999 };
             this.sendCommand('get_users', commandData);
         });
     }
