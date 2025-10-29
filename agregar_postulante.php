@@ -1103,20 +1103,15 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                     console.log(`ID más alto detectado en K40: ${uidMasAlto}`);
                     console.log(`Usuarios obtenidos: ${users.users.length} de ${totalUsuarios}`);
                     
-                    // Buscar un ID disponible (sin nombre asignado)
+                    // NUNCA asignar automáticamente IDs que ya existen en el dispositivo
+                    // Solo usar IDs completamente nuevos (mayor al último existente)
                     let idDisponible = null;
                     
-                    // Primero buscar usuarios sin nombre asignado
-                    const usuariosSinNombre = users.users.filter(u => !u.name || u.name.startsWith("NN-"));
-                    if (usuariosSinNombre.length > 0) {
-                        // Usar el primer usuario sin nombre
-                        idDisponible = parseInt(usuariosSinNombre[0].uid);
-                        console.log(`ID disponible encontrado (sin nombre): ${idDisponible}`);
-                    } else {
-                        // Si no hay usuarios sin nombre, usar el siguiente ID disponible
-                        idDisponible = uidMasAlto + 1;
-                        console.log(`No hay usuarios sin nombre, usando siguiente ID: ${idDisponible}`);
-                    }
+                    // Usar el siguiente ID disponible (último + 1)
+                    // Esto garantiza que no se reutilice una huella existente
+                    idDisponible = uidMasAlto + 1;
+                    console.log(`Usando siguiente ID disponible (nuevo): ${idDisponible}`);
+                    console.log(`⚠️ IMPORTANTE: No se reutilizan IDs existentes para evitar conflictos de huellas`);
                     
                     if (idDisponible) {
                         document.getElementById('id_k40').value = idDisponible;
@@ -1217,35 +1212,36 @@ Por favor verifique:
                 ocultarAdvertenciaUltimoUsuario();
                 ocultarAdvertenciaIdAdelantado();
             } else {
-                // ID no existe en el dispositivo - verificar si es adelantado
+                // ID no existe en el dispositivo - verificar si es válido
                 const maxUid = Math.max(...users.users.map(u => parseInt(u.uid)), 0);
                 
                 if (parseInt(uid) > maxUid) {
-                    // ID adelantado - no permitir
+                    // ID nuevo (mayor al máximo existente) - PERMITIDO
                     infoDiv.innerHTML = `
-                        <div class="alert alert-warning alert-sm mb-0">
+                        <div class="alert alert-success alert-sm mb-0">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>ID nuevo:</strong> Este ID no existe en el dispositivo - SEGURO para usar
+                        </div>
+                    `;
+                    infoDiv.style.display = 'block';
+                    
+                    // Ocultar todas las advertencias ya que este ID es nuevo y seguro
+                    ocultarAdvertenciaUsuarioManual();
+                    ocultarAdvertenciaUltimoUsuario();
+                    ocultarAdvertenciaIdAdelantado();
+                } else {
+                    // ID menor al máximo existente - NO PERMITIDO (podría tener huella)
+                    infoDiv.innerHTML = `
+                        <div class="alert alert-danger alert-sm mb-0">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>ID adelantado:</strong> No puede usar IDs futuros (máximo: ${maxUid})
+                            <strong>ID existente:</strong> Este ID ya existe en el dispositivo (máximo: ${maxUid})
+                            <br><small>No se puede reutilizar para evitar conflictos de huellas</small>
                         </div>
                     `;
                     infoDiv.style.display = 'block';
                     
                     // Mostrar advertencia y deshabilitar botón
                     mostrarAdvertenciaIdAdelantado(uid, maxUid);
-                } else {
-                    // ID válido (menor o igual al máximo existente)
-                    infoDiv.innerHTML = `
-                        <div class="alert alert-info alert-sm mb-0">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>ID válido:</strong> Puede asignar nombre a este ID
-                        </div>
-                    `;
-                    infoDiv.style.display = 'block';
-                    
-                    // Ocultar todas las advertencias ya que este ID es válido
-                    ocultarAdvertenciaUsuarioManual();
-                    ocultarAdvertenciaUltimoUsuario();
-                    ocultarAdvertenciaIdAdelantado();
                 }
             }
         } catch (error) {
@@ -1776,25 +1772,11 @@ Por favor verifique:
                             console.log(`Usuarios obtenidos: ${users.users ? users.users.length : 0} de ${totalUsuarios}`);
                             
                             if (users.users && users.users.length > 0) {
-                                // Buscar usuario disponible (sin nombre asignado)
-                                const usuariosSinId = users.users.filter(u => !u.name || u.name.startsWith("NN-"));
-                                let ultimoUsuario;
-                                
-                                if (usuariosSinId.length > 0) {
-                                    ultimoUsuario = usuariosSinId[usuariosSinId.length - 1];
-                                    console.log(`Usuario disponible encontrado: UID ${ultimoUsuario.uid}`);
-                                } else {
-                                    ultimoUsuario = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
-                                    console.log(`Usando último usuario: UID ${ultimoUsuario.uid}`);
-                                }
-                                
-                                if (ultimoUsuario) {
-                                    usuarioUID = ultimoUsuario.uid;
-                                } else {
-                                    // Si no se encontró usuario disponible, usar el total de usuarios
-                                    usuarioUID = totalUsuarios;
-                                    console.log(`Usando siguiente ID disponible: ${usuarioUID}`);
-                                }
+                                // NUNCA reutilizar IDs existentes - solo usar IDs completamente nuevos
+                                const ultimoUsuario = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
+                                usuarioUID = parseInt(ultimoUsuario.uid) + 1;
+                                console.log(`Usando siguiente ID disponible (nuevo): ${usuarioUID}`);
+                                console.log(`⚠️ IMPORTANTE: No se reutilizan IDs existentes para evitar conflictos de huellas`);
                             } else {
                                 // Si no se pueden obtener usuarios, usar el total de usuarios
                                 usuarioUID = totalUsuarios;
