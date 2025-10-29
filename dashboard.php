@@ -5348,8 +5348,8 @@ $distribucion_unidad = $pdo->query("
                             <div class="card h-100 text-center export-option" onclick="confirmarExportacion('excel')" style="cursor: pointer;">
                                 <div class="card-body">
                                     <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
-                                    <h6 class="card-title">Excel (.xlsx)</h6>
-                                    <p class="card-text small text-muted">Formato recomendado para análisis de datos</p>
+                                    <h6 class="card-title">Excel (.xls)</h6>
+                                    <p class="card-text small text-muted">Formato compatible con Excel y LibreOffice</p>
                                 </div>
                             </div>
                         </div>

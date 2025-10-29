@@ -207,34 +207,50 @@ function exportarCSV($postulantes, $timestamp) {
 }
 
 function exportarExcel($postulantes, $timestamp, $fecha_actual) {
-    $filename = "postulantes_export_{$timestamp}.xlsx";
+    $filename = "postulantes_export_{$timestamp}.xls";
     
-    // Crear un archivo Excel usando formato HTML que Excel puede abrir
+    // Headers para Excel
     header('Content-Type: application/vnd.ms-excel');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
-    header('Cache-Control: max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
     
     // Crear BOM para UTF-8
     echo "\xEF\xBB\xBF";
     
+    // Inicio del documento Excel
     echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
     echo '<head>';
     echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
-    echo '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Postulantes</x:Name><x:WorksheetOptions><x:DefaultRowHeight>285</x:DefaultRowHeight></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
+    echo '<meta name="ProgId" content="Excel.Sheet">';
+    echo '<meta name="Generator" content="Microsoft Excel 11">';
+    echo '<!--[if gte mso 9]><xml>';
+    echo '<x:ExcelWorkbook>';
+    echo '<x:ExcelWorksheets>';
+    echo '<x:ExcelWorksheet>';
+    echo '<x:Name>Postulantes</x:Name>';
+    echo '<x:WorksheetOptions>';
+    echo '<x:DefaultRowHeight>285</x:DefaultRowHeight>';
+    echo '</x:WorksheetOptions>';
+    echo '</x:ExcelWorksheet>';
+    echo '</x:ExcelWorksheets>';
+    echo '</x:ExcelWorkbook>';
+    echo '</xml><![endif]-->';
     echo '</head>';
     echo '<body>';
     
-    echo '<table border="1" cellpadding="0" cellspacing="0">';
+    // Tabla principal
+    echo '<table>';
     
     // Encabezados
-    echo '<tr style="background-color: #4472C4; color: white; font-weight: bold;">';
+    echo '<tr>';
     $headers = [
         'ID', 'Nombre', 'Apellido', 'Cédula', 'Fecha Nacimiento', 'Edad', 'Sexo', 
         'Teléfono', 'Unidad', 'Dedo Registrado', 'Aparato', 'Registrado Por', 
         'Capturador', 'Fecha Registro', 'Observaciones'
     ];
     foreach ($headers as $header) {
-        echo '<td style="padding: 8px; border: 1px solid #000;">' . htmlspecialchars($header) . '</td>';
+        echo '<td><b>' . $header . '</b></td>';
     }
     echo '</tr>';
     
@@ -260,7 +276,7 @@ function exportarExcel($postulantes, $timestamp, $fecha_actual) {
         ];
         
         foreach ($datos as $dato) {
-            echo '<td style="padding: 8px; border: 1px solid #000;">' . htmlspecialchars($dato) . '</td>';
+            echo '<td>' . $dato . '</td>';
         }
         echo '</tr>';
     }
