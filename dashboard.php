@@ -3523,7 +3523,68 @@ $distribucion_unidad = $pdo->query("
         }
         
         function exportarPostulantes() {
-            alert('Función de exportación en desarrollo. Próximamente disponible.');
+            $('#modalExportarPostulantes').modal('show');
+        }
+        
+        function toggleTodosCampos() {
+            const seleccionarTodos = document.getElementById('seleccionarTodos');
+            const campos = document.querySelectorAll('.campo-exportar');
+            
+            campos.forEach(campo => {
+                campo.checked = seleccionarTodos.checked;
+            });
+        }
+        
+        function procesarExportacion() {
+            const camposSeleccionados = [];
+            const checkboxes = document.querySelectorAll('.campo-exportar:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('Por favor seleccione al menos un campo para exportar.');
+                return;
+            }
+            
+            checkboxes.forEach(checkbox => {
+                camposSeleccionados.push(checkbox.value);
+            });
+            
+            // Obtener los filtros actuales del formulario
+            const filtros = {
+                search: document.getElementById('search').value,
+                filtro_unidad: document.getElementById('filtro_unidad').value,
+                filtro_aparato: document.getElementById('filtro_aparato').value,
+                filtro_dedo: document.getElementById('filtro_dedo').value
+            };
+            
+            // Crear formulario temporal para enviar los datos
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'exportar_postulantes_pdf.php';
+            form.target = '_blank';
+            
+            // Agregar campos seleccionados
+            const camposInput = document.createElement('input');
+            camposInput.type = 'hidden';
+            camposInput.name = 'campos';
+            camposInput.value = JSON.stringify(camposSeleccionados);
+            form.appendChild(camposInput);
+            
+            // Agregar filtros
+            Object.keys(filtros).forEach(key => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = filtros[key];
+                form.appendChild(input);
+            });
+            
+            // Agregar al DOM, enviar y remover
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+            
+            // Cerrar modal
+            $('#modalExportarPostulantes').modal('hide');
         }
         
         // Funciones para gestión de unidades
@@ -5272,6 +5333,115 @@ $distribucion_unidad = $pdo->query("
     </div>
 
     <!-- Modal Exportar Postulantes -->
+    <div class="modal fade" id="modalExportarPostulantes" tabindex="-1" role="dialog" aria-labelledby="modalExportarPostulantesLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalExportarPostulantesLabel">
+                        <i class="fas fa-download mr-2"></i>Exportar Lista de Postulantes
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Se exportarán <strong id="totalRegistrosExportar"><?= $total_records ?></strong> registros en formato PDF (Oficio horizontal).
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6><i class="fas fa-list-check mr-2"></i>Seleccionar campos a exportar:</h6>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="seleccionarTodos" onchange="toggleTodosCampos()">
+                                    <label class="form-check-label font-weight-bold" for="seleccionarTodos">
+                                        <i class="fas fa-check-double mr-1"></i>TODOS LOS CAMPOS
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_nombre" value="nombre" checked>
+                                        <label class="form-check-label" for="campo_nombre">Nombre</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_apellido" value="apellido" checked>
+                                        <label class="form-check-label" for="campo_apellido">Apellido</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_cedula" value="cedula" checked>
+                                        <label class="form-check-label" for="campo_cedula">Cédula</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_fecha_nacimiento" value="fecha_nacimiento">
+                                        <label class="form-check-label" for="campo_fecha_nacimiento">Fecha Nacimiento</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_edad" value="edad" checked>
+                                        <label class="form-check-label" for="campo_edad">Edad</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_sexo" value="sexo">
+                                        <label class="form-check-label" for="campo_sexo">Sexo</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_telefono" value="telefono">
+                                        <label class="form-check-label" for="campo_telefono">Teléfono</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_unidad" value="unidad" checked>
+                                        <label class="form-check-label" for="campo_unidad">Unidad</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_dedo_registrado" value="dedo_registrado">
+                                        <label class="form-check-label" for="campo_dedo_registrado">Dedo Registrado</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_aparato" value="aparato">
+                                        <label class="form-check-label" for="campo_aparato">Aparato</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_registrado_por" value="registrado_por">
+                                        <label class="form-check-label" for="campo_registrado_por">Registrado Por</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_capturador" value="capturador">
+                                        <label class="form-check-label" for="campo_capturador">Capturador</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_fecha_registro" value="fecha_registro" checked>
+                                        <label class="form-check-label" for="campo_fecha_registro">Fecha Registro</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input campo-exportar" type="checkbox" id="campo_observaciones" value="observaciones">
+                                        <label class="form-check-label" for="campo_observaciones">Observaciones</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="procesarExportacion()">
+                        <i class="fas fa-download mr-1"></i>Exportar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Modal functionality
