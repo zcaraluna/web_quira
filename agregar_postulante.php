@@ -1618,18 +1618,56 @@ Por favor verifique:
                   const users = await zktecoBridge.getUsers();
                   let ultimoUsuario = '';
                   
+                  // Usar el user_count del dispositivo como referencia del último usuario real
+                  const ultimoUIDReal = info.user_count || 0;
+                  console.log(`Último UID real según dispositivo: ${ultimoUIDReal}`);
+                  
                   if (users.users && users.users.length > 0) {
-                      // Obtener el último usuario (mayor UID)
+                      // Buscar el usuario con el UID más alto (último usuario real)
                       const ultimo = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
-                      if (ultimo.name && !ultimo.name.startsWith("NN-")) {
-                          ultimoUsuario = ` | Último: ${ultimo.uid}:${ultimo.name}`;
-                          // Mostrar advertencia si el último usuario tiene nombre asignado
-                          mostrarAdvertenciaUltimoUsuario(ultimo.uid, ultimo.name);
+                      console.log(`Último usuario encontrado en la lista: UID ${ultimo.uid}, Nombre: ${ultimo.name}`);
+                      console.log(`Total usuarios en lista: ${users.users.length}, Total según dispositivo: ${ultimoUIDReal}`);
+                      
+                      // Verificar si este es realmente el último usuario según el contador del dispositivo
+                      if (parseInt(ultimo.uid) === ultimoUIDReal) {
+                          if (ultimo.name && !ultimo.name.startsWith("NN-")) {
+                              ultimoUsuario = ` | Último: ${ultimo.uid}:${ultimo.name}`;
+                              // Mostrar advertencia si el último usuario tiene nombre asignado
+                              mostrarAdvertenciaUltimoUsuario(ultimo.uid, ultimo.name);
+                          } else {
+                              ultimoUsuario = ` | Último: ${ultimo.uid} (sin nombre)`;
+                              // Ocultar advertencia si no hay problema
+                              ocultarAdvertenciaUltimoUsuario();
+                          }
                       } else {
-                          ultimoUsuario = ` | Último: ${ultimo.uid} (sin nombre)`;
-                          // Ocultar advertencia si no hay problema
-                          ocultarAdvertenciaUltimoUsuario();
+                          // El último usuario en la lista no coincide con el contador del dispositivo
+                          // Esto significa que no se obtuvieron todos los usuarios
+                          console.log(`⚠️ El último usuario en la lista (${ultimo.uid}) no coincide con el contador del dispositivo (${ultimoUIDReal})`);
+                          console.log(`⚠️ Esto indica que la lista de usuarios está incompleta`);
+                          
+                          // Intentar obtener específicamente el último usuario
+                          try {
+                              console.log(`Intentando obtener usuario específico UID ${ultimoUIDReal}...`);
+                              const ultimoUsuarioEspecifico = await zktecoBridge.getUser(ultimoUIDReal);
+                              console.log(`Usuario específico obtenido:`, ultimoUsuarioEspecifico);
+                              
+                              if (ultimoUsuarioEspecifico && ultimoUsuarioEspecifico.name && !ultimoUsuarioEspecifico.name.startsWith("NN-")) {
+                                  ultimoUsuario = ` | Último: ${ultimoUIDReal}:${ultimoUsuarioEspecifico.name}`;
+                                  mostrarAdvertenciaUltimoUsuario(ultimoUIDReal, ultimoUsuarioEspecifico.name);
+                              } else {
+                                  ultimoUsuario = ` | Último: ${ultimoUIDReal} (sin nombre)`;
+                                  ocultarAdvertenciaUltimoUsuario();
+                              }
+                          } catch (error) {
+                              console.log(`No se pudo obtener usuario específico:`, error);
+                              ultimoUsuario = ` | Último: ${ultimoUIDReal} (no verificado)`;
+                              ocultarAdvertenciaUltimoUsuario();
+                          }
                       }
+                  } else {
+                      // Si no se pudieron obtener usuarios, asumir que el último no tiene nombre
+                      ultimoUsuario = ` | Último: ${ultimoUIDReal} (no verificado)`;
+                      ocultarAdvertenciaUltimoUsuario();
                   }
                   
                   const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
