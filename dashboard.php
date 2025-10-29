@@ -3539,14 +3539,20 @@ $distribucion_unidad = $pdo->query("
             const camposSeleccionados = [];
             const checkboxes = document.querySelectorAll('.campo-exportar:checked');
             
+            console.log('Checkboxes encontrados:', checkboxes.length);
+            console.log('Checkboxes:', checkboxes);
+            
             if (checkboxes.length === 0) {
                 alert('Por favor seleccione al menos un campo para exportar.');
                 return;
             }
             
             checkboxes.forEach(checkbox => {
+                console.log('Campo seleccionado:', checkbox.value);
                 camposSeleccionados.push(checkbox.value);
             });
+            
+            console.log('Campos seleccionados:', camposSeleccionados);
             
             // Obtener los filtros actuales del formulario
             const searchEl = document.getElementById('search');
@@ -3560,6 +3566,8 @@ $distribucion_unidad = $pdo->query("
                 filtro_aparato: aparatoEl ? aparatoEl.value : '',
                 filtro_dedo: dedoEl ? dedoEl.value : ''
             };
+            
+            console.log('Filtros:', filtros);
             
             // Crear formulario temporal para enviar los datos
             const form = document.createElement('form');
@@ -3581,6 +3589,12 @@ $distribucion_unidad = $pdo->query("
                 input.name = key;
                 input.value = filtros[key];
                 form.appendChild(input);
+            });
+            
+            console.log('Formulario creado:', form);
+            console.log('Datos a enviar:', {
+                campos: JSON.stringify(camposSeleccionados),
+                filtros: filtros
             });
             
             // Agregar al DOM, enviar y remover
