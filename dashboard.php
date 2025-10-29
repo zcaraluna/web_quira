@@ -3542,8 +3542,8 @@ $distribucion_unidad = $pdo->query("
             const aparato = document.getElementById('aparato').value;
             const dedo = document.getElementById('dedo').value;
             
-            // Crear URL para exportar
-            const url = new URL('exportar_postulantes.php', window.location.origin);
+            // Crear URL para exportar usando la ruta base actual
+            const url = new URL('./exportar_postulantes.php', window.location.href);
             url.searchParams.set('exportar', '1');
             url.searchParams.set('formato', formato);
             
