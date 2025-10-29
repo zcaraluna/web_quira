@@ -5,9 +5,10 @@
 
 -- Hash de la contraseña "123456" generado con password_hash()
 -- Este hash es estándar para la contraseña "123456"
-SET @password_hash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
+-- Variable para el hash (no se usa en PostgreSQL, solo para referencia)
+-- $password_hash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
 
--- Insertar usuarios desde el CSV
+-- Insertar usuarios desde el CSV (usando INSERT ... ON CONFLICT para evitar duplicados)
 INSERT INTO usuarios (usuario, nombre, apellido, grado, cedula, telefono, rol, contrasena, primer_inicio, fecha_creacion) VALUES
 ('55825', 'ROMINA ELIZABETH', 'ACHUCARRO FERREIRA', 'Oficial Inspector', '3482710', '+595 983 485258', 'USUARIO', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', true, NOW()),
 ('60125', 'ROSA INMACULADA', 'FLEITAS AQUINO', 'Oficial Segundo', '6192601', '+595 983 900984', 'USUARIO', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', true, NOW()),
@@ -57,7 +58,8 @@ INSERT INTO usuarios (usuario, nombre, apellido, grado, cedula, telefono, rol, c
 ('62285', 'PABLA NOELIA', 'BOGADO SAMANIEGO', 'Suboficial Segundo', '5063577', '+595 985 685534', 'USUARIO', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', true, NOW()),
 ('62288', 'ELIZABETH', 'GAMARRA GONZÁLEZ', 'Suboficial Segundo', '6943529', '+595 985 788461', 'USUARIO', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', true, NOW()),
 ('62309', 'LIMPIA CONCEPCIÓN', 'CABRERA AMARILLA', 'Suboficial Segundo', '7038948', '+595 982 646455', 'USUARIO', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', true, NOW()),
-('62163', 'EUFRACIO FABIAN', 'ARCE GIMENEZ', 'Suboficial Segundo', '4486772', '+595 985 977758', 'USUARIO', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', true, NOW());
+('62163', 'EUFRACIO FABIAN', 'ARCE GIMENEZ', 'Suboficial Segundo', '4486772', '+595 985 977758', 'USUARIO', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', true, NOW())
+ON CONFLICT (usuario) DO NOTHING;
 
 -- Verificar que se insertaron correctamente
 SELECT COUNT(*) as total_usuarios_insertados FROM usuarios WHERE rol = 'USUARIO' AND primer_inicio = true;
