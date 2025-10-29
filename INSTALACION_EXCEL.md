@@ -24,7 +24,7 @@ chmod +x install_dependencies.sh
 
 **Opción B - Usando Composer directamente:**
 ```bash
-composer install --no-dev --optimize-autoloader
+composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 ```
 
 ### 3. Verificar instalación
@@ -49,7 +49,15 @@ Después de la instalación, deberías ver:
 
 ## Solución de problemas
 
-Si la instalación falla:
+### Error de versión de PHP
+Si ves el error: `"Your Composer dependencies require a PHP version ">= 8.3.0""`
+
+**Solución:** Usar la versión compatible que ya está configurada:
+```bash
+composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+```
+
+### Otros problemas comunes:
 1. Verificar que Composer esté instalado: `composer --version`
 2. Verificar conexión a internet
 3. Verificar permisos de escritura en la carpeta del proyecto:

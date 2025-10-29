@@ -3,6 +3,10 @@
 echo "Instalando PhpSpreadsheet para generar archivos Excel reales..."
 echo
 
+# Verificar versión de PHP
+PHP_VERSION=$(php -r "echo PHP_VERSION;")
+echo "Versión de PHP detectada: $PHP_VERSION"
+
 # Verificar si composer está instalado
 if ! command -v composer &> /dev/null; then
     echo "ERROR: Composer no está instalado."
@@ -14,11 +18,11 @@ if ! command -v composer &> /dev/null; then
     exit 1
 fi
 
-echo "Composer encontrado. Instalando dependencias..."
+echo "Composer encontrado. Instalando dependencias compatibles..."
 echo
 
-# Instalar PhpSpreadsheet
-composer install --no-dev --optimize-autoloader
+# Instalar PhpSpreadsheet con versión compatible
+composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 if [ $? -eq 0 ]; then
     echo
