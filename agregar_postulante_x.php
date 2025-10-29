@@ -26,16 +26,8 @@ $mensaje = '';
 $tipo_mensaje = '';
 $postulante_id = null;
 
-// Obtener lista de usuarios del sistema para el campo capturador
-$usuarios_sistema = [];
-try {
-    $pdo = getDBConnection();
-    $stmt = $pdo->prepare("SELECT id, usuario, nombre, apellido, grado FROM usuarios ORDER BY nombre ASC, apellido ASC");
-    $stmt->execute();
-    $usuarios_sistema = $stmt->fetchAll();
-} catch (Exception $e) {
-    error_log('Error obteniendo usuarios del sistema: ' . $e->getMessage());
-}
+// Obtener conexión a la base de datos
+$pdo = getDBConnection();
 
 // Obtener unidades disponibles (igual que la página original)
 $unidades = [];
@@ -45,10 +37,6 @@ try {
     error_log('Error obteniendo unidades: ' . $e->getMessage());
 }
 
-// Manejar memoria de sesión para el capturador
-if (!isset($_SESSION['capturador_memoria'])) {
-    $_SESSION['capturador_memoria'] = $_SESSION['user_id'];
-}
 
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -61,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $unidad = trim($_POST['unidad']);
         $sexo = $_POST['sexo'];
         $observaciones = trim($_POST['observaciones']);
-        $capturador_id = $_POST['capturador_id'] ?? $_SESSION['capturador_memoria'];
         
         // Validaciones básicas
         if (empty($nombre) || empty($apellido) || empty($cedula) || empty($fecha_nacimiento) || empty($unidad) || empty($sexo)) {
@@ -85,22 +72,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hoy = new DateTime();
         $edad = $hoy->diff($fecha_nac)->y;
         
+        // Obtener fecha y hora actual con zona horaria de Paraguay
+        $fecha_registro = date('Y-m-d H:i:s');
+        
+        // Crear registrado_por con nombre completo (igual que la página original)
+        $registrado_por = $_SESSION['grado'] . ' ' . $_SESSION['nombre'] . ' ' . $_SESSION['apellido'];
+        
         // Insertar postulante SIN datos biométricos
         $stmt = $pdo->prepare("
             INSERT INTO postulantes (
                 nombre, apellido, cedula, fecha_nacimiento, telefono, 
-                unidad, observaciones, edad, sexo, registrado_por, capturador_id,
-                dedo_registrado, aparato_id, uid_k40, aparato_nombre
+                unidad, observaciones, edad, sexo, registrado_por,
+                dedo_registrado, aparato_id, uid_k40, aparato_nombre, fecha_registro
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $stmt->execute([
             $nombre, $apellido, $cedula, $fecha_nacimiento, $telefono,
-            $unidad, $observaciones, $edad, $sexo, $_SESSION['user_id'], $capturador_id,
+            $unidad, $observaciones, $edad, $sexo, $registrado_por,
             'NO_REGISTRADO', // dedo_registrado
             null, // aparato_id
             null, // uid_k40
-            'SIN_DISPOSITIVO' // aparato_nombre
+            'SIN_DISPOSITIVO', // aparato_nombre
+            $fecha_registro // fecha_registro
         ]);
         
         $postulante_id = $pdo->lastInsertId();
@@ -547,7 +541,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <h6 class="text-primary font-weight-bold mb-3 mt-4"><i class="fas fa-clipboard-list"></i> INFORMACIÓN DEL REGISTRO</h6>
                             
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="unidad"><i class="fas fa-building"></i> Unidad *</label>
                                         <select class="form-control" id="unidad" name="unidad" required>
@@ -556,19 +550,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <option value="<?= htmlspecialchars($unidad) ?>" 
                                                     <?= ($_POST['unidad'] ?? '') === $unidad ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($unidad) ?>
-                                            </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="capturador_id"><i class="fas fa-user-tie"></i> Capturador</label>
-                                        <select class="form-control" id="capturador_id" name="capturador_id">
-                                            <?php foreach ($usuarios_sistema as $usuario): ?>
-                                            <option value="<?= $usuario['id'] ?>" 
-                                                    <?= ($usuario['id'] == ($_POST['capturador_id'] ?? $_SESSION['capturador_memoria'])) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($usuario['grado'] . ' ' . $usuario['nombre'] . ' ' . $usuario['apellido']) ?>
                                             </option>
                                             <?php endforeach; ?>
                                         </select>
