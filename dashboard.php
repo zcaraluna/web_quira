@@ -2291,9 +2291,9 @@ $distribucion_unidad = $pdo->query("
                                                         <button type="button" class="btn btn-success" onclick="generarReporteDiarioEspecifico()">
                                                             <i class="fas fa-file-word"></i> Generar Reporte
                                                         </button>
-                                                        <button type="button" class="btn btn-info" onclick="exportarReporteHorario()">
+                                                        <!-- <button type="button" class="btn btn-info" onclick="exportarReporteHorario()">
                                                             <i class="fas fa-download"></i> Exportar Excel
-                                                        </button>
+                                                        </button> -->
                                                     </div>
                                                 </div>
                                             </div>
@@ -3650,23 +3650,6 @@ $distribucion_unidad = $pdo->query("
             
             // Aplicar automáticamente el filtro
             document.getElementById('fechaForm').submit();
-        }
-        
-        // Función para exportar reporte con franja horaria
-        function exportarReporteHorario() {
-            const fecha = document.getElementById('fecha_reporte').value;
-            const horaDesde = document.getElementById('hora_desde').value;
-            const horaHasta = document.getElementById('hora_hasta').value;
-            
-            // Crear URL para exportar
-            const url = new URL(window.location);
-            url.searchParams.set('exportar', '1');
-            url.searchParams.set('fecha_reporte', fecha);
-            url.searchParams.set('hora_desde', horaDesde);
-            url.searchParams.set('hora_hasta', horaHasta);
-            
-            // Abrir en nueva ventana para descarga
-            window.open(url.toString(), '_blank');
         }
         
         // Función que se ejecuta cuando la página se carga con el parámetro
