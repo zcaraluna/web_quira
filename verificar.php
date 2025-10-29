@@ -412,19 +412,14 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
                     </div>
                     
                     
+                    <?php if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']): ?>
                     <div class="data-row">
                         <span class="data-label">Capturador de Huella:</span>
                         <span class="data-value">
-                            <?php 
-                            if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']) {
-                                $capturador = $postulante['capturador_grado'] . ' ' . $postulante['capturador_nombre'] . ' ' . $postulante['capturador_apellido'];
-                                echo htmlspecialchars($capturador);
-                            } else {
-                                echo 'No disponible';
-                            }
-                            ?>
+                            <?= htmlspecialchars($postulante['capturador_grado'] . ' ' . $postulante['capturador_nombre'] . ' ' . $postulante['capturador_apellido']) ?>
                         </span>
                     </div>
+                    <?php endif; ?>
                     
                     <div class="data-row">
                         <span class="data-label">Registrador:</span>
@@ -555,14 +550,9 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
                 ['Edad:', '<?= htmlspecialchars($postulante['edad']) ?> años'],
                 ['Sexo:', '<?= htmlspecialchars($postulante['sexo']) ?>'],
                 ['Unidad:', '<?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?>'],
-                ['Capturador de Huella:', '<?php
-                    if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']) {
-                        $capturador_pdf = $postulante['capturador_grado'] . ' ' . $postulante['capturador_nombre'] . ' ' . $postulante['capturador_apellido'];
-                        echo htmlspecialchars($capturador_pdf);
-                    } else {
-                        echo 'No disponible';
-                    }
-                ?>'],
+                <?php if ($postulante['capturador_grado'] && $postulante['capturador_nombre'] && $postulante['capturador_apellido']): ?>
+                ['Capturador de Huella:', '<?= htmlspecialchars($postulante['capturador_grado'] . ' ' . $postulante['capturador_nombre'] . ' ' . $postulante['capturador_apellido']) ?>'],
+                <?php endif; ?>
                 ['Registrador:', '<?= htmlspecialchars($postulante['registrado_por']) ?>'],
                 ['Fecha y Hora de Registro:', '<?= date('d/m/Y H:i:s', strtotime($postulante['fecha_registro'])) ?>']
             ];
