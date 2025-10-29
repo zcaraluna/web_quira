@@ -149,19 +149,7 @@ function obtenerNombreAparato($postulante) {
     return $postulante['aparato_nombre_actual'] ?: $postulante['aparato_nombre'] ?: 'Sin aparato';
 }
 
-switch ($formato) {
-    case 'csv':
-        exportarCSV($postulantes, $timestamp);
-        break;
-    case 'pdf':
-        exportarPDF($postulantes, $timestamp, $fecha_actual);
-        break;
-    case 'excel':
-    default:
-        exportarExcel($postulantes, $timestamp, $fecha_actual);
-        break;
-}
-
+// Definir funciones de exportación ANTES de usarlas
 function exportarCSV($postulantes, $timestamp) {
     // Limpiar cualquier output previo
     ob_clean();
@@ -530,5 +518,19 @@ function exportarPDF($postulantes, $timestamp, $fecha_actual) {
     
     echo $html;
     exit;
+}
+
+// Ahora ejecutar la exportación
+switch ($formato) {
+    case 'csv':
+        exportarCSV($postulantes, $timestamp);
+        break;
+    case 'pdf':
+        exportarPDF($postulantes, $timestamp, $fecha_actual);
+        break;
+    case 'excel':
+    default:
+        exportarExcel($postulantes, $timestamp, $fecha_actual);
+        break;
 }
 ?>
