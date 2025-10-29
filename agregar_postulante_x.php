@@ -37,6 +37,16 @@ try {
     error_log('Error obteniendo usuarios del sistema: ' . $e->getMessage());
 }
 
+// Obtener lista de unidades
+$unidades = [];
+try {
+    $stmt = $pdo->prepare("SELECT DISTINCT unidad FROM postulantes WHERE unidad IS NOT NULL AND unidad != '' ORDER BY unidad ASC");
+    $stmt->execute();
+    $unidades = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) {
+    error_log('Error obteniendo unidades: ' . $e->getMessage());
+}
+
 // Manejar memoria de sesión para el capturador
 if (!isset($_SESSION['capturador_memoria'])) {
     $_SESSION['capturador_memoria'] = $_SESSION['user_id'];
@@ -51,12 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fecha_nacimiento = $_POST['fecha_nacimiento'];
         $telefono = trim($_POST['telefono']);
         $unidad = trim($_POST['unidad']);
+        $sexo = $_POST['sexo'];
         $observaciones = trim($_POST['observaciones']);
         $capturador_id = $_POST['capturador_id'] ?? $_SESSION['capturador_memoria'];
         
         // Validaciones básicas
-        if (empty($nombre) || empty($apellido) || empty($cedula) || empty($fecha_nacimiento) || empty($unidad)) {
-            throw new Exception('Los campos nombre, apellido, cédula, fecha de nacimiento y unidad son obligatorios');
+        if (empty($nombre) || empty($apellido) || empty($cedula) || empty($fecha_nacimiento) || empty($unidad) || empty($sexo)) {
+            throw new Exception('Los campos nombre, apellido, cédula, fecha de nacimiento, unidad y sexo son obligatorios');
         }
         
         // Validar formato de cédula (solo números)
@@ -80,14 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("
             INSERT INTO postulantes (
                 nombre, apellido, cedula, fecha_nacimiento, telefono, 
-                unidad, observaciones, edad, registrado_por, capturador_id,
+                unidad, observaciones, edad, sexo, registrado_por, capturador_id,
                 dedo_registrado, aparato_id, uid_k40, aparato_nombre
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $stmt->execute([
             $nombre, $apellido, $cedula, $fecha_nacimiento, $telefono,
-            $unidad, $observaciones, $edad, $_SESSION['user_id'], $capturador_id,
+            $unidad, $observaciones, $edad, $sexo, $_SESSION['user_id'], $capturador_id,
             'NO_REGISTRADO', // dedo_registrado
             null, // aparato_id
             null, // uid_k40
@@ -106,22 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mensaje = $e->getMessage();
         $tipo_mensaje = 'danger';
     }
-}
-
-// Obtener información del dispositivo para mostrar en la interfaz
-$deviceInfo = null;
-$usuarios_dispositivo = [];
-$conexion_activa = false;
-
-try {
-    // Simular información de dispositivo (ya que no hay conexión)
-    $deviceInfo = (object) [
-        'serial' => 'SIN_CONEXION',
-        'user_count' => 0,
-        'status' => 'DESCONECTADO'
-    ];
-} catch (Exception $e) {
-    error_log('Error obteniendo información del dispositivo: ' . $e->getMessage());
 }
 ?>
 
@@ -223,6 +218,48 @@ try {
         
         .status-connected {
             color: #28a745;
+        }
+        
+        .mobile-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+        
+        .mobile-warning h2 {
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .mobile-warning p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .mobile-warning .btn {
+            background: white;
+            color: #2E5090;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-warning .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         /* FOOTER STYLES */
@@ -373,69 +410,111 @@ try {
             padding: 15px;
             margin-bottom: 20px;
         }
+        
+        .device-status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .device-status.device-connecting {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .device-status.device-connected {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .device-status.device-disconnected {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h3 class="mb-0">
-                            <i class="fas fa-user-plus mr-2"></i>
-                            Agregar Postulante (Sin Biométrico)
-                        </h3>
-                        <p class="mb-0 mt-2 opacity-75">Registro manual para casos especiales</p>
+    <!-- Advertencia para dispositivos móviles -->
+    <div class="mobile-warning" id="mobile-warning">
+        <div>
+            <i class="fas fa-mobile-alt fa-3x mb-3"></i>
+            <h2>Acceso No Disponible en Móviles</h2>
+            <p>Esta página está optimizada para computadoras de escritorio.<br>
+            Por favor, accede desde una computadora para una mejor experiencia.</p>
+            <a href="dashboard.php" class="btn">
+                <i class="fas fa-arrow-left mr-2"></i> Volver al Inicio
+            </a>
+        </div>
+    </div>
+
+    <div class="container mt-4" style="margin-bottom: 80px;">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="fas fa-user-plus"></i> Agregar Postulante (Sin Biométrico)</h1>
+                    <div>
+                        <a href="dashboard.php" class="btn btn-outline-primary btn-sm mr-2">
+                            <i class="fas fa-arrow-left"></i> Volver al Inicio
+                        </a>
+                        <span class="text-muted">Bienvenido: <?= htmlspecialchars($_SESSION['nombre'] . ' ' . $_SESSION['apellido']) ?></span>
+                        <a href="logout.php" class="btn btn-outline-danger btn-sm ml-2">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
                     </div>
-                    <div class="card-body p-4">
-                        <!-- Advertencia sobre falta de biométrico -->
-                        <div class="no-biometric-warning">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-exclamation-triangle text-warning fa-2x mr-3"></i>
-                                <div>
-                                    <h6 class="mb-1 font-weight-bold">Modo Sin Biométrico</h6>
-                                    <p class="mb-0 text-muted">Este postulante será registrado sin datos biométricos. No se generará ID en K40 ni se registrará huella dactilar.</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Estado del dispositivo -->
-                        <div class="device-status">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Estado del Sistema</h6>
-                                    <p class="mb-0 text-muted">Sistema listo - Modo manual activado</p>
-                                </div>
-                                <div class="text-right">
-                                    <span class="badge badge-warning">SIN BIOMÉTRICO</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <?php if ($mensaje): ?>
-                        <div class="alert alert-<?= $tipo_mensaje ?> alert-dismissible fade show" role="alert">
-                            <i class="fas fa-<?= $tipo_mensaje === 'success' ? 'check-circle' : 'exclamation-triangle' ?> mr-2"></i>
-                            <?= htmlspecialchars($mensaje) ?>
-                            <button type="button" class="close" data-dismiss="alert">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <form method="POST" id="formPostulante">
+                </div>
+                
+                <!-- Estado del dispositivo ZKTeco -->
+                <div class="alert device-status device-disconnected" id="device-status">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <span id="device-status-text">Sistema listo - Modo manual activado (SIN BIOMÉTRICO)</span>
+                    <div class="mt-2">
+                        <small id="device-details">No se requiere conexión con dispositivo biométrico</small>
+                    </div>
+                </div>
+                
+                <!-- Mensajes del sistema -->
+                <?php if ($mensaje): ?>
+                <div class="alert alert-<?= $tipo_mensaje ?> alert-dismissible fade show" role="alert">
+                    <i class="fas fa-<?= $tipo_mensaje === 'success' ? 'check-circle' : 'exclamation-triangle' ?>"></i>
+                    <?= htmlspecialchars($mensaje) ?>
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Formulario -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user-edit"></i> AÑADIR NUEVO POSTULANTE (SIN BIOMÉTRICO)</h5>
+                        <small class="text-muted">Sistema de Registro Manual</small>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" id="postulante-form">
+                            <!-- Sección 1: Información Personal -->
+                            <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-user"></i> INFORMACIÓN PERSONAL</h6>
+                            
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="nombre">Nombre <span class="required">*</span></label>
-                                        <input type="text" class="form-control" id="nombre" name="nombre" 
-                                               value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" required>
+                                        <label for="fecha_registro"><i class="fas fa-calendar"></i> Fecha Registro</label>
+                                        <input type="text" class="form-control" id="fecha_registro" name="fecha_registro" 
+                                               value="<?= date('d/m/Y H:i:s') ?>" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="apellido">Apellido <span class="required">*</span></label>
-                                        <input type="text" class="form-control" id="apellido" name="apellido" 
-                                               value="<?= htmlspecialchars($_POST['apellido'] ?? '') ?>" required>
+                                        <label for="sexo"><i class="fas fa-venus-mars"></i> Sexo *</label>
+                                        <select class="form-control" id="sexo" name="sexo" required>
+                                            <option value="">Seleccionar</option>
+                                            <option value="Hombre" <?= ($_POST['sexo'] ?? '') === 'Hombre' ? 'selected' : '' ?>>Hombre</option>
+                                            <option value="Mujer" <?= ($_POST['sexo'] ?? '') === 'Mujer' ? 'selected' : '' ?>>Mujer</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -443,63 +522,132 @@ try {
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="cedula">Cédula <span class="required">*</span></label>
-                                        <input type="text" class="form-control" id="cedula" name="cedula" 
-                                               value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" required>
+                                        <label for="nombre"><i class="fas fa-user"></i> Nombre *</label>
+                                        <input type="text" class="form-control" id="nombre" name="nombre" 
+                                               value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" 
+                                               style="text-transform: uppercase;" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="fecha_nacimiento">Fecha de Nacimiento <span class="required">*</span></label>
+                                        <label for="apellido"><i class="fas fa-user"></i> Apellido *</label>
+                                        <input type="text" class="form-control" id="apellido" name="apellido" 
+                                               value="<?= htmlspecialchars($_POST['apellido'] ?? '') ?>" 
+                                               style="text-transform: uppercase;" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="cedula"><i class="fas fa-id-card"></i> Cédula *</label>
+                                        <input type="text" class="form-control" id="cedula" name="cedula" 
+                                               value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" 
+                                               pattern="[0-9]+" title="Solo números" required>
+                                        <small class="form-text text-muted">Solo números, sin puntos ni guiones</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="telefono"><i class="fas fa-phone"></i> Teléfono</label>
+                                        <input type="text" class="form-control" id="telefono" name="telefono" 
+                                               value="<?= htmlspecialchars($_POST['telefono'] ?? '') ?>">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="fecha_nacimiento"><i class="fas fa-calendar"></i> Fecha Nacimiento *</label>
                                         <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" 
                                                value="<?= htmlspecialchars($_POST['fecha_nacimiento'] ?? '') ?>" required>
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="edad"><i class="fas fa-birthday-cake"></i> Edad</label>
+                                        <input type="text" class="form-control" id="edad" name="edad" readonly>
+                                        <small class="form-text text-muted">Se calcula automáticamente</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sección 2: Información del Registro -->
+                            <h6 class="text-primary font-weight-bold mb-3 mt-4"><i class="fas fa-clipboard-list"></i> INFORMACIÓN DEL REGISTRO</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="unidad"><i class="fas fa-building"></i> Unidad *</label>
+                                        <select class="form-control" id="unidad" name="unidad" required>
+                                            <option value="">Seleccionar unidad</option>
+                                            <?php foreach ($unidades as $unidad): ?>
+                                            <option value="<?= htmlspecialchars($unidad) ?>" 
+                                                    <?= ($_POST['unidad'] ?? '') === $unidad ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($unidad) ?>
+                                            </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="capturador_id"><i class="fas fa-user-tie"></i> Capturador</label>
+                                        <select class="form-control" id="capturador_id" name="capturador_id">
+                                            <?php foreach ($usuarios_sistema as $usuario): ?>
+                                            <option value="<?= $usuario['id'] ?>" 
+                                                    <?= ($usuario['id'] == ($_POST['capturador_id'] ?? $_SESSION['capturador_memoria'])) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($usuario['grado'] . ' ' . $usuario['nombre'] . ' ' . $usuario['apellido']) ?>
+                                            </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="observaciones"><i class="fas fa-sticky-note"></i> Observaciones</label>
+                                <textarea class="form-control" id="observaciones" name="observaciones" rows="3" 
+                                          placeholder="Observaciones adicionales..."><?= htmlspecialchars($_POST['observaciones'] ?? '') ?></textarea>
+                            </div>
+                            
+                            <!-- Sección 3: Información Biométrica (Deshabilitada) -->
+                            <h6 class="text-muted font-weight-bold mb-3 mt-4"><i class="fas fa-fingerprint"></i> INFORMACIÓN BIOMÉTRICA (NO DISPONIBLE)</h6>
+                            
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Modo Sin Biométrico:</strong> Este postulante será registrado sin datos biométricos. 
+                                No se generará ID en K40 ni se registrará huella dactilar.
                             </div>
                             
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="telefono">Teléfono</label>
-                                        <input type="text" class="form-control" id="telefono" name="telefono" 
-                                               value="<?= htmlspecialchars($_POST['telefono'] ?? '') ?>" 
-                                               placeholder="0981 123 456">
+                                        <label for="id_k40_disabled"><i class="fas fa-fingerprint"></i> ID en K40</label>
+                                        <input type="text" class="form-control" id="id_k40_disabled" 
+                                               value="NO DISPONIBLE" readonly style="background-color: #f8f9fa; color: #6c757d;">
+                                        <small class="form-text text-muted">No disponible en modo manual</small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="unidad">Unidad <span class="required">*</span></label>
-                                        <input type="text" class="form-control" id="unidad" name="unidad" 
-                                               value="<?= htmlspecialchars($_POST['unidad'] ?? '') ?>" required
-                                               placeholder="Ej: Academia Nacional de Policía">
+                                        <label for="aparato_disabled"><i class="fas fa-desktop"></i> Aparato Biométrico</label>
+                                        <input type="text" class="form-control" id="aparato_disabled" 
+                                               value="SIN DISPOSITIVO" readonly style="background-color: #f8f9fa; color: #6c757d;">
+                                        <small class="form-text text-muted">No disponible en modo manual</small>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="observaciones">Observaciones</label>
-                                <textarea class="form-control" id="observaciones" name="observaciones" rows="3" 
-                                          placeholder="Observaciones adicionales..."><?= htmlspecialchars($_POST['observaciones'] ?? '') ?></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="capturador_id">Capturador</label>
-                                <select class="form-control" id="capturador_id" name="capturador_id">
-                                    <?php foreach ($usuarios_sistema as $usuario): ?>
-                                    <option value="<?= $usuario['id'] ?>" 
-                                            <?= ($usuario['id'] == ($_POST['capturador_id'] ?? $_SESSION['capturador_memoria'])) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($usuario['grado'] . ' ' . $usuario['nombre'] . ' ' . $usuario['apellido']) ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
+                            <!-- Botones de acción -->
                             <div class="text-center mt-4">
                                 <button type="submit" class="btn btn-primary btn-lg mr-3">
-                                    <i class="fas fa-save mr-2"></i>Guardar Postulante
+                                    <i class="fas fa-save mr-2"></i>GUARDAR POSTULANTE
                                 </button>
-                                <a href="dashboard.php" class="btn btn-secondary btn-lg">
-                                    <i class="fas fa-arrow-left mr-2"></i>Volver al Dashboard
+                                <a href="dashboard.php" class="btn btn-outline-secondary btn-lg px-4 py-2">
+                                    <i class="fas fa-times mr-2"></i> CANCELAR
                                 </a>
                             </div>
                         </form>
@@ -513,15 +661,46 @@ try {
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     
     <script>
+        // Detectar dispositivos móviles
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
+        // Mostrar advertencia en móviles
+        if (isMobile()) {
+            document.getElementById('mobile-warning').style.display = 'flex';
+        }
+        
+        // Auto-calcular edad cuando cambie la fecha de nacimiento
+        document.getElementById('fecha_nacimiento').addEventListener('change', function() {
+            const fechaNac = new Date(this.value);
+            const hoy = new Date();
+            let edad = hoy.getFullYear() - fechaNac.getFullYear();
+            const mes = hoy.getMonth() - fechaNac.getMonth();
+            
+            if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+                edad--;
+            }
+            
+            if (edad < 0) {
+                alert('La fecha de nacimiento no puede ser futura');
+                this.value = '';
+                document.getElementById('edad').value = '';
+            } else {
+                document.getElementById('edad').value = edad;
+            }
+        });
+        
         // Validación del formulario
-        document.getElementById('formPostulante').addEventListener('submit', function(e) {
+        document.getElementById('postulante-form').addEventListener('submit', function(e) {
             const nombre = document.getElementById('nombre').value.trim();
             const apellido = document.getElementById('apellido').value.trim();
             const cedula = document.getElementById('cedula').value.trim();
             const fechaNacimiento = document.getElementById('fecha_nacimiento').value;
-            const unidad = document.getElementById('unidad').value.trim();
+            const unidad = document.getElementById('unidad').value;
+            const sexo = document.getElementById('sexo').value;
             
-            if (!nombre || !apellido || !cedula || !fechaNacimiento || !unidad) {
+            if (!nombre || !apellido || !cedula || !fechaNacimiento || !unidad || !sexo) {
                 e.preventDefault();
                 alert('Por favor complete todos los campos obligatorios marcados con *');
                 return false;
@@ -541,23 +720,6 @@ try {
                 e.preventDefault();
                 alert('La fecha de nacimiento debe ser anterior a hoy');
                 return false;
-            }
-        });
-        
-        // Auto-calcular edad cuando cambie la fecha de nacimiento
-        document.getElementById('fecha_nacimiento').addEventListener('change', function() {
-            const fechaNac = new Date(this.value);
-            const hoy = new Date();
-            const edad = hoy.getFullYear() - fechaNac.getFullYear();
-            const mes = hoy.getMonth() - fechaNac.getMonth();
-            
-            if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
-                edad--;
-            }
-            
-            if (edad < 0) {
-                alert('La fecha de nacimiento no puede ser futura');
-                this.value = '';
             }
         });
     </script>
