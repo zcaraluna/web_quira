@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Agregar Postulante (Sin Biométrico) - Sistema Quira</title>
     <link rel="shortcut icon" href="favicon.php">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
@@ -132,134 +132,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="assets/css/main.min.css">
     
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding-bottom: 80px; /* Safe zone para el footer */
+        .device-status {
+            transition: all 0.3s ease;
         }
-        
-        .container {
-            margin-bottom: 80px; /* Safe zone para el footer */
+        .device-connected {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
         }
-        
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        .device-disconnected {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
         }
-        
-        .card-header {
-            background: linear-gradient(135deg, #2E5090 0%, #1a3a70 100%);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 1.5rem;
+        .device-connecting {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
         }
-        
         .form-control:focus {
             border-color: #2E5090;
             box-shadow: 0 0 0 0.2rem rgba(46, 80, 144, 0.25);
         }
-        
         .btn-primary {
-            background: linear-gradient(135deg, #2E5090 0%, #1a3a70 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 12px 30px;
-            font-weight: 600;
+            background-color: #2E5090;
+            border-color: #2E5090;
         }
-        
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 80, 144, 0.4);
+            background-color: #1e3a6b;
+            border-color: #1e3a6b;
         }
-        
-        .btn-secondary {
-            background: #6c757d;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 30px;
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
             font-weight: 600;
+            letter-spacing: 0.5px;
         }
-        
-        .btn-warning {
-            background: #ffc107;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 30px;
-            font-weight: 600;
-            color: #212529;
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
         }
-        
-        .alert {
-            border-radius: 10px;
-            border: none;
+        .btn-outline-secondary {
+            border-color: #6c757d;
+            color: #6c757d;
+            font-weight: 500;
         }
-        
-        .form-group label {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 8px;
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            transform: translateY(-1px);
         }
-        
-        .required {
-            color: #dc3545;
+        .btn-outline-info {
+            border-color: #17a2b8;
+            color: #17a2b8;
         }
-        
-        .device-status {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
+        .btn-outline-info:hover {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
         }
-        
-        .status-disconnected {
-            color: #dc3545;
+        .gap-3 {
+            gap: 1rem !important;
         }
-        
-        .status-connected {
-            color: #28a745;
-        }
-        
         .mobile-warning {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2E5090, #1e3a6b);
+            color: white;
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             text-align: center;
-            color: white;
-            padding: 20px;
+            padding: 2rem;
         }
-        
         .mobile-warning h2 {
-            margin-bottom: 20px;
-            font-weight: bold;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
         }
-        
         .mobile-warning p {
             font-size: 1.1rem;
-            margin-bottom: 30px;
-            line-height: 1.6;
+            margin-bottom: 2rem;
+            opacity: 0.9;
         }
-        
         .mobile-warning .btn {
-            background: white;
-            color: #2E5090;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
             padding: 12px 30px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
-        
         .mobile-warning .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         /* FOOTER STYLES */
@@ -291,6 +262,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .footer-simple:hover #footer-text {
             color: #2E5090;
+        }
+        
+        /* Safe zone para el footer */
+        body {
+            padding-bottom: 80px;
+        }
+        
+        .container {
+            margin-bottom: 80px !important;
         }
         
         /* MODAL STYLES */
@@ -403,37 +383,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             opacity: 0.9;
         }
         
-        .no-biometric-warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .device-status {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .device-status.device-connecting {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-        }
-        
-        .device-status.device-connected {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        
-        .device-status.device-disconnected {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
+        /* Estilo para campos de solo lectura */
+        .form-control[readonly] {
+            background-color: #f8f9fa;
+            border-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
         }
     </style>
 </head>
