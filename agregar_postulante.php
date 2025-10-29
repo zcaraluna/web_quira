@@ -1088,9 +1088,9 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
             const deviceInfo = await zktecoBridge.getDeviceInfo();
             console.log('Device info response:', deviceInfo);
             
-            if (deviceInfo && deviceInfo.user_count) {
+            if (deviceInfo && deviceInfo.device_info && deviceInfo.device_info.user_count) {
                 // Usar el contador del dispositivo como base
-                const totalUsuarios = deviceInfo.user_count;
+                const totalUsuarios = deviceInfo.device_info.user_count;
                 console.log(`Total de usuarios en el dispositivo: ${totalUsuarios}`);
                 
                 // Intentar obtener usuarios del dispositivo
@@ -1619,7 +1619,7 @@ Por favor verifique:
                   let ultimoUsuario = '';
                   
                   // Usar el user_count del dispositivo como referencia del último usuario real
-                  const ultimoUIDReal = info.user_count || 0;
+                  const ultimoUIDReal = info.device_info ? info.device_info.user_count || 0 : 0;
                   console.log(`Último UID real según dispositivo: ${ultimoUIDReal}`);
                   
                   if (users.users && users.users.length > 0) {
@@ -1658,11 +1658,11 @@ Por favor verifique:
                       ocultarAdvertenciaUltimoUsuario();
                   }
                   
-                  const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
+                  const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.device_info ? info.device_info.serial_number || 'No disponible' : 'No disponible'} | Usuarios: ${info.device_info ? info.device_info.user_count || 0 : 0}`;
                   updateDeviceStatus(statusText, 'connected');
               } catch (error) {
                   console.error('Error obteniendo último usuario:', error);
-                  const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
+                  const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.device_info ? info.device_info.serial_number || 'No disponible' : 'No disponible'} | Usuarios: ${info.device_info ? info.device_info.user_count || 0 : 0}`;
                   updateDeviceStatus(statusText, 'connected');
               }
             
@@ -1779,8 +1779,8 @@ Por favor verifique:
                         // Primero obtener información del dispositivo
                         const deviceInfo = await zktecoBridge.getDeviceInfo();
                         
-                        if (deviceInfo && deviceInfo.user_count) {
-                            const totalUsuarios = deviceInfo.user_count;
+                        if (deviceInfo && deviceInfo.device_info && deviceInfo.device_info.user_count) {
+                            const totalUsuarios = deviceInfo.device_info.user_count;
                             console.log(`Total de usuarios en el dispositivo: ${totalUsuarios}`);
                             
                             // Intentar obtener usuarios del dispositivo
