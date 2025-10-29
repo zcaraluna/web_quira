@@ -704,9 +704,8 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                         <label for="id_k40"><i class="fas fa-fingerprint"></i> ID en K40</label>
                                         <input type="number" class="form-control" id="id_k40" name="id_k40" 
                                                value="<?= htmlspecialchars($_POST['id_k40'] ?? '') ?>" 
-                                               min="1" max="9999" placeholder="Se asigna automáticamente"
-                                               readonly>
-                                        <small class="form-text text-muted">Se asigna automáticamente por el sistema</small>
+                                               min="1" max="9999" placeholder="Se asigna automáticamente">
+                                        <small class="form-text text-muted">Se asigna automáticamente, pero puede ser editado manualmente</small>
                                         <div id="usuario-existente-info" class="mt-2" style="display: none;">
                                             <!-- Aquí se mostrará la información del usuario existente -->
                                         </div>
@@ -1977,6 +1976,21 @@ Por favor verifique:
     document.getElementById('cedula').addEventListener('input', function(e) {
         // Solo permitir números
         e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    });
+    
+    // Validación de ID en K40 en tiempo real
+    document.getElementById('id_k40').addEventListener('input', function(e) {
+        const uid = e.target.value;
+        if (uid && !isNaN(uid) && parseInt(uid) > 0) {
+            verificarUsuarioExistente(parseInt(uid));
+        } else {
+            // Limpiar información si el campo está vacío o inválido
+            const infoDiv = document.getElementById('usuario-existente-info');
+            infoDiv.style.display = 'none';
+            infoDiv.innerHTML = '';
+            ocultarAdvertenciaUsuarioManual();
+            ocultarAdvertenciaIdAdelantado();
+        }
     });
     
      // Calcular edad inicial si ya hay una fecha cargada
