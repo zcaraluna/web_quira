@@ -1677,9 +1677,11 @@ $distribucion_unidad = $pdo->query("
                                 <h5 class="mb-0"><i class="fas fa-user-friends mr-2"></i>Lista de Postulantes</h5>
                                 <div class="d-flex align-items-center">
                                     <span class="badge badge-info mr-2">Total: <?= $total_records ?></span>
+                                    <?php if (!in_array($_SESSION['rol'], ['USUARIO'])): ?>
                                     <button type="button" class="btn btn-primary btn-sm" onclick="exportarPostulantes()">
                                         <i class="fas fa-download"></i> Exportar
                                     </button>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             

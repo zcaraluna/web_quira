@@ -11,6 +11,12 @@ session_start();
 require_once 'config.php';
 requireLogin();
 
+// Los usuarios con rol USUARIO no pueden exportar
+if ($_SESSION['rol'] === 'USUARIO') {
+    header('Location: dashboard.php');
+    exit;
+}
+
 // Verificar que se haya solicitado una exportación
 if (!isset($_GET['exportar']) || $_GET['exportar'] !== '1') {
     header('Location: dashboard.php');
