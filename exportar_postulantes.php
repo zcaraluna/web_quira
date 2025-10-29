@@ -11,6 +11,13 @@ session_start();
 require_once 'config.php';
 requireLogin();
 
+// Cargar PhpSpreadsheet si está disponible
+$phpspreadsheet_available = false;
+if (file_exists('vendor/autoload.php')) {
+    require_once 'vendor/autoload.php';
+    $phpspreadsheet_available = true;
+}
+
 // Los usuarios con rol USUARIO no pueden exportar
 if ($_SESSION['rol'] === 'USUARIO') {
     header('Location: dashboard.php');
@@ -207,44 +214,121 @@ function exportarCSV($postulantes, $timestamp) {
 }
 
 function exportarExcel($postulantes, $timestamp, $fecha_actual) {
+    global $phpspreadsheet_available;
+    
+    $filename = "postulantes_export_{$timestamp}.xlsx";
+    
+    if ($phpspreadsheet_available) {
+        // Usar PhpSpreadsheet para generar archivo Excel real
+        try {
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Postulantes');
+            
+            // Encabezados
+            $headers = [
+                'A' => 'ID', 'B' => 'Nombre', 'C' => 'Apellido', 'D' => 'Cédula', 
+                'E' => 'Fecha Nacimiento', 'F' => 'Edad', 'G' => 'Sexo', 'H' => 'Teléfono',
+                'I' => 'Unidad', 'J' => 'Dedo Registrado', 'K' => 'Aparato', 'L' => 'Registrado Por',
+                'M' => 'Capturador', 'N' => 'Fecha Registro', 'O' => 'Observaciones'
+            ];
+            
+            $col = 1;
+            foreach ($headers as $header) {
+                $sheet->setCellValueByColumnAndRow($col, 1, $header);
+                $col++;
+            }
+            
+            // Estilo para encabezados
+            $headerRange = 'A1:O1';
+            $sheet->getStyle($headerRange)->getFont()->setBold(true);
+            $sheet->getStyle($headerRange)->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setARGB('FF4472C4');
+            $sheet->getStyle($headerRange)->getFont()->getColor()->setARGB('FFFFFFFF');
+            
+            // Datos
+            $row = 2;
+            foreach ($postulantes as $postulante) {
+                $col = 1;
+                $datos = [
+                    $postulante['id'],
+                    limpiarTexto($postulante['nombre']),
+                    limpiarTexto($postulante['apellido']),
+                    $postulante['cedula'],
+                    formatearFechaNacimiento($postulante['fecha_nacimiento']),
+                    $postulante['edad'] ?: '',
+                    $postulante['sexo'] ?: '',
+                    $postulante['telefono'] ?: '',
+                    limpiarTexto($postulante['unidad'] ?: ''),
+                    $postulante['dedo_registrado'] ?: '',
+                    limpiarTexto(obtenerNombreAparato($postulante)),
+                    limpiarTexto($postulante['registrado_por'] ?: ''),
+                    limpiarTexto($postulante['capturador_nombre'] ?: ''),
+                    formatearFecha($postulante['fecha_registro']),
+                    limpiarTexto($postulante['observaciones'] ?: '')
+                ];
+                
+                foreach ($datos as $dato) {
+                    $sheet->setCellValueByColumnAndRow($col, $row, $dato);
+                    $col++;
+                }
+                $row++;
+            }
+            
+            // Autoajustar columnas
+            foreach (range('A', 'O') as $column) {
+                $sheet->getColumnDimension($column)->setAutoSize(true);
+            }
+            
+            // Generar archivo
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Cache-Control: max-age=0');
+            
+            $writer->save('php://output');
+            exit;
+            
+        } catch (Exception $e) {
+            // Si falla PhpSpreadsheet, usar método de respaldo
+            error_log('Error con PhpSpreadsheet: ' . $e->getMessage());
+            exportarExcelFallback($postulantes, $timestamp, $fecha_actual);
+        }
+    } else {
+        // Método de respaldo si PhpSpreadsheet no está disponible
+        exportarExcelFallback($postulantes, $timestamp, $fecha_actual);
+    }
+}
+
+function exportarExcelFallback($postulantes, $timestamp, $fecha_actual) {
     $filename = "postulantes_export_{$timestamp}.xls";
     
-    // Headers para Excel - formato más compatible
+    // Método de respaldo usando HTML
     header('Content-Type: application/vnd.ms-excel; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Pragma: no-cache');
     header('Expires: 0');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
     
-    // Crear BOM para UTF-8
     echo "\xEF\xBB\xBF";
-    
-    // Generar XML SpreadsheetML que Excel reconoce mejor
-    echo '<?xml version="1.0" encoding="UTF-8"?>';
-    echo '<?mso-application progid="Excel.Sheet"?>';
-    echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
-    echo ' xmlns:o="urn:schemas-microsoft-com:office:office"';
-    echo ' xmlns:x="urn:schemas-microsoft-com:office:excel"';
-    echo ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"';
-    echo ' xmlns:html="http://www.w3.org/TR/REC-html40">';
-    echo '<Worksheet ss:Name="Postulantes">';
-    echo '<Table>';
+    echo '<table border="1">';
     
     // Encabezados
-    echo '<Row>';
+    echo '<tr>';
     $headers = [
         'ID', 'Nombre', 'Apellido', 'Cédula', 'Fecha Nacimiento', 'Edad', 'Sexo', 
         'Teléfono', 'Unidad', 'Dedo Registrado', 'Aparato', 'Registrado Por', 
         'Capturador', 'Fecha Registro', 'Observaciones'
     ];
     foreach ($headers as $header) {
-        echo '<Cell><Data ss:Type="String"><![CDATA[' . $header . ']]></Data></Cell>';
+        echo '<td><b>' . $header . '</b></td>';
     }
-    echo '</Row>';
+    echo '</tr>';
     
     // Datos
     foreach ($postulantes as $postulante) {
-        echo '<Row>';
+        echo '<tr>';
         $datos = [
             $postulante['id'],
             limpiarTexto($postulante['nombre']),
@@ -264,15 +348,12 @@ function exportarExcel($postulantes, $timestamp, $fecha_actual) {
         ];
         
         foreach ($datos as $dato) {
-            $tipo = is_numeric($dato) && $dato !== '' ? 'Number' : 'String';
-            echo '<Cell><Data ss:Type="' . $tipo . '"><![CDATA[' . $dato . ']]></Data></Cell>';
+            echo '<td>' . $dato . '</td>';
         }
-        echo '</Row>';
+        echo '</tr>';
     }
     
-    echo '</Table>';
-    echo '</Worksheet>';
-    echo '</Workbook>';
+    echo '</table>';
     exit;
 }
 
