@@ -880,9 +880,12 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                     </a>
                                 </div>
                                 <div class="text-center mt-3">
-                                    <button type="button" class="btn btn-outline-info btn-sm" id="test-connection-btn">
+                                    <button type="button" class="btn btn-outline-info btn-sm mr-2" id="test-connection-btn">
                                         <i class="fas fa-plug mr-1"></i> Probar Conexión
                                     </button>
+                                    <a href="agregar_postulante_x.php" class="btn btn-outline-warning btn-sm">
+                                        <i class="fas fa-user-plus mr-1"></i> Agregar Postulante X
+                                    </a>
                                 </div>
                             </div>
                         </form>
