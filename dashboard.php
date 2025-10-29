@@ -3569,11 +3569,19 @@ $distribucion_unidad = $pdo->query("
             formData.append('filtro_aparato', filtros.filtro_aparato);
             formData.append('filtro_dedo', filtros.filtro_dedo);
             
+            // Debug: ver qué se está enviando
+            console.log('Enviando datos:');
+            console.log('Campos:', camposSeleccionados);
+            console.log('Filtros:', filtros);
+            for (let [key, value] of formData.entries()) {
+                console.log(key, ':', value);
+            }
+            
             // Cerrar modal
             $('#modalExportarPostulantes').modal('hide');
             
             // Usar fetch para enviar los datos
-            fetch('exportar_postulantes_pdf.php', {
+            fetch('test_export.php', {
                 method: 'POST',
                 body: formData
             })

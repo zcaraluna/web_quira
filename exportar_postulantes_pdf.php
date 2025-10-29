@@ -212,11 +212,18 @@ if (file_exists('fpdf/fpdf.php')) {
     }
 }
 
+// Debug temporal - ver qué llega
+error_log('POST recibido: ' . print_r($_POST, true));
+error_log('Raw input: ' . file_get_contents('php://input'));
+
 // Obtener los campos seleccionados
 $campos = json_decode($_POST['campos'] ?? '[]', true);
 
+error_log('Campos decodificados: ' . print_r($campos, true));
+
 if (empty($campos)) {
-    die('No se seleccionaron campos para exportar.');
+    error_log('ERROR: No hay campos seleccionados');
+    die('No se seleccionaron campos para exportar. POST: ' . print_r($_POST, true));
 }
 
 // Obtener filtros
