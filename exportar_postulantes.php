@@ -7,7 +7,6 @@
 // Configurar zona horaria para Paraguay
 date_default_timezone_set('America/Asuncion');
 
-session_start();
 require_once 'config.php';
 requireLogin();
 
