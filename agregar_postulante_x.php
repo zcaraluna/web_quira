@@ -37,12 +37,10 @@ try {
     error_log('Error obteniendo usuarios del sistema: ' . $e->getMessage());
 }
 
-// Obtener lista de unidades
+// Obtener unidades disponibles (igual que la página original)
 $unidades = [];
 try {
-    $stmt = $pdo->prepare("SELECT DISTINCT unidad FROM postulantes WHERE unidad IS NOT NULL AND unidad != '' ORDER BY unidad ASC");
-    $stmt->execute();
-    $unidades = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER BY nombre")->fetchAll(PDO::FETCH_COLUMN);
 } catch (Exception $e) {
     error_log('Error obteniendo unidades: ' . $e->getMessage());
 }
@@ -93,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 nombre, apellido, cedula, fecha_nacimiento, telefono, 
                 unidad, observaciones, edad, sexo, registrado_por, capturador_id,
                 dedo_registrado, aparato_id, uid_k40, aparato_nombre
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $stmt->execute([
