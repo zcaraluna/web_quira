@@ -1336,10 +1336,6 @@ $distribucion_unidad = $pdo->query("
                                     <i class="fas fa-fw fa-cog mr-2"></i>
                                     Configuración
                                 </a>
-                                <a class="nav-link mb-2" href="#base-datos" onclick="showSection('base-datos')">
-                                    <i class="fas fa-fw fa-database mr-2"></i>
-                                    Base de datos
-                                </a>
                                 <?php endif; ?>
                             </nav>
                         </div>
@@ -2443,17 +2439,6 @@ $distribucion_unidad = $pdo->query("
 
                     <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
                     <div id="configuracion-section" class="content-section">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-cog mr-2"></i>Configuración del Sistema</h5>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted">Módulo de configuración en desarrollo...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="base-datos-section" class="content-section">
                         <div class="row">
                             <!-- Backup de Base de Datos -->
                             <div class="col-lg-6 mb-4">
@@ -2476,26 +2461,14 @@ $distribucion_unidad = $pdo->query("
                                 </div>
                             </div>
 
-                            <!-- Gestión de Postulantes -->
+                            <!-- Configuración General -->
                             <div class="col-lg-6 mb-4">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h5 class="mb-0"><i class="fas fa-users mr-2"></i>Gestión de Postulantes</h5>
+                                        <h5 class="mb-0"><i class="fas fa-cog mr-2"></i>Configuración General</h5>
                                     </div>
                                     <div class="card-body">
-                                        <p class="text-muted mb-3">Busque y elimine postulantes del sistema.</p>
-                                        <div class="form-group">
-                                            <label for="buscar-postulante">Buscar por cédula:</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control" id="buscar-postulante" placeholder="Ingrese número de cédula">
-                                                <div class="input-group-append">
-                                                    <button class="btn btn-outline-secondary" type="button" onclick="buscarPostulante()">
-                                                        <i class="fas fa-search"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div id="resultado-busqueda" class="mt-3"></div>
+                                        <p class="text-muted">Módulo de configuración en desarrollo...</p>
                                     </div>
                                 </div>
                             </div>
@@ -5129,79 +5102,6 @@ $distribucion_unidad = $pdo->query("
             }, 3000);
         }
 
-        // Función para buscar postulante por cédula
-        function buscarPostulante() {
-            const cedula = document.getElementById('buscar-postulante').value.trim();
-            const resultadoDiv = document.getElementById('resultado-busqueda');
-            
-            if (!cedula) {
-                resultadoDiv.innerHTML = '<div class="alert alert-warning">Por favor ingrese un número de cédula</div>';
-                return;
-            }
-            
-            // Mostrar loading
-            resultadoDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando postulante...</div>';
-            
-            // Realizar búsqueda via AJAX
-            fetch('buscar_postulante_eliminar.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'cedula=' + encodeURIComponent(cedula)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    resultadoDiv.innerHTML = `
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="card-title">Postulante encontrado:</h6>
-                                <p><strong>Nombre:</strong> ${data.postulante.nombre} ${data.postulante.apellido}</p>
-                                <p><strong>Cédula:</strong> ${data.postulante.cedula}</p>
-                                <p><strong>Unidad:</strong> ${data.postulante.unidad}</p>
-                                <p><strong>Fecha de registro:</strong> ${data.postulante.fecha_registro}</p>
-                                <button class="btn btn-danger btn-sm" onclick="eliminarPostulante(${data.postulante.id}, '${data.postulante.nombre} ${data.postulante.apellido}')">
-                                    <i class="fas fa-trash mr-1"></i>Eliminar
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    resultadoDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
-                }
-            })
-            .catch(error => {
-                resultadoDiv.innerHTML = '<div class="alert alert-danger">Error al buscar el postulante</div>';
-                console.error('Error:', error);
-            });
-        }
-
-        // Función para eliminar postulante
-        function eliminarPostulante(id, nombre) {
-            if (confirm(`¿Está seguro de que desea eliminar al postulante "${nombre}"? Esta acción no se puede deshacer.`)) {
-                fetch('eliminar_postulante.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'id=' + encodeURIComponent(id)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('resultado-busqueda').innerHTML = '<div class="alert alert-success">Postulante eliminado exitosamente</div>';
-                        document.getElementById('buscar-postulante').value = '';
-                    } else {
-                        document.getElementById('resultado-busqueda').innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('resultado-busqueda').innerHTML = '<div class="alert alert-danger">Error al eliminar el postulante</div>';
-                    console.error('Error:', error);
-                });
-            }
-        }
     </script>
 
     <!-- Modal para Registros por Día -->
