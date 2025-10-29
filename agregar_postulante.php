@@ -1035,12 +1035,12 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
             const deviceInfo = await zktecoBridge.getDeviceInfo();
             console.log('Device info:', deviceInfo);
             
-             if (deviceInfo && deviceInfo.serial_number) {
+             if (deviceInfo && deviceInfo.device_info && deviceInfo.device_info.serial_number) {
                  // Obtener el nombre del aparato desde la base de datos
                  try {
-                     console.log('Enviando consulta para serial:', deviceInfo.serial_number);
+                     console.log('Enviando consulta para serial:', deviceInfo.device_info.serial_number);
                      
-                     const response = await fetch(`obtener_aparato_por_serial.php?serial=${encodeURIComponent(deviceInfo.serial_number)}`, {
+                     const response = await fetch(`obtener_aparato_por_serial.php?serial=${encodeURIComponent(deviceInfo.device_info.serial_number)}`, {
                          method: 'GET'
                      });
                      
@@ -1052,23 +1052,23 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                          
                         if (data.success && data.aparato) {
                             document.getElementById('aparato_biometrico').value = data.aparato.nombre;
-                            document.getElementById('serial_aparato').value = deviceInfo.serial_number;
+                            document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
                             console.log(`✅ Aparato biométrico actualizado: ${data.aparato.nombre}`);
                         } else {
-                            document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.serial_number})`;
-                            document.getElementById('serial_aparato').value = deviceInfo.serial_number;
-                            console.log(`❌ Aparato no encontrado en BD, usando serial: ${deviceInfo.serial_number}`);
+                            document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.device_info.serial_number})`;
+                            document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
+                            console.log(`❌ Aparato no encontrado en BD, usando serial: ${deviceInfo.device_info.serial_number}`);
                             console.log('Respuesta del servidor:', data);
                         }
                      } else {
-                         document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.serial_number})`;
+                         document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.device_info.serial_number})`;
                          console.log('❌ Error HTTP obteniendo datos del aparato, status:', response.status);
                          const errorText = await response.text();
                          console.log('Error response:', errorText);
                      }
                  } catch (error) {
                      console.error('❌ Error consultando aparato:', error);
-                     document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.serial_number})`;
+                     document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.device_info.serial_number})`;
                  }
              } else {
                  console.log('No se pudo obtener el serial del dispositivo');
@@ -1465,13 +1465,13 @@ Por favor verifique:
             } catch (error) {
                 console.log('No se pudo obtener device info, usando serial por defecto');
                 // Usar el serial que sabemos que funciona
-                deviceInfo = { serial_number: 'A8MX193760004' };
+                deviceInfo = { device_info: { serial_number: 'A8MX193760004' } };
             }
             
-            if (deviceInfo && deviceInfo.serial_number) {
-                console.log('Consultando aparato con serial:', deviceInfo.serial_number);
+            if (deviceInfo && deviceInfo.device_info && deviceInfo.device_info.serial_number) {
+                console.log('Consultando aparato con serial:', deviceInfo.device_info.serial_number);
                 
-                const response = await fetch(`obtener_aparato_por_serial.php?serial=${encodeURIComponent(deviceInfo.serial_number)}`, {
+                const response = await fetch(`obtener_aparato_por_serial.php?serial=${encodeURIComponent(deviceInfo.device_info.serial_number)}`, {
                     method: 'GET'
                 });
                 
@@ -1483,15 +1483,15 @@ Por favor verifique:
                     
                     if (data.success && data.aparato) {
                         document.getElementById('aparato_biometrico').value = data.aparato.nombre;
-                        document.getElementById('serial_aparato').value = deviceInfo.serial_number;
+                        document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
                         console.log(`✅ Aparato actualizado manualmente: ${data.aparato.nombre}`);
                         
                         // Mostrar mensaje de éxito
                         showToast('Aparato actualizado: ' + data.aparato.nombre, 'success');
                     } else {
-                        document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.serial_number})`;
-                        document.getElementById('serial_aparato').value = deviceInfo.serial_number;
-                        console.log(`❌ Aparato no encontrado: ${deviceInfo.serial_number}`);
+                        document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.device_info.serial_number})`;
+                        document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
+                        console.log(`❌ Aparato no encontrado: ${deviceInfo.device_info.serial_number}`);
                         showToast('Aparato no encontrado en la base de datos', 'warning');
                     }
                 } else {
