@@ -1272,14 +1272,6 @@ $distribucion_unidad = $pdo->query("
         .export-option:hover i {
             transform: scale(1.1);
         }
-        
-        #modalExportarPostulantes .modal-dialog {
-            max-width: 600px;
-        }
-        
-        #modalExportarPostulantes .modal-body {
-            padding: 2rem;
-        }
     </style>
 </head>
 <body>
@@ -3531,56 +3523,7 @@ $distribucion_unidad = $pdo->query("
         }
         
         function exportarPostulantes() {
-            // Mostrar modal de opciones de exportación
-            $('#modalExportarPostulantes').modal('show');
-        }
-        
-        function confirmarExportacion(formato) {
-            // Obtener todos los filtros actuales
-            const search = document.getElementById('search').value;
-            const fechaDesde = document.getElementById('fecha_desde').value;
-            const fechaHasta = document.getElementById('fecha_hasta').value;
-            const unidad = document.getElementById('unidad').value;
-            const aparato = document.getElementById('aparato').value;
-            const dedo = document.getElementById('dedo').value;
-            
-            // Crear URL para exportar usando la ruta base actual
-            const url = new URL('./exportar_postulantes.php', window.location.href);
-            url.searchParams.set('exportar', '1');
-            url.searchParams.set('formato', formato);
-            
-            if (search) url.searchParams.set('search', search);
-            if (fechaDesde) url.searchParams.set('fecha_desde', fechaDesde);
-            if (fechaHasta) url.searchParams.set('fecha_hasta', fechaHasta);
-            if (unidad) url.searchParams.set('unidad', unidad);
-            if (aparato) url.searchParams.set('aparato', aparato);
-            if (dedo) url.searchParams.set('dedo', dedo);
-            
-            // Cerrar modal
-            $('#modalExportarPostulantes').modal('hide');
-            
-            // Mostrar mensaje de procesamiento
-            const mensaje = document.createElement('div');
-            mensaje.className = 'alert alert-info alert-dismissible fade show position-fixed';
-            mensaje.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            mensaje.innerHTML = `
-                <i class="fas fa-spinner fa-spin mr-2"></i>
-                Generando archivo ${formato.toUpperCase()}... Por favor espere.
-                <button type="button" class="close" data-dismiss="alert">
-                    <span>&times;</span>
-                </button>
-            `;
-            document.body.appendChild(mensaje);
-            
-            // Abrir en nueva ventana para descarga
-            window.open(url.toString(), '_blank');
-            
-            // Remover mensaje después de 3 segundos
-            setTimeout(() => {
-                if (mensaje.parentNode) {
-                    mensaje.parentNode.removeChild(mensaje);
-                }
-            }, 3000);
+            alert('Función de exportación en desarrollo. Próximamente disponible.');
         }
         
         // Funciones para gestión de unidades
@@ -5329,70 +5272,6 @@ $distribucion_unidad = $pdo->query("
     </div>
 
     <!-- Modal Exportar Postulantes -->
-    <div class="modal fade" id="modalExportarPostulantes" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-download mr-2"></i>Exportar Postulantes
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-3">Seleccione el formato de exportación para los postulantes filtrados:</p>
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 text-center export-option" onclick="confirmarExportacion('excel')" style="cursor: pointer;">
-                                <div class="card-body">
-                                    <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
-                                    <h6 class="card-title">Excel (.xlsx)</h6>
-                                    <p class="card-text small text-muted">Archivo Excel binario real - Sin advertencias</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 text-center export-option" onclick="confirmarExportacion('csv')" style="cursor: pointer;">
-                                <div class="card-body">
-                                    <i class="fas fa-file-csv fa-3x text-info mb-3"></i>
-                                    <h6 class="card-title">CSV (.csv)</h6>
-                                    <p class="card-text small text-muted">Formato compatible con cualquier hoja de cálculo</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 text-center export-option" onclick="confirmarExportacion('pdf')" style="cursor: pointer;">
-                                <div class="card-body">
-                                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
-                                    <h6 class="card-title">PDF (.html)</h6>
-                                    <p class="card-text small text-muted">Formato HTML optimizado para imprimir como PDF</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <strong>Nota:</strong> La exportación incluirá todos los filtros aplicados actualmente. 
-                        Total de registros a exportar: <span id="total-exportar"><?= $total_records ?></span>
-                    </div>
-                    
-                    <div class="alert alert-warning mt-2">
-                        <i class="fas fa-print mr-2"></i>
-                        <strong>Para PDF:</strong> El archivo se descargará como HTML. Para convertirlo a PDF, 
-                        ábrelo en el navegador y usa <strong>Ctrl+P</strong> → <strong>Destino: Guardar como PDF</strong>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i> Cancelar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
         // Modal functionality
