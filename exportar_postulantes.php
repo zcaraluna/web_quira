@@ -4,6 +4,9 @@
  * Sistema QUIRA - Versión Web
  */
 
+// Iniciar output buffering para evitar problemas con headers
+ob_start();
+
 // Configurar zona horaria para Paraguay
 date_default_timezone_set('America/Asuncion');
 
@@ -19,13 +22,15 @@ if (file_exists('vendor/autoload.php')) {
 
 // Los usuarios con rol USUARIO no pueden exportar
 if ($_SESSION['rol'] === 'USUARIO') {
-    echo '<script>window.location.href = "dashboard.php";</script>';
+    ob_clean();
+    header('Location: dashboard.php');
     exit;
 }
 
 // Verificar que se haya solicitado una exportación
 if (!isset($_GET['exportar']) || $_GET['exportar'] !== '1') {
-    echo '<script>window.location.href = "dashboard.php";</script>';
+    ob_clean();
+    header('Location: dashboard.php');
     exit;
 }
 
@@ -56,12 +61,12 @@ if (!empty($search)) {
 
 // Filtro por fecha
 if (!empty($filtro_fecha_desde)) {
-    $where_conditions[] = "DATE(p.fecha_registro) >= ?";
+    $where_conditions[] = "p.fecha_registro::date >= ?";
     $params[] = $filtro_fecha_desde;
 }
 
 if (!empty($filtro_fecha_hasta)) {
-    $where_conditions[] = "DATE(p.fecha_registro) <= ?";
+    $where_conditions[] = "p.fecha_registro::date <= ?";
     $params[] = $filtro_fecha_hasta;
 }
 
@@ -158,6 +163,9 @@ switch ($formato) {
 }
 
 function exportarCSV($postulantes, $timestamp) {
+    // Limpiar cualquier output previo
+    ob_clean();
+    
     $filename = "postulantes_export_{$timestamp}.csv";
     
     header('Content-Type: text/csv; charset=utf-8');
@@ -214,6 +222,9 @@ function exportarCSV($postulantes, $timestamp) {
 
 function exportarExcel($postulantes, $timestamp, $fecha_actual) {
     global $phpspreadsheet_available;
+    
+    // Limpiar cualquier output previo
+    ob_clean();
     
     $filename = "postulantes_export_{$timestamp}.xlsx";
     
@@ -302,6 +313,9 @@ function exportarExcel($postulantes, $timestamp, $fecha_actual) {
 }
 
 function exportarExcelFallback($postulantes, $timestamp, $fecha_actual) {
+    // Limpiar cualquier output previo
+    ob_clean();
+    
     $filename = "postulantes_export_{$timestamp}.xls";
     
     // Método de respaldo usando HTML
@@ -357,6 +371,9 @@ function exportarExcelFallback($postulantes, $timestamp, $fecha_actual) {
 }
 
 function exportarPDF($postulantes, $timestamp, $fecha_actual) {
+    // Limpiar cualquier output previo
+    ob_clean();
+    
     $filename = "postulantes_export_{$timestamp}.pdf";
     
     // Crear PDF usando HTML que se puede imprimir como PDF
