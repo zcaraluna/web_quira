@@ -127,11 +127,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Agregar Postulante (Sin Biométrico) - Sistema Quira</title>
     <link rel="shortcut icon" href="favicon.php">
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="favicon.php">
+    <!-- Google Fonts - Lato -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Main CSS -->
     <link rel="stylesheet" href="assets/css/main.min.css">
     
     <style>
+        /* Fuente Lato para coincidir con la página original */
+        body, html {
+            font-family: 'Lato', sans-serif;
+        }
+        
+        .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+            font-family: 'Lato', sans-serif;
+        }
+        
         .device-status {
             transition: all 0.3s ease;
         }
