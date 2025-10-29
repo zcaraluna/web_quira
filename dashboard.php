@@ -3549,11 +3549,16 @@ $distribucion_unidad = $pdo->query("
             });
             
             // Obtener los filtros actuales del formulario
+            const searchEl = document.getElementById('search');
+            const unidadEl = document.getElementById('unidad');
+            const aparatoEl = document.getElementById('aparato');
+            const dedoEl = document.getElementById('dedo');
+            
             const filtros = {
-                search: document.getElementById('search').value,
-                filtro_unidad: document.getElementById('filtro_unidad').value,
-                filtro_aparato: document.getElementById('filtro_aparato').value,
-                filtro_dedo: document.getElementById('filtro_dedo').value
+                search: searchEl ? searchEl.value : '',
+                filtro_unidad: unidadEl ? unidadEl.value : '',
+                filtro_aparato: aparatoEl ? aparatoEl.value : '',
+                filtro_dedo: dedoEl ? dedoEl.value : ''
             };
             
             // Crear formulario temporal para enviar los datos
