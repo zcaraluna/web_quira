@@ -1283,7 +1283,7 @@ $distribucion_unidad = $pdo->query("
                 <header class="container-fluid d-md-flex align-items-md-center justify-content-md-between py-4" style="padding-left: 50px; padding-right: 30px;">
                     <div class="text-center text-md-left py-3">
                         <a class="h4 text-dark font-weight-600" href="dashboard.php">
-                            <img src="assets/media/various/quiraXXXL.png" alt="Quira Logo" style="height: 130px; width: auto; margin-right: 15px; vertical-align: middle;">Panel de Administración
+                            <img src="assets/media/various/quiraXXXL.png" alt="Quira Logo" style="height: 130px; width: auto; margin-right: 15px; vertical-align: middle;">Panel _de Administración
                         </a>
                     </div>
                     <div class="text-center text-md-right py-3">
