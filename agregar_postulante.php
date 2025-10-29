@@ -1199,13 +1199,9 @@ Por favor verifique:
                 `;
                 infoDiv.style.display = 'block';
                 
-                // Ocultar advertencia de usuario manual si existe
+                // Ocultar todas las advertencias
                 ocultarAdvertenciaUsuarioManual();
-                
-                // Ocultar advertencia del último usuario ya que este ID está disponible
                 ocultarAdvertenciaUltimoUsuario();
-                
-                // Ocultar advertencia de ID adelantado si existe
                 ocultarAdvertenciaIdAdelantado();
             } else {
                 // ID no existe en el dispositivo - verificar si es adelantado
@@ -1233,13 +1229,9 @@ Por favor verifique:
                     `;
                     infoDiv.style.display = 'block';
                     
-                    // Ocultar advertencia de usuario manual si existe
+                    // Ocultar todas las advertencias ya que este ID es válido
                     ocultarAdvertenciaUsuarioManual();
-                    
-                    // Ocultar advertencia del último usuario ya que este ID es válido
                     ocultarAdvertenciaUltimoUsuario();
-                    
-                    // Ocultar advertencia de ID adelantado si existe
                     ocultarAdvertenciaIdAdelantado();
                 }
             }
@@ -1631,13 +1623,13 @@ Por favor verifique:
                       const ultimo = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
                       if (ultimo.name && !ultimo.name.startsWith("NN-")) {
                           ultimoUsuario = ` | Último: ${ultimo.uid}:${ultimo.name}`;
-                          // Mostrar advertencia si el último usuario tiene nombre
-                          mostrarAdvertenciaUltimoUsuario(ultimo.uid, ultimo.name);
+                          // NO mostrar advertencia automáticamente - solo informar
+                          // La advertencia se mostrará solo si el usuario intenta usar un ID específico que ya tiene nombre
                       } else {
                           ultimoUsuario = ` | Último: ${ultimo.uid} (sin nombre)`;
-                          // Ocultar advertencia si no hay problema
-                          ocultarAdvertenciaUltimoUsuario();
                       }
+                      // Ocultar advertencia del último usuario ya que no es un problema automático
+                      ocultarAdvertenciaUltimoUsuario();
                   }
                   
                   const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
@@ -1979,6 +1971,22 @@ Por favor verifique:
     document.getElementById('cedula').addEventListener('input', function(e) {
         // Solo permitir números
         e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    });
+    
+    // Verificación de ID en tiempo real
+    document.getElementById('id_k40').addEventListener('input', function(e) {
+        const uid = e.target.value;
+        if (uid && !isNaN(uid)) {
+            verificarUsuarioExistente(parseInt(uid));
+        } else {
+            // Limpiar información si no hay UID válido
+            const infoDiv = document.getElementById('usuario-existente-info');
+            infoDiv.style.display = 'none';
+            infoDiv.innerHTML = '';
+            ocultarAdvertenciaUsuarioManual();
+            ocultarAdvertenciaUltimoUsuario();
+            ocultarAdvertenciaIdAdelantado();
+        }
     });
     
      // Calcular edad inicial si ya hay una fecha cargada
