@@ -1,0 +1,29 @@
+COMANDOS PARA UBUNTU/LINUX:
+
+1. HACER EJECUTABLE EL SCRIPT:
+   chmod +x ejecutar_usuarios.sh
+
+2. EJECUTAR EL SCRIPT:
+   ./ejecutar_usuarios.sh
+
+3. O EJECUTAR DIRECTAMENTE CON PSQL:
+   psql -h 64.176.18.16 -U postgres -d sistema_postulantes -f insert_usuarios.sql
+
+4. O CONECTARSE INTERACTIVAMENTE:
+   psql -h 64.176.18.16 -U postgres -d sistema_postulantes
+   (luego ejecutar el contenido del archivo insert_usuarios.sql)
+
+CONFIGURACIÓN DEL SERVIDOR:
+- Host: 64.176.18.16
+- Puerto: 5432 (por defecto)
+- Base de datos: sistema_postulantes
+- Usuario: postgres
+- Contraseña: Postgres2025!
+
+TOTAL DE USUARIOS A INSERTAR: 50 usuarios
+ROL ASIGNADO: USUARIO
+CONTRASEÑA INICIAL: 123456 (se pedirá cambio en primer login)
+
+NOTA: Asegúrate de tener psql instalado:
+sudo apt update
+sudo apt install postgresql-client
