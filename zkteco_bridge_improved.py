@@ -170,6 +170,17 @@ class ZKTecoBridgeImproved:
                 }
             
             device_info = self.device.get_device_info()
+            
+            # Agregar información de usuarios al device_info
+            if device_info and isinstance(device_info, dict):
+                try:
+                    user_count = self.device.get_user_count()
+                    device_info['user_count'] = user_count
+                    logger.info(f"Device info actualizado con user_count: {user_count}")
+                except Exception as e:
+                    logger.warning(f"No se pudo obtener user_count: {e}")
+                    device_info['user_count'] = 0
+            
             return {
                 "success": True,
                 "message": "Información del dispositivo obtenida",
@@ -416,11 +427,90 @@ async def websocket_endpoint(websocket: WebSocket):
             "timestamp": datetime.now().isoformat()
         }))
         
-        # Mantener conexión activa
+        # Función auxiliar para enviar mensajes tipados
+        async def send_message(message_type: str, payload: Dict[str, Any]):
+            await websocket.send_text(json.dumps({
+                "type": message_type,
+                **(payload or {})
+            }))
+        
+        # Mantener conexión activa y procesar comandos del cliente
         while True:
             try:
-                data = await websocket.receive_text()
-                # Procesar mensajes del cliente si es necesario
+                raw_text = await websocket.receive_text()
+                if not raw_text:
+                    continue
+                try:
+                    msg = json.loads(raw_text)
+                except Exception:
+                    await send_message("error", {"message": "Mensaje no es JSON válido"})
+                    continue
+                
+                command = msg.get("command")
+                if not command:
+                    await send_message("error", {"message": "Comando no especificado"})
+                    continue
+                
+                # Ruteo de comandos
+                if command == "ping":
+                    await send_message("pong", {"timestamp": datetime.now().isoformat()})
+                
+                elif command == "connect":
+                    # Permitir cambiar IP/puerto dinámicamente
+                    ip = msg.get("ip") or bridge.ip_address
+                    port = int(msg.get("port") or bridge.port)
+                    # Si cambia, reconfigurar
+                    if ip != bridge.ip_address or port != bridge.port:
+                        bridge.ip_address = ip
+                        bridge.port = port
+                        bridge.device = ZKTecoK40V2(ip, port)
+                    result = await bridge.connect_to_device()
+                    # Notificar a todos por status y responder al caller
+                    await bridge.broadcast_status("Estado de conexión actualizado", result)
+                    await send_message("connect_response", result)
+                
+                elif command == "disconnect":
+                    result = await bridge.disconnect_device()
+                    await bridge.broadcast_status("Estado de conexión actualizado", result)
+                    await send_message("disconnect_response", result)
+                
+                elif command == "get_info":
+                    result = await bridge.get_device_info()
+                    await send_message("device_info", result)
+                
+                elif command == "get_users":
+                    result = await bridge.get_users_improved()
+                    await send_message("users_list", result)
+                
+                elif command == "add_user":
+                    uid = msg.get("uid")
+                    name = msg.get("name")
+                    privilege = int(msg.get("privilege", 0))
+                    if uid is None or not name:
+                        await send_message("add_user_response", {"success": False, "message": "UID y nombre son requeridos"})
+                    else:
+                        result = await bridge.add_user(int(uid), name, privilege)
+                        await send_message("add_user_response", result)
+                
+                elif command == "delete_user":
+                    uid = msg.get("uid")
+                    if uid is None:
+                        await send_message("delete_user_response", {"success": False, "message": "UID es requerido"})
+                    else:
+                        result = await bridge.delete_user(int(uid))
+                        await send_message("delete_user_response", result)
+                
+                elif command == "get_attendance":
+                    # No implementado en esta versión mejorada; responder placeholder
+                    await send_message("attendance_logs_error", {"message": "No implementado"})
+                
+                elif command == "search_postulante":
+                    name = msg.get("name", "")
+                    result = await bridge.search_postulante_by_name(name)
+                    await send_message("search_postulante_response", {"data": result})
+                
+                else:
+                    await send_message("error", {"message": f"Comando no soportado: {command}"})
             except WebSocketDisconnect:
                 break
                 
