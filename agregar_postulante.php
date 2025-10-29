@@ -1753,58 +1753,23 @@ Por favor verifique:
             let k40Actualizado = false;
             let usuarioUID = null;
             
-            // Si el usuario proporcionó un ID específico, usarlo
+            // Usar el ID del campo (puede ser automático o manual)
             if (idK40) {
                 usuarioUID = parseInt(idK40);
-                console.log(`Usando ID proporcionado por el usuario: ${usuarioUID}`);
+                console.log(`Usando ID del campo: ${usuarioUID}`);
+            } else {
+                // Si no hay ID en el campo, usar el último UID calculado
+                usuarioUID = ultimoUID;
+                console.log(`Usando último UID calculado: ${usuarioUID}`);
             }
             
             if (!esModoPrueba && dispositivoConectado && zktecoBridge) {
                 try {
-                    // Si no se proporcionó un ID específico, buscar uno disponible
+                    // Verificar que tenemos un UID válido
                     if (!usuarioUID) {
-                        console.log('Obteniendo información del dispositivo...');
-                        // Primero obtener información del dispositivo
-                        const deviceInfo = await zktecoBridge.getDeviceInfo();
-                        
-                        if (deviceInfo && deviceInfo.user_count) {
-                            const totalUsuarios = deviceInfo.user_count;
-                            console.log(`Total de usuarios en el dispositivo: ${totalUsuarios}`);
-                            
-                            // Intentar obtener usuarios del dispositivo
-                            const users = await zktecoBridge.getUsers();
-                            console.log(`Usuarios obtenidos: ${users.users ? users.users.length : 0} de ${totalUsuarios}`);
-                            
-                            if (users.users && users.users.length > 0) {
-                                // Buscar usuario disponible (sin nombre asignado)
-                                const usuariosSinId = users.users.filter(u => !u.name || u.name.startsWith("NN-"));
-                                let ultimoUsuario;
-                                
-                                if (usuariosSinId.length > 0) {
-                                    ultimoUsuario = usuariosSinId[usuariosSinId.length - 1];
-                                    console.log(`Usuario disponible encontrado: UID ${ultimoUsuario.uid}`);
-                                } else {
-                                    ultimoUsuario = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
-                                    console.log(`Usando último usuario: UID ${ultimoUsuario.uid}`);
-                                }
-                                
-                                if (ultimoUsuario) {
-                                    usuarioUID = ultimoUsuario.uid;
-                                } else {
-                                    // Si no se encontró usuario disponible, usar el total de usuarios
-                                    usuarioUID = totalUsuarios;
-                                    console.log(`Usando siguiente ID disponible: ${usuarioUID}`);
-                                }
-                            } else {
-                                // Si no se pueden obtener usuarios, usar el total de usuarios
-                                usuarioUID = totalUsuarios;
-                                console.log(`No se pudieron obtener usuarios, usando siguiente ID: ${usuarioUID}`);
-                            }
-                        } else {
-                            console.log('❌ No se pudo obtener información del dispositivo');
-                            alert('No se pudo obtener información del dispositivo biométrico.');
-                            return;
-                        }
+                        console.log('❌ No se pudo determinar el UID del usuario');
+                        alert('No se pudo determinar el ID del usuario en el dispositivo.');
+                        return;
                     }
                     
                      // Verificar si el usuario ya tiene nombre asignado
@@ -2022,6 +1987,8 @@ Por favor verifique:
     document.getElementById('id_k40').addEventListener('input', function(e) {
         const uid = e.target.value;
         if (uid && !isNaN(uid) && parseInt(uid) > 0) {
+            // Actualizar la variable global ultimoUID cuando el usuario edita manualmente
+            ultimoUID = parseInt(uid);
             verificarUsuarioExistente(parseInt(uid));
         } else {
             // Limpiar información si el campo está vacío o inválido
@@ -2030,6 +1997,7 @@ Por favor verifique:
             infoDiv.innerHTML = '';
             ocultarAdvertenciaUsuarioManual();
             ocultarAdvertenciaIdAdelantado();
+            ultimoUID = null;
         }
     });
     
