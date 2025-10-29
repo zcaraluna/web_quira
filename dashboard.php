@@ -177,13 +177,12 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                 $serial = trim($_POST['serial']);
                 $ip_address = trim($_POST['ip_address']);
                 $puerto = trim($_POST['puerto']);
-                $ubicacion = trim($_POST['ubicacion']);
                 $estado = $_POST['estado'];
                 $activo = 1; // Por defecto todos los dispositivos están activos
                 
                 // Validaciones básicas
-                if (empty($nombre) || empty($serial) || empty($estado)) {
-                    throw new Exception('Los campos nombre, serial y estado son obligatorios');
+                if (empty($nombre) || empty($serial) || empty($ip_address) || empty($puerto) || empty($estado)) {
+                    throw new Exception('Los campos nombre, serial, IP, puerto y estado son obligatorios');
                 }
                 
                 // Verificar si el dispositivo ya existe (por serial)
@@ -194,8 +193,8 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                 }
                 
                 // Crear dispositivo
-                $stmt = $pdo->prepare("INSERT INTO aparatos_biometricos (nombre, serial, ip_address, puerto, ubicacion, estado, fecha_registro, activo) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)");
-                $stmt->execute([$nombre, $serial, $ip_address, $puerto, $ubicacion, $estado, $activo]);
+                $stmt = $pdo->prepare("INSERT INTO aparatos_biometricos (nombre, serial, ip_address, puerto, estado, fecha_registro, activo) VALUES (?, ?, ?, ?, ?, NOW(), ?)");
+                $stmt->execute([$nombre, $serial, $ip_address, $puerto, $estado, $activo]);
                 
                 $_SESSION['mensaje_dispositivos'] = 'Dispositivo creado exitosamente';
                 $_SESSION['tipo_mensaje_dispositivos'] = 'success';
@@ -207,13 +206,12 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                 $serial = trim($_POST['serial']);
                 $ip_address = trim($_POST['ip_address']);
                 $puerto = trim($_POST['puerto']);
-                $ubicacion = trim($_POST['ubicacion']);
                 $estado = $_POST['estado'];
                 $activo = 1; // Por defecto todos los dispositivos están activos
                 
                 // Validaciones básicas
-                if (empty($nombre) || empty($serial) || empty($estado)) {
-                    throw new Exception('Los campos nombre, serial y estado son obligatorios');
+                if (empty($nombre) || empty($serial) || empty($ip_address) || empty($puerto) || empty($estado)) {
+                    throw new Exception('Los campos nombre, serial, IP, puerto y estado son obligatorios');
                 }
                 
                 // Verificar si el dispositivo ya existe (excluyendo el actual)
@@ -224,8 +222,8 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                 }
                 
                 // Actualizar dispositivo
-                $stmt = $pdo->prepare("UPDATE aparatos_biometricos SET nombre = ?, serial = ?, ip_address = ?, puerto = ?, ubicacion = ?, estado = ?, activo = ? WHERE id = ?");
-                $stmt->execute([$nombre, $serial, $ip_address, $puerto, $ubicacion, $estado, $activo, $id]);
+                $stmt = $pdo->prepare("UPDATE aparatos_biometricos SET nombre = ?, serial = ?, ip_address = ?, puerto = ?, estado = ?, activo = ? WHERE id = ?");
+                $stmt->execute([$nombre, $serial, $ip_address, $puerto, $estado, $activo, $id]);
                 
                 $_SESSION['mensaje_dispositivos'] = 'Dispositivo actualizado exitosamente';
                 $_SESSION['tipo_mensaje_dispositivos'] = 'success';
@@ -445,12 +443,12 @@ if (isset($_SESSION['mensaje_unidades'])) {
 if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN'])) {
     $dispositivos = $pdo->query("
         SELECT 
-            a.id, a.nombre, a.serial, a.ip_address, a.puerto, a.ubicacion, 
+            a.id, a.nombre, a.serial, a.ip_address, a.puerto, 
             a.estado, a.fecha_registro, a.activo,
             COUNT(p.id) as postulantes_count
         FROM aparatos_biometricos a
         LEFT JOIN postulantes p ON a.id = p.aparato_id
-        GROUP BY a.id, a.nombre, a.serial, a.ip_address, a.puerto, a.ubicacion, a.estado, a.fecha_registro, a.activo
+        GROUP BY a.id, a.nombre, a.serial, a.ip_address, a.puerto, a.estado, a.fecha_registro, a.activo
         ORDER BY a.fecha_registro DESC
     ")->fetchAll();
     $estados_dispositivos = ['ACTIVO', 'INACTIVO', 'PRUEBA', 'MANTENIMIENTO'];
@@ -1568,9 +1566,7 @@ $distribucion_unidad = $pdo->query("
                                                 <th>Serial</th>
                                                 <th>IP Address</th>
                                                 <th>Puerto</th>
-                                                <th>Ubicación</th>
                                                 <th>Estado</th>
-                                                <th>Activo</th>
                                                 <th>Postulantes</th>
                                                 <th>Fecha Registro</th>
                                                 <th>Acciones</th>
@@ -1584,7 +1580,6 @@ $distribucion_unidad = $pdo->query("
                                                 <td><code><?= htmlspecialchars($dispositivo['serial']) ?></code></td>
                                                 <td><?= htmlspecialchars($dispositivo['ip_address']) ?></td>
                                                 <td><?= htmlspecialchars($dispositivo['puerto']) ?></td>
-                                                <td><?= htmlspecialchars($dispositivo['ubicacion']) ?></td>
                                                 <td>
                                                     <?php
                                                     $estado_class = '';
@@ -1597,13 +1592,6 @@ $distribucion_unidad = $pdo->query("
                                                     }
                                                     ?>
                                                     <span class="badge <?= $estado_class ?>"><?= htmlspecialchars($dispositivo['estado']) ?></span>
-                                                </td>
-                                                <td>
-                                                    <?php if ($dispositivo['activo']): ?>
-                                                        <span class="badge badge-success">Sí</span>
-                                                    <?php else: ?>
-                                                        <span class="badge badge-secondary">No</span>
-                                                    <?php endif; ?>
                                                 </td>
                                                 <td>
                                                     <?php if ($dispositivo['postulantes_count'] > 0): ?>
