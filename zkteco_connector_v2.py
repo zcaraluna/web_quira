@@ -309,7 +309,75 @@ class ZKTecoK40V2:
             logger.error(f"Error al obtener cantidad de usuarios: {e}")
             return 0
     
-    def get_user_list(self, start_index: int = 0, count: int = 3000, include_fingerprints: bool = False) -> List[Dict[str, Any]]:
+    def get_last_user(self) -> Dict[str, Any]:
+        """
+        Obtener información del último usuario registrado
+        
+        Returns:
+            Diccionario con información del último usuario o None si no se puede obtener
+        """
+        if not self.conn:
+            raise Exception("No hay conexión activa")
+        
+        try:
+            # Obtener el conteo total de usuarios
+            total_count = self.get_user_count()
+            if total_count == 0:
+                return None
+            
+            # Intentar obtener usuarios con diferentes métodos
+            users = None
+            
+            # Método 1: get_users (puede estar limitado)
+            try:
+                users = self.conn.get_users()
+                logger.info(f"Usuarios obtenidos con get_users: {len(users) if users else 0}")
+            except Exception as e1:
+                logger.warning(f"Método get_users falló: {e1}")
+                users = None
+            
+            # Si no se obtuvieron usuarios o la lista está incompleta
+            if not users or len(users) < total_count:
+                logger.warning(f"Lista de usuarios incompleta: {len(users) if users else 0} de {total_count}")
+                
+                # Intentar obtener usuarios con paginación
+                try:
+                    # Obtener los últimos usuarios
+                    start_index = max(0, total_count - 10)  # Obtener los últimos 10
+                    users_paginated = self.conn.get_users()[start_index:]
+                    if users_paginated:
+                        users = users_paginated
+                        logger.info(f"Usuarios obtenidos con paginación: {len(users)}")
+                except Exception as e2:
+                    logger.warning(f"Paginación falló: {e2}")
+            
+            if not users:
+                logger.error("No se pudieron obtener usuarios")
+                return None
+            
+            # Encontrar el usuario con el UID más alto
+            last_user = max(users, key=lambda u: getattr(u, 'uid', 0))
+            
+            user_info = {
+                'uid': getattr(last_user, 'uid', 'N/A'),
+                'user_id': getattr(last_user, 'user_id', 'N/A'),
+                'name': getattr(last_user, 'name', 'N/A'),
+                'privilege': getattr(last_user, 'privilege', 0),
+                'password': getattr(last_user, 'password', ''),
+                'group_id': getattr(last_user, 'group_id', ''),
+                'card': getattr(last_user, 'card', ''),
+                'fingerprints': 0,
+                'status': getattr(last_user, 'privilege', 0)
+            }
+            
+            logger.info(f"Último usuario encontrado: UID {user_info['uid']}, Nombre: {user_info['name']}")
+            return user_info
+            
+        except Exception as e:
+            logger.error(f"Error al obtener último usuario: {e}")
+            return None
+    
+    def get_user_list(self, start_index: int = 0, count: int = 10000, include_fingerprints: bool = False) -> List[Dict[str, Any]]:
         """
         Obtener lista de usuarios
         
