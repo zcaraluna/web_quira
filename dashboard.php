@@ -598,7 +598,14 @@ $unidades = $pdo->query("SELECT DISTINCT unidad FROM postulantes WHERE unidad IS
 
 // Obtener aparatos disponibles (tanto activos como nombres de aparatos eliminados)
 $aparatos_activos = $pdo->query("SELECT id, nombre FROM aparatos_biometricos ORDER BY nombre")->fetchAll();
-$aparatos_eliminados = $pdo->query("SELECT DISTINCT aparato_nombre as nombre FROM postulantes WHERE aparato_nombre IS NOT NULL AND aparato_nombre != '' ORDER BY aparato_nombre")->fetchAll();
+$aparatos_eliminados = $pdo->query("
+    SELECT DISTINCT p.aparato_nombre as nombre 
+    FROM postulantes p 
+    WHERE p.aparato_nombre IS NOT NULL 
+    AND p.aparato_nombre != '' 
+    AND p.aparato_nombre NOT IN (SELECT nombre FROM aparatos_biometricos)
+    ORDER BY p.aparato_nombre
+")->fetchAll();
 
 // Combinar aparatos activos y eliminados
 $aparatos = [];
