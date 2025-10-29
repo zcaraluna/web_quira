@@ -52,5 +52,32 @@ Después de la instalación, deberías ver:
 Si la instalación falla:
 1. Verificar que Composer esté instalado: `composer --version`
 2. Verificar conexión a internet
-3. Verificar permisos de escritura en la carpeta del proyecto
-4. El sistema usará el método de respaldo (HTML) si PhpSpreadsheet no está disponible
+3. Verificar permisos de escritura en la carpeta del proyecto:
+   ```bash
+   sudo chown -R www-data:www-data /ruta/a/tu/proyecto
+   sudo chmod -R 755 /ruta/a/tu/proyecto
+   ```
+4. Verificar que PHP tenga las extensiones necesarias:
+   ```bash
+   php -m | grep -E "(xml|zip|mbstring)"
+   ```
+5. El sistema usará el método de respaldo (HTML) si PhpSpreadsheet no está disponible
+
+## Comandos útiles para Ubuntu VPS
+
+```bash
+# Verificar permisos del directorio
+ls -la
+
+# Dar permisos correctos
+sudo chown -R www-data:www-data .
+sudo chmod -R 755 .
+
+# Verificar que el archivo se creó correctamente
+ls -la vendor/autoload.php
+
+# Ver logs de error de PHP (si hay problemas)
+sudo tail -f /var/log/apache2/error.log
+# o
+sudo tail -f /var/log/nginx/error.log
+```
