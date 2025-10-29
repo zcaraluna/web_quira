@@ -1019,6 +1019,11 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
         try {
             console.log('Inicializando dispositivo real...');
             
+            // Ocultar cualquier advertencia previa
+            ocultarAdvertenciaUltimoUsuario();
+            ocultarAdvertenciaUsuarioManual();
+            ocultarAdvertenciaIdAdelantado();
+            
             // Obtener información del dispositivo
             console.log('Obteniendo información del dispositivo...');
             await loadDeviceInfo();
@@ -1628,13 +1633,12 @@ Por favor verifique:
                       const ultimo = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
                       if (ultimo.name && !ultimo.name.startsWith("NN-")) {
                           ultimoUsuario = ` | Último: ${ultimo.uid}:${ultimo.name}`;
-                          // Mostrar advertencia si el último usuario tiene nombre
-                          mostrarAdvertenciaUltimoUsuario(ultimo.uid, ultimo.name);
+                          // NO mostrar advertencia - esto es normal, solo informativo
                       } else {
                           ultimoUsuario = ` | Último: ${ultimo.uid} (sin nombre)`;
-                          // Ocultar advertencia si no hay problema
-                          ocultarAdvertenciaUltimoUsuario();
                       }
+                      // Ocultar cualquier advertencia del último usuario
+                      ocultarAdvertenciaUltimoUsuario();
                   }
                   
                   const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
