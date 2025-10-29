@@ -1618,18 +1618,44 @@ Por favor verifique:
                   const users = await zktecoBridge.getUsers();
                   let ultimoUsuario = '';
                   
+                  // Usar el user_count del dispositivo como referencia del último usuario real
+                  const ultimoUIDReal = info.user_count || 0;
+                  console.log(`Último UID real según dispositivo: ${ultimoUIDReal}`);
+                  
                   if (users.users && users.users.length > 0) {
-                      // Obtener el último usuario (mayor UID)
-                      const ultimo = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
-                      if (ultimo.name && !ultimo.name.startsWith("NN-")) {
-                          ultimoUsuario = ` | Último: ${ultimo.uid}:${ultimo.name}`;
-                          // Mostrar advertencia si el último usuario tiene nombre asignado
-                          mostrarAdvertenciaUltimoUsuario(ultimo.uid, ultimo.name);
+                      // Buscar el usuario con el UID más alto en la lista obtenida
+                      const ultimoEnLista = users.users.reduce((max, u) => parseInt(u.uid) > parseInt(max.uid) ? u : max);
+                      console.log(`Último usuario en la lista: UID ${ultimoEnLista.uid}, Nombre: ${ultimoEnLista.name}`);
+                      console.log(`Total usuarios en lista: ${users.users.length}, Total según dispositivo: ${ultimoUIDReal}`);
+                      
+                      // Verificar si este es realmente el último usuario según el contador del dispositivo
+                      if (parseInt(ultimoEnLista.uid) === ultimoUIDReal) {
+                          if (ultimoEnLista.name && !ultimoEnLista.name.startsWith("NN-")) {
+                              ultimoUsuario = ` | Último: ${ultimoEnLista.uid}:${ultimoEnLista.name}`;
+                              // Mostrar advertencia si el último usuario tiene nombre asignado
+                              mostrarAdvertenciaUltimoUsuario(ultimoEnLista.uid, ultimoEnLista.name);
+                          } else {
+                              ultimoUsuario = ` | Último: ${ultimoEnLista.uid} (sin nombre)`;
+                              // Ocultar advertencia si no hay problema
+                              ocultarAdvertenciaUltimoUsuario();
+                          }
                       } else {
-                          ultimoUsuario = ` | Último: ${ultimo.uid} (sin nombre)`;
-                          // Ocultar advertencia si no hay problema
+                          // El último usuario en la lista no coincide con el contador del dispositivo
+                          // Esto significa que no se obtuvieron todos los usuarios
+                          console.log(`⚠️ El último usuario en la lista (${ultimoEnLista.uid}) no coincide con el contador del dispositivo (${ultimoUIDReal})`);
+                          console.log(`⚠️ Esto indica que la lista de usuarios está incompleta`);
+                          
+                          // Si el contador del dispositivo es mayor que el último UID en la lista,
+                          // significa que hay usuarios más recientes que no se obtuvieron
+                          // Asumir que el último usuario real (según contador) no tiene nombre asignado
+                          console.log(`Asumiendo que el último usuario real (UID ${ultimoUIDReal}) no tiene nombre asignado`);
+                          ultimoUsuario = ` | Último: ${ultimoUIDReal} (sin nombre - no verificado)`;
                           ocultarAdvertenciaUltimoUsuario();
                       }
+                  } else {
+                      // Si no se pudieron obtener usuarios, asumir que el último no tiene nombre
+                      ultimoUsuario = ` | Último: ${ultimoUIDReal} (no verificado)`;
+                      ocultarAdvertenciaUltimoUsuario();
                   }
                   
                   const statusText = `Sistema listo - QUIRA conectado | Serial: ${info.serial_number || 'No disponible'} | Usuarios: ${info.user_count || 0}`;
