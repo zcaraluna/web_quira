@@ -382,7 +382,7 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
                         <span class="data-value"><?= htmlspecialchars($postulante['cedula']) ?></span>
                     </div>
                     
-                    <div class="data-row">
+                    <div class="data-row" style="display: none;">
                         <span class="data-label">Teléfono:</span>
                         <span class="data-value"><?= htmlspecialchars($postulante['telefono']) ?></span>
                     </div>
@@ -545,7 +545,6 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
             const datos = [
                 ['Nombre Completo:', '<?= htmlspecialchars($postulante['nombre_completo_display'] ?? $postulante['nombre_completo'] ?? ($postulante['nombre'] . ' ' . $postulante['apellido'])) ?>'],
                 ['Cédula de Identidad:', '<?= htmlspecialchars($postulante['cedula']) ?>'],
-                ['Teléfono:', '<?= htmlspecialchars($postulante['telefono']) ?>'],
                 ['Dispositivo/Dedo Registrado:', '<?= htmlspecialchars($postulante['aparato_nombre']) ?> / <?= htmlspecialchars(getDedoNombre($postulante['dedo_registrado'])) ?>'],
                 ['Fecha de Nacimiento:', '<?= date('d/m/Y', strtotime($postulante['fecha_nacimiento'])) ?>'],
                 ['Edad:', '<?= htmlspecialchars($postulante['edad']) ?> años'],

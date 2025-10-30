@@ -285,7 +285,7 @@
                                         <div class="info-label">Cédula:</div>
                                         <div class="info-value"><?= htmlspecialchars($postulante['cedula']) ?></div>
                                     </div>
-                                    <div class="info-row">
+                                    <div class="info-row" style="display: none;">
                                         <div class="info-label">Teléfono:</div>
                                         <div class="info-value"><?= htmlspecialchars($postulante['telefono']) ?></div>
                                     </div>

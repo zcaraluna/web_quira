@@ -2859,7 +2859,7 @@ $distribucion_unidad = $pdo->query("
                                     <td><strong>Edad:</strong></td>
                                     <td id="detalle_edad">-</td>
                                 </tr>
-                                <tr>
+                                <tr style="display: none;">
                                     <td><strong>Teléfono:</strong></td>
                                     <td id="detalle_telefono">-</td>
                                 </tr>

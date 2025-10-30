@@ -576,7 +576,7 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
                                         <small class="form-text text-muted">Solo números, sin puntos ni guiones</small>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6" style="display: none;">
                                     <div class="form-group">
                                         <label for="telefono"><i class="fas fa-phone"></i> Teléfono</label>
                                         <input type="text" class="form-control" id="telefono" name="telefono" 
