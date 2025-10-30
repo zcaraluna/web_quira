@@ -303,6 +303,36 @@ class ZKTecoBridgeImproved:
                 "users": []
             }
     
+    async def reset_connection(self) -> Dict[str, Any]:
+        """Resetear conexión y limpiar estado interno"""
+        try:
+            logger.info("[RESET] Iniciando reset de conexión...")
+            
+            # Desconectar si está conectado
+            if self.connected:
+                await self.disconnect_device()
+            
+            # Limpiar estado interno
+            self.connected = False
+            
+            # Recrear instancia del dispositivo para limpiar cache interno
+            self.device = ZKTecoK40V2(self.ip_address, self.port)
+            
+            logger.info("[RESET] Estado interno limpiado")
+            
+            return {
+                "success": True,
+                "message": "Conexión reseteada exitosamente",
+                "connected": False
+            }
+            
+        except Exception as e:
+            logger.error(f"[ERROR] Error reseteando conexión: {e}")
+            return {
+                "success": False,
+                "message": f"Error reseteando conexión: {str(e)}"
+            }
+    
     async def broadcast_status(self, message: str, data: Dict[str, Any] = None):
         """Enviar mensaje a todos los clientes WebSocket conectados"""
         if self.websocket_clients:
@@ -367,6 +397,13 @@ async def connect():
     """Conectar al dispositivo ZKTeco"""
     result = await bridge.connect_to_device()
     await bridge.broadcast_status("Estado de conexión actualizado", result)
+    return result
+
+@app.post("/reset")
+async def reset_connection():
+    """Resetear conexión y limpiar estado interno"""
+    result = await bridge.reset_connection()
+    await bridge.broadcast_status("Conexión reseteada", result)
     return result
 
 @app.post("/disconnect")
@@ -456,6 +493,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     await send_message("pong", {"timestamp": datetime.now().isoformat()})
                 
                 elif command == "connect":
+                    # Hacer reset antes de conectar para limpiar estado corrupto
+                    logger.info("[CONNECT] Reseteando conexión antes de conectar...")
+                    await bridge.reset_connection()
+                    
                     # Permitir cambiar IP/puerto dinámicamente
                     ip = msg.get("ip") or bridge.ip_address
                     port = int(msg.get("port") or bridge.port)
@@ -464,6 +505,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         bridge.ip_address = ip
                         bridge.port = port
                         bridge.device = ZKTecoK40V2(ip, port)
+                    
                     result = await bridge.connect_to_device()
                     # Notificar a todos por status y responder al caller
                     await bridge.broadcast_status("Estado de conexión actualizado", result)
@@ -473,6 +515,11 @@ async def websocket_endpoint(websocket: WebSocket):
                     result = await bridge.disconnect_device()
                     await bridge.broadcast_status("Estado de conexión actualizado", result)
                     await send_message("disconnect_response", result)
+                
+                elif command == "reset":
+                    result = await bridge.reset_connection()
+                    await bridge.broadcast_status("Conexión reseteada", result)
+                    await send_message("reset_response", result)
                 
                 elif command == "get_info":
                     result = await bridge.get_device_info()

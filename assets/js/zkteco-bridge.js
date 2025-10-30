@@ -421,6 +421,20 @@ class ZKTecoBridge {
     }
     
     /**
+     * Resetear conexión y limpiar estado interno
+     */
+    async reset() {
+        return new Promise((resolve, reject) => {
+            this.onMessage('reset_response', (data) => {
+                console.log('Reset response data:', data);
+                resolve(data?.success !== false);
+            });
+            
+            this.sendCommand('reset');
+        });
+    }
+    
+    /**
      * Obtener estado actual del dispositivo
      */
     getDeviceStatus() {
