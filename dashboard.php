@@ -632,7 +632,7 @@ try {
     $postulantes_mes = $pdo->query("SELECT COUNT(*) as total FROM postulantes WHERE fecha_registro >= CURRENT_DATE - INTERVAL '30 days'")->fetch()['total'];
     
     // Promedio de registros por día (rango personalizable)
-    $fecha_desde_promedio = $_GET['fecha_desde_promedio'] ?? date('Y-m-d', strtotime('-30 days'));
+    $fecha_desde_promedio = $_GET['fecha_desde_promedio'] ?? '2025-10-29';
     $fecha_hasta_promedio = $_GET['fecha_hasta_promedio'] ?? date('Y-m-d');
     
     // Calcular días entre las fechas
@@ -2115,7 +2115,7 @@ $distribucion_unidad = $pdo->query("
                                                             <input type="hidden" name="tab" value="estadisticas">
                                                             <div class="form-group mb-2">
                                                                 <label for="fecha_desde_promedio" class="mr-2">Desde:</label>
-                                                                <input type="date" class="form-control form-control-sm mr-2" id="fecha_desde_promedio" name="fecha_desde_promedio" value="<?= $_GET['fecha_desde_promedio'] ?? date('Y-m-d', strtotime('-30 days')) ?>">
+                                                                <input type="date" class="form-control form-control-sm mr-2" id="fecha_desde_promedio" name="fecha_desde_promedio" value="<?= htmlspecialchars($fecha_desde_promedio) ?>">
                                                             </div>
                                                             <div class="form-group mb-2">
                                                                 <label for="fecha_hasta_promedio" class="mr-2">Hasta:</label>
