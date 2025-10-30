@@ -718,7 +718,7 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                             </div>
                             
                             <div class="row">
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="nombre_completo"><i class="fas fa-user"></i> Nombre Completo *</label>
                                         <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
@@ -727,9 +727,6 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                         <small class="form-text text-muted">Ingrese el nombre completo (nombres y apellidos)</small>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="cedula"><i class="fas fa-id-card"></i> Cédula *</label>
@@ -739,7 +736,10 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                         <small class="form-text text-muted">Solo números, sin puntos ni guiones</small>
                                     </div>
                                 </div>
-                                <div class="col-md-6" style="display: none;">
+                            </div>
+                            
+                            <div class="row" style="display: none;">
+                                <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="telefono"><i class="fas fa-phone"></i> Teléfono</label>
                                         <input type="text" class="form-control" id="telefono" name="telefono" 

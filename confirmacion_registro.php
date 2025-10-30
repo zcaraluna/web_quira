@@ -285,6 +285,10 @@
                                         <div class="info-label">Cédula:</div>
                                         <div class="info-value"><?= htmlspecialchars($postulante['cedula']) ?></div>
                                     </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Dedo Registrado:</div>
+                                        <div class="info-value"><?= htmlspecialchars($postulante['dedo_registrado']) ?></div>
+                                    </div>
                                     <div class="info-row" style="display: none;">
                                         <div class="info-label">Teléfono:</div>
                                         <div class="info-value"><?= htmlspecialchars($postulante['telefono']) ?></div>
@@ -308,10 +312,6 @@
                                     <div class="info-row">
                                         <div class="info-label">Unidad:</div>
                                         <div class="info-value"><?= htmlspecialchars($postulante['unidad']) ?: 'No especificada' ?></div>
-                                    </div>
-                                    <div class="info-row">
-                                        <div class="info-label">Dedo Registrado:</div>
-                                        <div class="info-value"><?= htmlspecialchars($postulante['dedo_registrado']) ?></div>
                                     </div>
                                 </div>
                             </div>
