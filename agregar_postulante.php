@@ -956,11 +956,6 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                 updateDeviceStatus('Conectando al dispositivo biométrico...', 'connecting');
             });
             
-            // Paso 2.5: Resetear conexión para limpiar estado corrupto
-            console.log('🔄 Reseteando conexión para limpiar estado...');
-            updateDeviceStatus('Limpiando estado previo...', 'connecting');
-            await zktecoBridge.reset();
-            
             zktecoBridge.onDisconnect(() => {
                 console.log('Desconectado del bridge ZKTeco');
                 updateDeviceStatus('Desconectado del bridge ZKTeco', 'disconnected');
@@ -975,6 +970,11 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
             
             // Paso 3: Conectar al bridge
             await zktecoBridge.connect();
+            
+            // Paso 3.5: Resetear conexión para limpiar estado corrupto
+            console.log('🔄 Reseteando conexión para limpiar estado...');
+            updateDeviceStatus('Limpiando estado previo...', 'connecting');
+            await zktecoBridge.reset();
             
             // Paso 4: Verificar modo prueba
             if (esModoPrueba) {
