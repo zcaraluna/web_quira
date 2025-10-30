@@ -21,13 +21,12 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from zkteco_connector_v2 import ZKTecoK40V2
 
-# Configurar logging
+# Configurar logging (solo archivo, sin salida a consola)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('zkteco_bridge.log'),
-        logging.StreamHandler(sys.stdout)
+        logging.FileHandler('zkteco_bridge.log')
     ]
 )
 logger = logging.getLogger(__name__)
@@ -195,7 +194,7 @@ class ZKTecoBridgeImproved:
             }
     
     async def add_user(self, uid: int, name: str, privilege: int = 0) -> Dict[str, Any]:
-        """Agregar usuario al dispositivo"""
+        """Agregar/actualizar usuario al dispositivo"""
         try:
             if not self.connected:
                 return {
@@ -203,28 +202,29 @@ class ZKTecoBridgeImproved:
                     "message": "No hay conexión activa con el dispositivo"
                 }
             
-            logger.info(f"Agregando usuario: UID {uid}, Nombre: {name}")
+            logger.info(f"Actualizando usuario: UID {uid}, Nombre: {name}")
             
-            if self.device.add_user(uid, name, privilege):
-                logger.info(f"[OK] Usuario agregado exitosamente: UID {uid}")
+            # Usar set_user en lugar de add_user
+            if self.device.set_user(uid, name, privilege):
+                logger.info(f"[OK] Usuario actualizado exitosamente: UID {uid}")
                 return {
                     "success": True,
-                    "message": f"Usuario {name} agregado exitosamente con UID {uid}",
+                    "message": f"Usuario {name} actualizado exitosamente con UID {uid}",
                     "uid": uid,
                     "name": name
                 }
             else:
-                logger.error(f"[ERROR] Error agregando usuario: UID {uid}")
+                logger.error(f"[ERROR] Error actualizando usuario: UID {uid}")
                 return {
                     "success": False,
-                    "message": f"Error agregando usuario {name} con UID {uid}"
+                    "message": f"Error actualizando usuario {name} con UID {uid}"
                 }
                 
         except Exception as e:
-            logger.error(f"[ERROR] Error agregando usuario: {e}")
+            logger.error(f"[ERROR] Error actualizando usuario: {e}")
             return {
                 "success": False,
-                "message": f"Error agregando usuario: {str(e)}"
+                "message": f"Error actualizando usuario: {str(e)}"
             }
     
     async def delete_user(self, uid: int) -> Dict[str, Any]:
@@ -567,15 +567,17 @@ async def websocket_endpoint(websocket: WebSocket):
         bridge.websocket_clients.discard(websocket)
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("    ZKTECO BRIDGE MEJORADO - SISTEMA QUIRA")
-    print("    Version 2.0.0 - Manejo mejorado de usuarios")
-    print("=" * 60)
-    print("Iniciando ZKTeco Bridge...")
-    print("[INFO] Bridge disponible en: http://0.0.0.0:8001")
-    print("[INFO] WebSocket disponible en: ws://0.0.0.0:8001/ws/zkteco")
-    print("[INFO] Logs guardados en: zkteco_bridge.log")
-    print("[WARN] Cierre esta ventana o presione CTRL+C para detener el servidor")
-    print("=" * 60)
-    
-    uvicorn.run(app, host="0.0.0.0", port=8001, log_level="info")
+    # No imprimir en consola; solo escribir en archivo de log
+    logger.info("Iniciando ZKTeco Bridge Mejorado - Sistema QUIRA (v2.0.0)")
+    logger.info("Bridge disponible en: http://0.0.0.0:8001")
+    logger.info("WebSocket disponible en: ws://0.0.0.0:8001/ws/zkteco")
+    logger.info("Logs guardados en: zkteco_bridge.log")
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8001,
+        log_level="critical",  # Silenciar salida de uvicorn en consola
+        access_log=False,       # Sin access logs en consola
+        log_config=None         # Deshabilitar configuración de logging de Uvicorn (evita TTY)
+    )
