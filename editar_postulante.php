@@ -185,9 +185,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Comparar cambios usando los datos originales (antes de la actualización)
                 $cambios = [];
+                
+                // Obtener nombre_completo de los datos originales (combinar si es necesario)
+                $nombre_completo_original = $datos_originales['nombre_completo'] ?? 
+                                          ($datos_originales['nombre'] ?? '') . ' ' . ($datos_originales['apellido'] ?? '');
+                $nombre_completo_original = trim($nombre_completo_original);
+                
                 $campos_comparar = [
-                    'nombre' => 'Nombre',
-                    'apellido' => 'Apellido', 
+                    'nombre_completo' => 'Nombre Completo',
                     'cedula' => 'Cédula',
                     'telefono' => 'Teléfono',
                     'fecha_nacimiento' => 'Fecha de Nacimiento',
@@ -198,8 +203,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
                 
                 foreach ($campos_comparar as $campo => $nombre_campo) {
-                    $valor_original = $datos_originales[$campo] ?? '';
-                    $valor_nuevo = $$campo ?? '';
+                    // Manejo especial para nombre_completo
+                    if ($campo === 'nombre_completo') {
+                        $valor_original = $nombre_completo_original;
+                        $valor_nuevo = $nombre_completo;
+                    } else {
+                        $valor_original = $datos_originales[$campo] ?? '';
+                        $valor_nuevo = $$campo ?? '';
+                    }
                     
                     // Convertir a string para comparación consistente
                     $valor_original_str = strval($valor_original);
