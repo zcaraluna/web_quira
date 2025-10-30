@@ -54,6 +54,22 @@ try {
         echo "Paso 2: La columna 'nombre_completo' ya existe, omitiendo creación.\n\n";
     }
     
+    // Paso 2.5: Permitir NULL en nombre y apellido (temporal, hasta eliminar columnas)
+    echo "Paso 2.5: Modificando restricciones de 'nombre' y 'apellido' para permitir NULL...\n";
+    try {
+        $pdo->exec("ALTER TABLE postulantes ALTER COLUMN nombre DROP NOT NULL");
+        echo "✅ Columna 'nombre' ahora permite NULL.\n";
+    } catch (Exception $e) {
+        echo "⚠️  No se pudo modificar 'nombre': " . $e->getMessage() . "\n";
+    }
+    
+    try {
+        $pdo->exec("ALTER TABLE postulantes ALTER COLUMN apellido DROP NOT NULL");
+        echo "✅ Columna 'apellido' ahora permite NULL.\n\n";
+    } catch (Exception $e) {
+        echo "⚠️  No se pudo modificar 'apellido': " . $e->getMessage() . "\n\n";
+    }
+    
     // Paso 3: Combinar nombre + apellido en nombre_completo
     echo "Paso 3: Combinando nombre y apellido en nombre_completo...\n";
     
