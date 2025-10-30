@@ -894,7 +894,7 @@ try {
 // Obtener postulantes recientes (últimos 5 registrados sin filtro de fecha)
 // Usar consulta directa para asegurar datos actualizados
 $postulantes_recientes = $pdo->query("
-    SELECT id, nombre, apellido, cedula, fecha_registro, edad, unidad, dedo_registrado, registrado_por
+    SELECT id, COALESCE(nombre_completo, nombre || ' ' || apellido) as nombre_completo, cedula, fecha_registro, edad, unidad, dedo_registrado, registrado_por
     FROM postulantes 
     ORDER BY fecha_registro DESC 
     LIMIT 5
@@ -4644,7 +4644,7 @@ $distribucion_unidad = $pdo->query("
                                     <tr>
                                         <th>N°</th>
                                         <th>Cédula</th>
-                                        <th>Nombre y Apellido</th>
+                                        <th>Nombre Completo</th>
                                         <th>Dispositivo</th>
                                     </tr>
                                 </thead>
@@ -4653,7 +4653,7 @@ $distribucion_unidad = $pdo->query("
                                     <tr>
                                         <td><?= $index + 1 ?></td>
                                         <td><?= htmlspecialchars($postulante['cedula']) ?></td>
-                                        <td><?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?></td>
+                                        <td><?= htmlspecialchars($postulante['nombre_completo'] ?? ($postulante['nombre'] . ' ' . $postulante['apellido'])) ?></td>
                                         <td><?= htmlspecialchars($postulante['dispositivo']) ?></td>
                                     </tr>
                                     <?php endforeach; ?>

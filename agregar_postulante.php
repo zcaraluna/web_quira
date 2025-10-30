@@ -319,8 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Redireccionar a página de confirmación con los datos del postulante
         $datos_postulante = [
             'id' => $postulante_id,
-            'nombre' => $nombre,
-            'apellido' => $apellido,
+            'nombre_completo' => $nombre_completo,
             'cedula' => $cedula,
             'telefono' => $telefono,
             'fecha_nacimiento' => $fecha_nacimiento,

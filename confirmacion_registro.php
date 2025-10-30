@@ -278,12 +278,8 @@
                                         <div class="info-value"><?= htmlspecialchars($postulante['uid_k40']) ?></div>
                                     </div>
                                     <div class="info-row">
-                                        <div class="info-label">Nombre:</div>
-                                        <div class="info-value"><?= htmlspecialchars($postulante['nombre']) ?></div>
-                                    </div>
-                                    <div class="info-row">
-                                        <div class="info-label">Apellido:</div>
-                                        <div class="info-value"><?= htmlspecialchars($postulante['apellido']) ?></div>
+                                        <div class="info-label">Nombre Completo:</div>
+                                        <div class="info-value"><?= htmlspecialchars($postulante['nombre_completo'] ?? ($postulante['nombre'] . ' ' . $postulante['apellido'])) ?></div>
                                     </div>
                                     <div class="info-row">
                                         <div class="info-label">Cédula:</div>
