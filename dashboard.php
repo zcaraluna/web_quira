@@ -4715,20 +4715,25 @@ $distribucion_unidad = $pdo->query("
             if (ctxRegistros) {
                 const datosRegistros = <?= json_encode($registros_por_dia) ?>;
                 if (datosRegistros && datosRegistros.length > 0) {
+                    // Ordenar por fecha ascendente y parsear fechas en horario local para evitar desfases
+                    const datosOrdenados = [...datosRegistros].sort((a, b) => a.fecha.localeCompare(b.fecha));
+                    const etiquetas = datosOrdenados.map(d => {
+                        const [y, m, dd] = String(d.fecha).split('-').map(Number);
+                        const fecha = new Date(y, (m || 1) - 1, dd || 1);
+                        const dia = String(fecha.getDate()).padStart(2, '0');
+                        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                        const anio = fecha.getFullYear();
+                        return `${dia}/${mes}/${anio}`;
+                    });
+                    const valores = datosOrdenados.map(d => d.cantidad);
+
                     new Chart(ctxRegistros, {
                         type: 'line',
                         data: {
-                            labels: datosRegistros.map(d => {
-                                // Convertir fecha de YYYY-MM-DD a DD/MM/AAAA
-                                const fecha = new Date(d.fecha);
-                                const dia = String(fecha.getDate()).padStart(2, '0');
-                                const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-                                const año = fecha.getFullYear();
-                                return `${dia}/${mes}/${año}`;
-                            }),
+                            labels: etiquetas,
                             datasets: [{
                                 label: 'Registros',
-                                data: datosRegistros.map(d => d.cantidad),
+                                data: valores,
                                 borderColor: 'rgb(75, 192, 192)',
                                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                                 tension: 0.1,
@@ -5002,19 +5007,25 @@ $distribucion_unidad = $pdo->query("
             
             const datosRegistros = <?= json_encode($registros_por_dia) ?>;
             if (datosRegistros && datosRegistros.length > 0) {
+                // Ordenar por fecha ascendente y parsear fechas en horario local
+                const datosOrdenados = [...datosRegistros].sort((a, b) => a.fecha.localeCompare(b.fecha));
+                const etiquetas = datosOrdenados.map(d => {
+                    const [y, m, dd] = String(d.fecha).split('-').map(Number);
+                    const fecha = new Date(y, (m || 1) - 1, dd || 1);
+                    const dia = String(fecha.getDate()).padStart(2, '0');
+                    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                    const anio = fecha.getFullYear();
+                    return `${dia}/${mes}/${anio}`;
+                });
+                const valores = datosOrdenados.map(d => d.cantidad);
+
                 window.graficoRegistrosDiaModal = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: datosRegistros.map(d => {
-                            const fecha = new Date(d.fecha);
-                            const dia = String(fecha.getDate()).padStart(2, '0');
-                            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-                            const año = fecha.getFullYear();
-                            return `${dia}/${mes}/${año}`;
-                        }),
+                        labels: etiquetas,
                         datasets: [{
                             label: 'Registros',
-                            data: datosRegistros.map(d => d.cantidad),
+                            data: valores,
                             borderColor: '#2E5090',
                             backgroundColor: 'rgba(46, 80, 144, 0.1)',
                             borderWidth: 3,
