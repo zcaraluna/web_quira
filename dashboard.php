@@ -474,23 +474,15 @@ if (!empty($search)) {
     
     // Búsqueda con acentos y sin acentos
     $where_conditions[] = "(
-        LOWER(p.nombre) LIKE LOWER(?) OR 
-        LOWER(p.apellido) LIKE LOWER(?) OR 
-        LOWER(CONCAT(p.nombre, ' ', p.apellido)) LIKE LOWER(?) OR 
+        LOWER(COALESCE(p.nombre_completo, p.nombre || ' ' || p.apellido)) LIKE LOWER(?) OR 
         p.cedula LIKE ? OR
         -- Búsqueda sin acentos
-        LOWER(TRANSLATE(p.nombre, 'áéíóúÁÉÍÓÚñÑ', 'aeiouAEIOUnN')) LIKE LOWER(?) OR
-        LOWER(TRANSLATE(p.apellido, 'áéíóúÁÉÍÓÚñÑ', 'aeiouAEIOUnN')) LIKE LOWER(?) OR
-        LOWER(TRANSLATE(CONCAT(p.nombre, ' ', p.apellido), 'áéíóúÁÉÍÓÚñÑ', 'aeiouAEIOUnN')) LIKE LOWER(?)
+        LOWER(TRANSLATE(COALESCE(p.nombre_completo, p.nombre || ' ' || p.apellido), 'áéíóúÁÉÍÓÚñÑ', 'aeiouAEIOUnN')) LIKE LOWER(?)
     )";
     
-    // 7 parámetros: original + sin acentos
-    $params[] = $search_param; // nombre original
-    $params[] = $search_param; // apellido original  
+    // 3 parámetros: nombre completo + cédula + nombre completo sin acentos
     $params[] = $search_param; // nombre completo original
     $params[] = $search_param; // cédula
-    $params[] = $search_param; // nombre sin acentos
-    $params[] = $search_param; // apellido sin acentos
     $params[] = $search_param; // nombre completo sin acentos
 }
 
@@ -559,7 +551,9 @@ $total_pages = ceil($total_records / $per_page);
 $offset = ($page - 1) * $per_page;
 $postulantes_sql = "
     SELECT 
-        p.id, p.nombre, p.apellido, p.cedula, p.fecha_nacimiento, p.telefono,
+        p.id, 
+        COALESCE(p.nombre_completo, p.nombre || ' ' || p.apellido) as nombre_completo,
+        p.cedula, p.fecha_nacimiento, p.telefono,
         p.fecha_registro, p.observaciones, p.edad, p.unidad, p.dedo_registrado,
         p.registrado_por, p.aparato_id, p.usuario_ultima_edicion, p.fecha_ultima_edicion,
         p.sexo, p.aparato_nombre,
@@ -863,8 +857,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT 
             p.cedula,
-            p.nombre,
-            p.apellido,
+            COALESCE(p.nombre_completo, p.nombre || ' ' || p.apellido) as nombre_completo,
             p.unidad,
             COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo') as dispositivo
         FROM postulantes p
@@ -1463,7 +1456,7 @@ $distribucion_unidad = $pdo->query("
                                                 <tbody>
                                                     <?php foreach ($postulantes_recientes as $postulante): ?>
                                                     <tr>
-                                                        <td><?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?></td>
+                                                        <td><?= htmlspecialchars($postulante['nombre_completo']) ?></td>
                                                         <td><?= htmlspecialchars($postulante['cedula']) ?></td>
                                                         <td><span class="badge badge-primary"><?= str_replace('&quot;', '"', htmlspecialchars($postulante['unidad'])) ?></span></td>
                                                         <td><?= date('d/m/Y H:i', strtotime($postulante['fecha_registro'])) ?></td>
@@ -1801,7 +1794,7 @@ $distribucion_unidad = $pdo->query("
                                                 <?php foreach ($postulantes as $postulante): ?>
                                                 <tr>
                                                     <td>
-                                                        <strong><?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?></strong>
+                                                        <strong><?= htmlspecialchars($postulante['nombre_completo']) ?></strong>
                                                         <?php if ($postulante['sexo']): ?>
                                                             <br><small class="text-muted"><?= htmlspecialchars($postulante['sexo']) ?></small>
                                                         <?php endif; ?>
@@ -2847,12 +2840,8 @@ $distribucion_unidad = $pdo->query("
                                     <td id="detalle_id">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Nombre:</strong></td>
-                                    <td id="detalle_nombre">-</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Apellido:</strong></td>
-                                    <td id="detalle_apellido">-</td>
+                                    <td><strong>Nombre Completo:</strong></td>
+                                    <td id="detalle_nombre_completo">-</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Cédula:</strong></td>
@@ -3320,8 +3309,7 @@ $distribucion_unidad = $pdo->query("
             
             // Llenar los campos del modal con los datos del postulante
             document.getElementById('detalle_id').textContent = postulanteId || '-';
-            document.getElementById('detalle_nombre').textContent = postulante.nombre || postulante[1] || '-';
-            document.getElementById('detalle_apellido').textContent = postulante.apellido || postulante[2] || '-';
+            document.getElementById('detalle_nombre_completo').textContent = postulante.nombre_completo || postulante[1] || '-';
             document.getElementById('detalle_cedula').textContent = postulante.cedula || postulante[3] || '-';
             document.getElementById('detalle_sexo').textContent = postulante.sexo || postulante[15] || '-';
             
@@ -4282,7 +4270,7 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "Nombre y Apellido",
+                                                            text: "Nombre Completo",
                                                             bold: true,
                                                             size: 22
                                                         })
@@ -4371,7 +4359,7 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "<?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>",
+                                                            text: "<?= htmlspecialchars($postulante['nombre_completo']) ?>",
                                                             size: 20
                                                         })
                                                     ]

@@ -34,7 +34,8 @@ $postulante_id = (int)$_GET['id'];
 function obtener_postulante_por_id($pdo, $id) {
     try {
         $stmt = $pdo->prepare("
-            SELECT id, nombre, apellido, cedula, fecha_nacimiento, telefono, 
+            SELECT id, nombre_completo, COALESCE(nombre_completo, nombre || ' ' || apellido) as nombre_completo_display, 
+                   cedula, fecha_nacimiento, telefono, 
                    fecha_registro, usuario_registrador, edad, unidad, 
                    dedo_registrado, registrado_por, aparato_id, uid_k40, 
                    observaciones, usuario_ultima_edicion, fecha_ultima_edicion, 
@@ -64,8 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Guardar datos originales ANTES de cualquier modificación
         $datos_originales = $postulante_data;
         
-        $nombre = trim($_POST['nombre']);
-        $apellido = trim($_POST['apellido']);
+        $nombre_completo = strtoupper(trim($_POST['nombre_completo']));
         $cedula = trim($_POST['cedula']);
         $telefono = trim($_POST['telefono']);
         $fecha_nacimiento = $_POST['fecha_nacimiento'] ?: null;
@@ -75,8 +75,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dedo_registrado = $_POST['dedo_registrado'] ?? '';
         
         // Validaciones básicas
-        if (empty($nombre) || empty($apellido) || empty($cedula)) {
-            throw new Exception('Los campos Nombre, Apellido y Cédula son obligatorios');
+        if (empty($nombre_completo) || empty($cedula)) {
+            throw new Exception('Los campos Nombre Completo y Cédula son obligatorios');
+        }
+        
+        // Validar longitud de nombre_completo
+        if (strlen($nombre_completo) > 200) {
+            throw new Exception('El nombre completo no puede tener más de 200 caracteres');
         }
         
         // Validar formato de cédula (solo números)
@@ -135,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Actualizar en la base de datos
         $stmt = $pdo->prepare("
             UPDATE postulantes SET 
-                nombre = ?, apellido = ?, cedula = ?, telefono = ?, 
+                nombre_completo = ?, cedula = ?, telefono = ?, 
                 fecha_nacimiento = ?, edad = ?, unidad = ?, 
                 dedo_registrado = ?, observaciones = ?, sexo = ?,
                 usuario_ultima_edicion = ?, fecha_ultima_edicion = ?
@@ -143,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
         
         $resultado = $stmt->execute([
-            $nombre, $apellido, $cedula, $telefono, 
+            $nombre_completo, $cedula, $telefono, 
             $fecha_nacimiento, $edad, $unidad, 
             $dedo_registrado, $observaciones_finales, $sexo,
             $usuario_ultima_edicion, $fecha_ultima_edicion,
@@ -539,20 +544,13 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
                             <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-user"></i> INFORMACIÓN PERSONAL</h6>
                             
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="nombre"><i class="fas fa-user"></i> Nombre *</label>
-                                        <input type="text" class="form-control" id="nombre" name="nombre" 
-                                               value="<?= htmlspecialchars($postulante_data['nombre']) ?>" 
+                                        <label for="nombre_completo"><i class="fas fa-user"></i> Nombre Completo *</label>
+                                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
+                                               value="<?= htmlspecialchars($postulante_data['nombre_completo'] ?? $postulante_data['nombre_completo_display'] ?? '') ?>" 
                                                style="text-transform: uppercase;" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="apellido"><i class="fas fa-user"></i> Apellido *</label>
-                                        <input type="text" class="form-control" id="apellido" name="apellido" 
-                                               value="<?= htmlspecialchars($postulante_data['apellido']) ?>" 
-                                               style="text-transform: uppercase;" required>
+                                        <small class="form-text text-muted">Ingrese el nombre completo (nombres y apellidos)</small>
                                     </div>
                                 </div>
                             </div>
@@ -938,10 +936,7 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
         // Event listeners
         document.getElementById('fecha_nacimiento').addEventListener('change', calcularEdad);
         document.getElementById('fecha_nacimiento').addEventListener('input', calcularEdad);
-        document.getElementById('nombre').addEventListener('input', function(e) {
-            convertirAMayusculas(e.target);
-        });
-        document.getElementById('apellido').addEventListener('input', function(e) {
+        document.getElementById('nombre_completo').addEventListener('input', function(e) {
             convertirAMayusculas(e.target);
         });
         

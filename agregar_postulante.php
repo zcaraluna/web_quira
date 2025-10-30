@@ -113,8 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             writeDebugLog("  $key: $value");
         }
         
-        $nombre = trim($_POST['nombre']);
-        $apellido = trim($_POST['apellido']);
+        $nombre_completo = strtoupper(trim($_POST['nombre_completo']));
         $cedula = trim($_POST['cedula']);
         $telefono = trim($_POST['telefono']);
         $fecha_nacimiento = $_POST['fecha_nacimiento'] ?: null;
@@ -132,8 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Validaciones básicas
-        if (empty($nombre) || empty($apellido) || empty($cedula) || empty($dedo_registrado) || $sexo === 'Seleccionar' || empty($unidad)) {
-            throw new Exception('Todos los campos, incluido "Dedo Registrado", "Sexo" y "Unidad", son obligatorios');
+        if (empty($nombre_completo) || empty($cedula) || empty($dedo_registrado) || $sexo === 'Seleccionar' || empty($unidad)) {
+            throw new Exception('Todos los campos, incluido "Nombre Completo", "Dedo Registrado", "Sexo" y "Unidad", son obligatorios');
         }
         
         // Validar formato de cédula (solo números)
@@ -147,11 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Validar longitud de otros campos
-        if (strlen($nombre) > 100) {
-            throw new Exception('El nombre no puede tener más de 100 caracteres');
-        }
-        if (strlen($apellido) > 100) {
-            throw new Exception('El apellido no puede tener más de 100 caracteres');
+        if (strlen($nombre_completo) > 200) {
+            throw new Exception('El nombre completo no puede tener más de 200 caracteres');
         }
         if (strlen($telefono) > 20) {
             throw new Exception('El teléfono no puede tener más de 20 caracteres');
@@ -243,20 +239,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Insertar en la base de datos
                     $stmt = $pdo->prepare("
                         INSERT INTO postulantes (
-                            nombre, apellido, cedula, telefono, fecha_nacimiento, 
+                            nombre_completo, cedula, telefono, fecha_nacimiento, 
                             unidad, observaciones, fecha_registro, usuario_registrador, 
                             registrado_por, edad, sexo, dedo_registrado, aparato_id, uid_k40, aparato_nombre,
                             fecha_ultima_edicion, capturador_id
                         ) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
             
             $registrado_por = $_SESSION['grado'] . ' ' . $_SESSION['nombre'] . ' ' . $_SESSION['apellido'];
             
             // Debug: mostrar todos los datos que se van a insertar
             writeDebugLog('📤 Datos que se van a insertar en la BD:');
-            writeDebugLog("  nombre: $nombre");
-            writeDebugLog("  apellido: $apellido");
+            writeDebugLog("  nombre_completo: $nombre_completo");
             writeDebugLog("  cedula: $cedula");
             writeDebugLog("  telefono: $telefono");
             writeDebugLog("  fecha_nacimiento: $fecha_nacimiento");
@@ -275,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             writeDebugLog("  capturador_id: $capturador_id");
             
             $resultado_insert = $stmt->execute([
-                $nombre, $apellido, $cedula, $telefono, $fecha_nacimiento, 
+                $nombre_completo, $cedula, $telefono, $fecha_nacimiento, 
                 $unidad, $observaciones, $fecha_registro, $_SESSION['user_id'], 
                 $registrado_por, $edad, $sexo, $dedo_registrado, $aparato_id, $uid_k40, $aparato_nombre,
                 $fecha_registro, $capturador_id  // Usar la misma fecha para fecha_ultima_edicion y agregar capturador_id
@@ -724,20 +719,13 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                             </div>
                             
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="nombre"><i class="fas fa-user"></i> Nombre *</label>
-                                        <input type="text" class="form-control" id="nombre" name="nombre" 
-                                               value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" 
+                                        <label for="nombre_completo"><i class="fas fa-user"></i> Nombre Completo *</label>
+                                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
+                                               value="<?= htmlspecialchars($_POST['nombre_completo'] ?? '') ?>" 
                                                style="text-transform: uppercase;" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="apellido"><i class="fas fa-user"></i> Apellido *</label>
-                                        <input type="text" class="form-control" id="apellido" name="apellido" 
-                                               value="<?= htmlspecialchars($_POST['apellido'] ?? '') ?>" 
-                                               style="text-transform: uppercase;" required>
+                                        <small class="form-text text-muted">Ingrese el nombre completo (nombres y apellidos)</small>
                                     </div>
                                 </div>
                             </div>
@@ -1713,16 +1701,15 @@ Por favor verifique:
         const submitBtn = document.getElementById('submit-btn');
         
         // Validaciones del lado cliente (igual que el software original)
-        const nombre = formData.get('nombre').trim();
-        const apellido = formData.get('apellido').trim();
+        const nombre_completo = formData.get('nombre_completo').trim();
         const cedula = formData.get('cedula').trim();
         const dedoRegistrado = formData.get('dedo_registrado');
         const sexo = formData.get('sexo');
         const unidad = formData.get('unidad');
         const idK40 = formData.get('id_k40').trim();
         
-        if (!nombre || !apellido || !cedula || !dedoRegistrado || sexo === 'Seleccionar' || !unidad) {
-            alert('Todos los campos, incluido "Dedo Registrado", "Sexo" y "Unidad", son obligatorios.');
+        if (!nombre_completo || !cedula || !dedoRegistrado || sexo === 'Seleccionar' || !unidad) {
+            alert('Todos los campos, incluido "Nombre Completo", "Dedo Registrado", "Sexo" y "Unidad", son obligatorios.');
             return;
         }
         
@@ -1731,12 +1718,8 @@ Por favor verifique:
             alert('La cédula no puede tener más de 20 dígitos.');
             return;
         }
-        if (nombre.length > 100) {
-            alert('El nombre no puede tener más de 100 caracteres.');
-            return;
-        }
-        if (apellido.length > 100) {
-            alert('El apellido no puede tener más de 100 caracteres.');
+        if (nombre_completo.length > 200) {
+            alert('El nombre completo no puede tener más de 200 caracteres.');
             return;
         }
         if (dedoRegistrado.length > 50) {
@@ -1842,7 +1825,7 @@ Por favor verifique:
                         console.log(`Actualizando usuario UID ${usuarioUID} en el dispositivo...`);
                         const zkResult = await zktecoBridge.addUser(
                             usuarioUID,
-                            `${nombre} ${apellido}`,
+                            nombre_completo,
                             0, // Privilege por defecto
                             "",
                             "" // Group ID por defecto
@@ -1991,10 +1974,7 @@ Por favor verifique:
     // Event listeners para funcionalidades automáticas
     document.getElementById('fecha_nacimiento').addEventListener('change', calcularEdad);
     document.getElementById('fecha_nacimiento').addEventListener('input', calcularEdad);
-    document.getElementById('nombre').addEventListener('input', function(e) {
-        convertirAMayusculas(e.target);
-    });
-    document.getElementById('apellido').addEventListener('input', function(e) {
+    document.getElementById('nombre_completo').addEventListener('input', function(e) {
         convertirAMayusculas(e.target);
     });
     

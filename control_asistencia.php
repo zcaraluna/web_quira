@@ -538,12 +538,8 @@ function obtener_info_dispositivo($pdo, $serial_number) {
                                     <td id="detalle_id">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Nombre:</strong></td>
-                                    <td id="detalle_nombre">-</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Apellido:</strong></td>
-                                    <td id="detalle_apellido">-</td>
+                                    <td><strong>Nombre Completo:</strong></td>
+                                    <td id="detalle_nombre_completo">-</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Cédula:</strong></td>
@@ -1660,7 +1656,7 @@ function obtener_info_dispositivo($pdo, $serial_number) {
                                     <li><strong>Cédulas similares:</strong>
                                         <ul>
                                             ${data.debug.cedulas_similares.map(c => 
-                                                `<li>"${c.cedula}" - ${c.nombre} ${c.apellido}</li>`
+                                                `<li>"${c.cedula}" - ${c.nombre_completo || (c.nombre + ' ' + c.apellido)}</li>`
                                             ).join('')}
                                         </ul>
                                     </li>
@@ -1672,7 +1668,7 @@ function obtener_info_dispositivo($pdo, $serial_number) {
                                     <li><strong>Cédulas exactas:</strong>
                                         <ul>
                                             ${data.debug.cedulas_exactas.map(c => 
-                                                `<li>"${c.cedula}" - ${c.nombre} ${c.apellido}</li>`
+                                                `<li>"${c.cedula}" - ${c.nombre_completo || (c.nombre + ' ' + c.apellido)}</li>`
                                             ).join('')}
                                         </ul>
                                     </li>
@@ -1722,12 +1718,8 @@ function obtener_info_dispositivo($pdo, $serial_number) {
                                     <td id="detalle_id">-</td>
                             </tr>
                             <tr>
-                                <td><strong>Nombre:</strong></td>
-                                    <td id="detalle_nombre">-</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Apellido:</strong></td>
-                                    <td id="detalle_apellido">-</td>
+                                <td><strong>Nombre Completo:</strong></td>
+                                <td id="detalle_nombre_completo">-</td>
                             </tr>
                             <tr>
                                 <td><strong>Cédula:</strong></td>
@@ -1834,11 +1826,8 @@ function obtener_info_dispositivo($pdo, $serial_number) {
             const detalleId = document.getElementById('detalle_id');
             if (detalleId) detalleId.textContent = postulanteId || '-';
             
-            const detalleNombre = document.getElementById('detalle_nombre');
-            if (detalleNombre) detalleNombre.textContent = postulante.nombre || postulante[1] || '-';
-            
-            const detalleApellido = document.getElementById('detalle_apellido');
-            if (detalleApellido) detalleApellido.textContent = postulante.apellido || postulante[2] || '-';
+            const detalleNombreCompleto = document.getElementById('detalle_nombre_completo');
+            if (detalleNombreCompleto) detalleNombreCompleto.textContent = postulante.nombre_completo || postulante[1] || '-';
             
             const detalleCedula = document.getElementById('detalle_cedula');
             if (detalleCedula) detalleCedula.textContent = postulante.cedula || postulante[3] || '-';

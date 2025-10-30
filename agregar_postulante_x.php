@@ -41,8 +41,7 @@ try {
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $nombre = strtoupper(trim($_POST['nombre']));
-        $apellido = strtoupper(trim($_POST['apellido']));
+        $nombre_completo = strtoupper(trim($_POST['nombre_completo']));
         $cedula = trim($_POST['cedula']);
         $fecha_nacimiento = $_POST['fecha_nacimiento'];
         $telefono = trim($_POST['telefono']);
@@ -51,8 +50,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $observaciones = trim($_POST['observaciones']);
         
         // Validaciones básicas
-        if (empty($nombre) || empty($apellido) || empty($cedula) || empty($fecha_nacimiento) || empty($unidad) || empty($sexo)) {
-            throw new Exception('Los campos nombre, apellido, cédula, fecha de nacimiento, unidad y sexo son obligatorios');
+        if (empty($nombre_completo) || empty($cedula) || empty($fecha_nacimiento) || empty($unidad) || empty($sexo)) {
+            throw new Exception('Los campos nombre completo, cédula, fecha de nacimiento, unidad y sexo son obligatorios');
+        }
+        
+        // Validar longitud de nombre_completo
+        if (strlen($nombre_completo) > 200) {
+            throw new Exception('El nombre completo no puede tener más de 200 caracteres');
         }
         
         // Validar formato de cédula (solo números)
@@ -81,14 +85,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Insertar postulante SIN datos biométricos
         $stmt = $pdo->prepare("
             INSERT INTO postulantes (
-                nombre, apellido, cedula, fecha_nacimiento, telefono, 
+                nombre_completo, cedula, fecha_nacimiento, telefono, 
                 unidad, observaciones, edad, sexo, registrado_por,
                 dedo_registrado, aparato_id, uid_k40, aparato_nombre, fecha_registro
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $stmt->execute([
-            $nombre, $apellido, $cedula, $fecha_nacimiento, $telefono,
+            $nombre_completo, $cedula, $fecha_nacimiento, $telefono,
             $unidad, $observaciones, $edad, $sexo, $registrado_por,
             'NO_REGISTRADO', // dedo_registrado
             null, // aparato_id
@@ -483,20 +487,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="nombre"><i class="fas fa-user"></i> Nombre *</label>
-                                        <input type="text" class="form-control" id="nombre" name="nombre" 
-                                               value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" 
+                                        <label for="nombre_completo"><i class="fas fa-user"></i> Nombre Completo *</label>
+                                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
+                                               value="<?= htmlspecialchars($_POST['nombre_completo'] ?? '') ?>" 
                                                style="text-transform: uppercase;" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="apellido"><i class="fas fa-user"></i> Apellido *</label>
-                                        <input type="text" class="form-control" id="apellido" name="apellido" 
-                                               value="<?= htmlspecialchars($_POST['apellido'] ?? '') ?>" 
-                                               style="text-transform: uppercase;" required>
+                                        <small class="form-text text-muted">Ingrese el nombre completo (nombres y apellidos)</small>
                                     </div>
                                 </div>
                             </div>
@@ -643,16 +640,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Validación del formulario
         document.getElementById('postulante-form').addEventListener('submit', function(e) {
-            const nombre = document.getElementById('nombre').value.trim();
-            const apellido = document.getElementById('apellido').value.trim();
+            const nombre_completo = document.getElementById('nombre_completo').value.trim();
             const cedula = document.getElementById('cedula').value.trim();
             const fechaNacimiento = document.getElementById('fecha_nacimiento').value;
             const unidad = document.getElementById('unidad').value;
             const sexo = document.getElementById('sexo').value;
             
-            if (!nombre || !apellido || !cedula || !fechaNacimiento || !unidad || !sexo) {
+            if (!nombre_completo || !cedula || !fechaNacimiento || !unidad || !sexo) {
                 e.preventDefault();
                 alert('Por favor complete todos los campos obligatorios marcados con *');
+                return false;
+            }
+            
+            // Validar longitud de nombre_completo
+            if (nombre_completo.length > 200) {
+                e.preventDefault();
+                alert('El nombre completo no puede tener más de 200 caracteres');
                 return false;
             }
             

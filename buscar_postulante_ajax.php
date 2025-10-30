@@ -38,7 +38,7 @@ try {
     ];
     
     // Primero, verificar si existe alguna CI similar (para debug)
-    $debug_sql = "SELECT cedula, nombre, apellido FROM postulantes WHERE cedula ILIKE :cedula_pattern LIMIT 5";
+    $debug_sql = "SELECT cedula, COALESCE(nombre_completo, nombre || ' ' || apellido) as nombre_completo FROM postulantes WHERE cedula ILIKE :cedula_pattern LIMIT 5";
     $debug_stmt = $conn->prepare($debug_sql);
     $cedula_pattern = '%' . $cedula . '%';
     $debug_stmt->bindParam(':cedula_pattern', $cedula_pattern, PDO::PARAM_STR);
@@ -46,7 +46,7 @@ try {
     $debug_results = $debug_stmt->fetchAll();
     
     // También buscar CIs exactas (sin ILIKE)
-    $exact_sql = "SELECT cedula, nombre, apellido FROM postulantes WHERE cedula = :cedula LIMIT 5";
+    $exact_sql = "SELECT cedula, COALESCE(nombre_completo, nombre || ' ' || apellido) as nombre_completo FROM postulantes WHERE cedula = :cedula LIMIT 5";
     $exact_stmt = $conn->prepare($exact_sql);
     $exact_stmt->bindParam(':cedula', $cedula, PDO::PARAM_STR);
     $exact_stmt->execute();
@@ -58,8 +58,8 @@ try {
     // Buscar postulante por CI exacta
     $sql = "SELECT 
                 p.id,
-                p.nombre,
-                p.apellido,
+                p.nombre_completo,
+                COALESCE(p.nombre_completo, p.nombre || ' ' || p.apellido) as nombre_completo_display,
                 p.cedula,
                 p.sexo,
                 p.fecha_nacimiento,

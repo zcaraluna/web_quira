@@ -89,6 +89,7 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
             $stmt = $pdo->prepare("
                 SELECT 
                     p.*,
+                    COALESCE(p.nombre_completo, p.nombre || ' ' || p.apellido) as nombre_completo_display,
                     u.nombre as capturador_nombre,
                     u.apellido as capturador_apellido,
                     u.grado as capturador_grado,
@@ -373,7 +374,7 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
                     
                     <div class="data-row">
                         <span class="data-label">Nombre Completo:</span>
-                        <span class="data-value"><?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?></span>
+                        <span class="data-value"><?= htmlspecialchars($postulante['nombre_completo_display'] ?? $postulante['nombre_completo'] ?? ($postulante['nombre'] . ' ' . $postulante['apellido'])) ?></span>
                     </div>
                     
                     <div class="data-row">
@@ -542,7 +543,7 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cedula'])) || (isset
             
             // Datos del postulante
             const datos = [
-                ['Nombre Completo:', '<?= htmlspecialchars($postulante['nombre'] . ' ' . $postulante['apellido']) ?>'],
+                ['Nombre Completo:', '<?= htmlspecialchars($postulante['nombre_completo_display'] ?? $postulante['nombre_completo'] ?? ($postulante['nombre'] . ' ' . $postulante['apellido'])) ?>'],
                 ['Cédula de Identidad:', '<?= htmlspecialchars($postulante['cedula']) ?>'],
                 ['Teléfono:', '<?= htmlspecialchars($postulante['telefono']) ?>'],
                 ['Dispositivo/Dedo Registrado:', '<?= htmlspecialchars($postulante['aparato_nombre']) ?> / <?= htmlspecialchars(getDedoNombre($postulante['dedo_registrado'])) ?>'],
