@@ -906,7 +906,7 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="assets/js/zkteco-bridge.js"></script>
+    <script src="assets/js/zkteco-bridge.js?v=20251030-1"></script>
     
      <script>
      console.log('🔧 JavaScript cargando...');
