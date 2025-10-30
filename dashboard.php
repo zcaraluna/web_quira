@@ -3309,9 +3309,13 @@ $distribucion_unidad = $pdo->query("
             
             // Llenar los campos del modal con los datos del postulante
             document.getElementById('detalle_id').textContent = postulanteId || '-';
-            document.getElementById('detalle_nombre_completo').textContent = postulante.nombre_completo || postulante[1] || '-';
-            document.getElementById('detalle_cedula').textContent = postulante.cedula || postulante[3] || '-';
-            document.getElementById('detalle_sexo').textContent = postulante.sexo || postulante[15] || '-';
+            // Asegurar que nombre_completo se muestre correctamente (con fallback para compatibilidad)
+            const nombreCompleto = postulante.nombre_completo || 
+                                   (postulante.nombre && postulante.apellido ? (postulante.nombre + ' ' + postulante.apellido) : null) ||
+                                   postulante[1] || '-';
+            document.getElementById('detalle_nombre_completo').textContent = nombreCompleto;
+            document.getElementById('detalle_cedula').textContent = (postulante.cedula || postulante[3]) ? String(postulante.cedula || postulante[3]) : '-';
+            document.getElementById('detalle_sexo').textContent = (postulante.sexo || postulante[15]) ? String(postulante.sexo || postulante[15]) : '-';
             
             // Fecha de nacimiento
             const fechaNacimiento = postulante.fecha_nacimiento || postulante[4];
@@ -3323,39 +3327,39 @@ $distribucion_unidad = $pdo->query("
             }
             
             const edad = postulante.edad || postulante[8];
-            document.getElementById('detalle_edad').textContent = edad ? edad + ' años' : '-';
+            document.getElementById('detalle_edad').textContent = (edad && edad !== null && edad !== '') ? edad + ' años' : '-';
             const telefono = postulante.telefono || postulante[5];
-            document.getElementById('detalle_telefono').textContent = telefono || '-';
+            document.getElementById('detalle_telefono').textContent = (telefono && telefono !== null && telefono !== '') ? telefono : '-';
             
             // Información biométrica
             const dedoRegistrado = postulante.dedo_registrado || postulante[10];
-            if (dedoRegistrado) {
-                document.getElementById('detalle_dedo_registrado').innerHTML = '<span class="badge badge-success">' + dedoRegistrado + '</span>';
+            if (dedoRegistrado && dedoRegistrado !== null && dedoRegistrado !== '') {
+                document.getElementById('detalle_dedo_registrado').innerHTML = '<span class="badge badge-success">' + String(dedoRegistrado) + '</span>';
             } else {
                 document.getElementById('detalle_dedo_registrado').innerHTML = '<span class="badge badge-secondary">No registrado</span>';
             }
             
             // Aparato (con fallback)
             const aparatoNombre = postulante.aparato_nombre_actual || postulante.aparato_nombre || postulante[16];
-            if (aparatoNombre) {
-                document.getElementById('detalle_aparato').innerHTML = '<span class="badge badge-primary">' + aparatoNombre + '</span>';
+            if (aparatoNombre && aparatoNombre !== null && aparatoNombre !== '') {
+                document.getElementById('detalle_aparato').innerHTML = '<span class="badge badge-primary">' + String(aparatoNombre) + '</span>';
             } else {
                 document.getElementById('detalle_aparato').innerHTML = '<span class="badge badge-secondary">Sin aparato</span>';
             }
             
             const unidad = postulante.unidad || postulante[9];
-            if (unidad) {
-                document.getElementById('detalle_unidad').innerHTML = '<span class="badge badge-info">' + unidad + '</span>';
+            if (unidad && unidad !== null && unidad !== '') {
+                document.getElementById('detalle_unidad').innerHTML = '<span class="badge badge-info">' + String(unidad) + '</span>';
             } else {
                 document.getElementById('detalle_unidad').innerHTML = '<span class="badge badge-secondary">Sin unidad</span>';
             }
             
             const registradoPor = postulante.registrado_por || postulante[12];
-            document.getElementById('detalle_registrado_por').textContent = registradoPor || '-';
+            document.getElementById('detalle_registrado_por').textContent = (registradoPor && registradoPor !== null && registradoPor !== '') ? String(registradoPor) : '-';
             
             // Capturador
-            const capturador = postulante.capturador_nombre || postulante.capturador || '-';
-            document.getElementById('detalle_capturador').textContent = capturador;
+            const capturador = postulante.capturador_nombre || postulante.capturador;
+            document.getElementById('detalle_capturador').textContent = (capturador && capturador !== null && capturador !== '') ? String(capturador) : '-';
             
             // Información de registro
             const fechaRegistro = postulante.fecha_registro || postulante[6];
@@ -3376,7 +3380,8 @@ $distribucion_unidad = $pdo->query("
             
             // Observaciones con formato mejorado
             const observaciones = postulante.observaciones || postulante[7];
-            if (observaciones && observaciones.trim()) {
+            // Asegurarse de que observaciones sea una cadena antes de usar .trim()
+            if (observaciones && typeof observaciones === 'string' && observaciones.trim()) {
                 // Procesar observaciones para formato mejorado
                 let observacionesFormateadas = observaciones
                     .replace(/\[([^\]]+)\]/g, '<span class="badge badge-info">[$1]</span>')
