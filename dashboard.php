@@ -2493,10 +2493,7 @@ $distribucion_unidad = $pdo->query("
                                     </div>
                                     <div class="card-body">
                                         <p class="text-muted mb-3">Suba un archivo CSV con los datos de preinscriptos. El formato debe ser: CI, NOMBRE COMPLETO, NACIMIENTO, SEXO (H/M), UNIDAD.</p>
-                                        <!-- iframe oculto para recibir la respuesta del formulario -->
-                                        <iframe id="iframe-cargar-preinscriptos" name="iframe-cargar-preinscriptos" style="display: none;"></iframe>
-                                        
-                                        <form id="form-cargar-preinscriptos" enctype="multipart/form-data" method="POST" action="cargar_preinscriptos.php?iframe=1" target="iframe-cargar-preinscriptos">
+                                        <form id="form-cargar-preinscriptos" enctype="multipart/form-data">
                                             <div class="form-group">
                                                 <label for="archivo_csv">Seleccionar archivo CSV</label>
                                                 <input type="file" class="form-control-file" id="archivo_csv" name="archivo_csv" accept=".csv" required>
@@ -5383,7 +5380,6 @@ $distribucion_unidad = $pdo->query("
                 // Variables para rastrear el estado de procesamiento
                 let procesado = false;
                 let timeoutHandle = null;
-                const iframe = document.getElementById('iframe-cargar-preinscriptos');
                 
                 // Función para procesar la respuesta del servidor
                 function procesarRespuesta(data) {
@@ -5414,59 +5410,17 @@ $distribucion_unidad = $pdo->query("
                     statusDiv.style.display = 'block';
                 }
                 
-                // Escuchar mensajes postMessage del iframe
-                window.addEventListener('message', function(event) {
-                    if (event.source !== iframe.contentWindow || procesado) {
-                        return;
-                    }
-                    
-                    const data = event.data;
-                    if (typeof data === 'object' && data !== null && ('success' in data || 'message' in data)) {
-                        procesarRespuesta(data);
-                    }
-                });
-                
-                // Listener para cuando el iframe carga (fallback si postMessage falla)
-                if (iframe) {
-                    iframe.addEventListener('load', function() {
-                        if (procesado) return;
-                        
-                        setTimeout(function() {
-                            if (procesado) return;
-                            
-                            try {
-                                const iframeContent = iframe.contentDocument.body.innerText || iframe.contentDocument.body.textContent || '';
-                                if (iframeContent) {
-                                    try {
-                                        const data = JSON.parse(iframeContent);
-                                        if (data.success !== undefined) {
-                                            procesarRespuesta(data);
-                                        }
-                                    } catch (e) {
-                                        // Si no es JSON y tiene contenido significativo, puede ser un error
-                                        if (!procesado && iframeContent.length > 50) {
-                                            console.log('Respuesta del iframe (no JSON):', iframeContent.substring(0, 200));
-                                            procesarRespuesta({
-                                                success: false,
-                                                message: 'Respuesta inesperada del servidor. Revisa la consola para más detalles.'
-                                            });
-                                        }
-                                    }
-                                }
-                            } catch (e) {
-                                console.log('Error leyendo iframe (probablemente CORS):', e);
-                            }
-                        }, 2000);
-                    });
-                }
+                // Ya no usamos iframe, usamos XMLHttpRequest directamente
                 
                 formCargarPreinscriptos.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
                     const statusDiv = document.getElementById('preinscriptos-status');
                     const btnCargar = document.getElementById('btn-cargar-preinscriptos');
                     
                     // Validar que hay un archivo seleccionado
                     if (!archivoInput.files || !archivoInput.files[0]) {
-                        e.preventDefault();
                         statusDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle mr-2"></i>Por favor, seleccione un archivo CSV.</div>';
                         statusDiv.style.display = 'block';
                         return;
@@ -5485,15 +5439,71 @@ $distribucion_unidad = $pdo->query("
                     statusDiv.style.display = 'block';
                     btnCargar.disabled = true;
                     
-                    // Timeout de seguridad: si después de 30 segundos no hay respuesta, mostrar error
-                    timeoutHandle = setTimeout(function() {
-                        if (!procesado) {
+                    // Preparar FormData
+                    const formData = new FormData();
+                    formData.append('archivo_csv', archivoInput.files[0]);
+                    
+                    // Enviar usando XMLHttpRequest (más confiable para archivos que fetch)
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'cargar_preinscriptos.php', true);
+                    
+                    xhr.onload = function() {
+                        procesado = true;
+                        if (timeoutHandle) clearTimeout(timeoutHandle);
+                        btnCargar.disabled = false;
+                        
+                        if (xhr.status === 200) {
+                            try {
+                                const data = JSON.parse(xhr.responseText);
+                                procesarRespuesta(data);
+                            } catch (e) {
+                                // Si no es JSON, puede ser HTML (del iframe antiguo)
+                                console.log('Respuesta no JSON:', xhr.responseText.substring(0, 200));
+                                procesarRespuesta({
+                                    success: false,
+                                    message: 'Respuesta inesperada del servidor. Revisa la consola para más detalles.'
+                                });
+                            }
+                        } else {
+                            let errorMsg = 'Error del servidor';
+                            try {
+                                const data = JSON.parse(xhr.responseText);
+                                errorMsg = data.message || errorMsg;
+                            } catch (e) {
+                                errorMsg = `Error HTTP ${xhr.status}`;
+                            }
                             procesarRespuesta({
                                 success: false,
-                                message: 'Timeout: El proceso está tomando más tiempo del esperado. Verifica los logs del servidor o intenta nuevamente.'
+                                message: errorMsg
+                            });
+                        }
+                    };
+                    
+                    xhr.onerror = function() {
+                        procesado = true;
+                        if (timeoutHandle) clearTimeout(timeoutHandle);
+                        btnCargar.disabled = false;
+                        procesarRespuesta({
+                            success: false,
+                            message: 'Error de red al enviar el archivo. Verifica tu conexión.'
+                        });
+                    };
+                    
+                    // Timeout de seguridad
+                    timeoutHandle = setTimeout(function() {
+                        if (!procesado) {
+                            xhr.abort();
+                            procesado = true;
+                            btnCargar.disabled = false;
+                            procesarRespuesta({
+                                success: false,
+                                message: 'Timeout: El proceso está tomando más tiempo del esperado. Verifica los logs del servidor.'
                             });
                         }
                     }, 30000); // 30 segundos
+                    
+                    // Enviar request
+                    xhr.send(formData);
                 });
             }
         });

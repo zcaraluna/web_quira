@@ -31,9 +31,51 @@ if (!$es_iframe) {
 }
 
 try {
+    // Debug: Log de información del request
+    error_log('DEBUG cargar_preinscriptos.php - REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD']);
+    error_log('DEBUG - POST keys: ' . implode(', ', array_keys($_POST)));
+    error_log('DEBUG - FILES keys: ' . implode(', ', array_keys($_FILES)));
+    error_log('DEBUG - FILES content: ' . print_r($_FILES, true));
+    
     // Verificar que se haya enviado un archivo
-    if (!isset($_FILES['archivo_csv']) || $_FILES['archivo_csv']['error'] !== UPLOAD_ERR_OK) {
-        throw new Exception('No se recibió ningún archivo o hubo un error en la carga.');
+    if (!isset($_FILES['archivo_csv'])) {
+        $error_code = isset($_FILES['archivo_csv']['error']) ? $_FILES['archivo_csv']['error'] : 'NO_FILE';
+        $error_msg = 'No se recibió ningún archivo. ';
+        
+        // Verificar límites de PHP
+        $max_upload = ini_get('upload_max_filesize');
+        $max_post = ini_get('post_max_size');
+        $error_msg .= "Límites PHP: upload_max_filesize=$max_upload, post_max_size=$max_post. ";
+        
+        if ($error_code !== 'NO_FILE' && $error_code !== UPLOAD_ERR_OK) {
+            $upload_errors = [
+                UPLOAD_ERR_INI_SIZE => 'El archivo excede upload_max_filesize',
+                UPLOAD_ERR_FORM_SIZE => 'El archivo excede MAX_FILE_SIZE del formulario',
+                UPLOAD_ERR_PARTIAL => 'El archivo se subió parcialmente',
+                UPLOAD_ERR_NO_FILE => 'No se subió ningún archivo',
+                UPLOAD_ERR_NO_TMP_DIR => 'Falta el directorio temporal',
+                UPLOAD_ERR_CANT_WRITE => 'Error al escribir el archivo en disco',
+                UPLOAD_ERR_EXTENSION => 'Una extensión PHP detuvo la carga'
+            ];
+            $error_msg .= 'Código de error: ' . ($upload_errors[$error_code] ?? "Error desconocido ($error_code)");
+        }
+        
+        throw new Exception($error_msg);
+    }
+    
+    if ($_FILES['archivo_csv']['error'] !== UPLOAD_ERR_OK) {
+        $error_code = $_FILES['archivo_csv']['error'];
+        $upload_errors = [
+            UPLOAD_ERR_INI_SIZE => 'El archivo excede upload_max_filesize',
+            UPLOAD_ERR_FORM_SIZE => 'El archivo excede MAX_FILE_SIZE del formulario',
+            UPLOAD_ERR_PARTIAL => 'El archivo se subió parcialmente',
+            UPLOAD_ERR_NO_FILE => 'No se subió ningún archivo',
+            UPLOAD_ERR_NO_TMP_DIR => 'Falta el directorio temporal',
+            UPLOAD_ERR_CANT_WRITE => 'Error al escribir el archivo en disco',
+            UPLOAD_ERR_EXTENSION => 'Una extensión PHP detuvo la carga'
+        ];
+        $error_msg = 'Error en la carga del archivo: ' . ($upload_errors[$error_code] ?? "Error desconocido ($error_code)");
+        throw new Exception($error_msg);
     }
 
     $archivo = $_FILES['archivo_csv'];
