@@ -110,19 +110,39 @@ $headers = array_map(function($h) {
     return strtolower(trim($h, '"'));
 }, $headers);
 
-// Mapear columnas
+// Mapear columnas (usar comparación más estricta para evitar falsos positivos)
+// Primero mostrar qué headers tenemos para debug
+echo "📋 Headers encontrados:\n";
+foreach ($headers as $idx => $h) {
+    echo "   [$idx] = '$h'\n";
+}
+
 $column_map = [];
 foreach ($headers as $index => $header) {
     $header_clean = strtolower(trim($header));
-    if (stripos($header_clean, 'ci') !== false || stripos($header_clean, 'cedula') !== false || stripos($header_clean, 'cédula') !== false) {
+    
+    // CI: debe ser exactamente "ci" (no parte de "nacimiento")
+    if ($header_clean === 'ci' && !isset($column_map['ci'])) {
         $column_map['ci'] = $index;
-    } elseif (stripos($header_clean, 'nombre') !== false && stripos($header_clean, 'completo') !== false) {
+    }
+    // CEDULA/CÉDULA
+    elseif (($header_clean === 'cedula' || $header_clean === 'cédula') && !isset($column_map['ci'])) {
+        $column_map['ci'] = $index;
+    }
+    // NOMBRE COMPLETO: debe contener ambas palabras
+    elseif (stripos($header_clean, 'nombre') !== false && stripos($header_clean, 'completo') !== false && !isset($column_map['nombre_completo'])) {
         $column_map['nombre_completo'] = $index;
-    } elseif (stripos($header_clean, 'nacimiento') !== false || stripos($header_clean, 'fecha') !== false) {
+    }
+    // NACIMIENTO: buscar por "nacimiento" específicamente
+    elseif (stripos($header_clean, 'nacimiento') !== false && !isset($column_map['fecha_nacimiento'])) {
         $column_map['fecha_nacimiento'] = $index;
-    } elseif (stripos($header_clean, 'sexo') !== false || stripos($header_clean, 'genero') !== false || stripos($header_clean, 'género') !== false) {
+    }
+    // SEXO
+    elseif (($header_clean === 'sexo' || $header_clean === 'genero' || $header_clean === 'género') && !isset($column_map['sexo'])) {
         $column_map['sexo'] = $index;
-    } elseif (stripos($header_clean, 'unidad') !== false) {
+    }
+    // UNIDAD
+    elseif (stripos($header_clean, 'unidad') !== false && !isset($column_map['unidad'])) {
         $column_map['unidad'] = $index;
     }
 }
