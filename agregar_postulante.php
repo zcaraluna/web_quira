@@ -1623,47 +1623,74 @@ Por favor verifique:
             buscarBtn.disabled = true;
             buscarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
             
-            // Construir URL absoluta para evitar problemas de reescritura
-            // Usar window.location.origin + pathname para garantizar URL completa
+            // Construir URL - usar sin .php directamente ya que el servidor tiene rewrite rules
             const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+            // Usar URL sin .php ya que el servidor tiene rewrite rules que lo quitan
+            // Pasar parámetro como query string para que funcione con redirects
             const url = window.location.origin + basePath + 'buscar_preinscripto_ajax.php';
+            const urlWithoutExt = window.location.origin + basePath + 'buscar_preinscripto_ajax';
+            
             console.log('📤 Enviando petición POST a:', url);
             console.log('📦 Datos:', { ci: ci });
             
-            const data = await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                // Usar URL absoluta completa para evitar redirects que cambien POST a GET
-                xhr.open('POST', url, true);
-                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                xhr.setRequestHeader('Cache-Control', 'no-cache');
-                
-                xhr.onload = function() {
-                    console.log('📥 Respuesta recibida:', xhr.status, xhr.statusText);
-                    console.log('📋 Método usado:', xhr.method || 'POST');
+            const data = await new Promise(async (resolve, reject) => {
+                try {
+                    // Primero intentar POST normal
+                    const formData = new URLSearchParams();
+                    formData.append('ci', ci);
                     
-                    if (xhr.status >= 200 && xhr.status < 300) {
+                    let response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Cache-Control': 'no-cache'
+                        },
+                        body: formData.toString(),
+                        credentials: 'same-origin',
+                        redirect: 'follow'
+                    });
+                    
+                    console.log('📥 Respuesta recibida:', response.status, response.statusText);
+                    console.log('📋 URL final:', response.url);
+                    
+                    // Si hay un redirect y la URL cambió (sin .php), o si recibimos 405,
+                    // intentar con GET usando query string
+                    if ((response.url !== url && response.url.includes('buscar_preinscripto_ajax') && !response.url.includes('.php')) || response.status === 405) {
+                        console.log('⚠️ Detectado redirect o 405, reintentando con GET y query string...');
+                        const urlWithParam = urlWithoutExt + '?ci=' + encodeURIComponent(ci);
+                        response = await fetch(urlWithParam, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Cache-Control': 'no-cache'
+                            },
+                            credentials: 'same-origin'
+                        });
+                        console.log('📥 Respuesta GET:', response.status, response.statusText);
+                        console.log('📋 URL GET:', response.url);
+                    }
+                    
+                    const responseText = await response.text();
+                    
+                    if (response.status >= 200 && response.status < 300) {
                         try {
-                            const responseData = JSON.parse(xhr.responseText);
+                            const responseData = JSON.parse(responseText);
                             resolve(responseData);
                         } catch (e) {
-                            reject(new Error('Error al parsear JSON: ' + e.message));
+                            reject(new Error('Error al parsear JSON: ' + e.message + ' - Respuesta: ' + responseText.substring(0, 100)));
                         }
                     } else {
                         try {
-                            const errorData = JSON.parse(xhr.responseText);
+                            const errorData = JSON.parse(responseText);
                             reject(new Error(errorData.message || 'Error del servidor'));
                         } catch (e) {
-                            reject(new Error('Error del servidor: ' + xhr.status));
+                            reject(new Error('Error del servidor: ' + response.status + ' - ' + responseText.substring(0, 100)));
                         }
                     }
-                };
-                
-                xhr.onerror = function() {
-                    reject(new Error('Error de red al enviar la petición'));
-                };
-                
-                xhr.send('ci=' + encodeURIComponent(ci));
+                } catch (error) {
+                    reject(new Error('Error de red: ' + error.message));
+                }
             });
             
             // Restaurar botón
@@ -2403,3 +2430,4 @@ Por favor verifique:
  // Debug: verificar que el archivo se ejecutó completamente
  writeDebugLog('✅ Archivo agregar_postulante.php ejecutado completamente');
  ?>
+

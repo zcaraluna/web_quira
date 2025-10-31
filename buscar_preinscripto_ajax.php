@@ -32,26 +32,33 @@ $request_method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 // Leer php://input una sola vez (solo se puede leer una vez)
 $raw_input = file_get_contents('php://input');
 $has_post_data = !empty($_POST) || !empty($raw_input);
+// También aceptar GET si viene con el parámetro ci (por si un redirect convierte POST a GET)
+$has_get_ci = !empty($_GET['ci']);
 
 // Debug: Log del método recibido
 error_log("DEBUG buscar_preinscripto_ajax.php - REQUEST_METHOD: $request_method");
 error_log("DEBUG - Has POST data: " . ($has_post_data ? 'YES' : 'NO'));
+error_log("DEBUG - Has GET ci: " . ($has_get_ci ? 'YES' : 'NO'));
 error_log("DEBUG - POST data: " . print_r($_POST, true));
+error_log("DEBUG - GET data: " . print_r($_GET, true));
 error_log("DEBUG - php://input length: " . strlen($raw_input));
 error_log("DEBUG - php://input preview: " . substr($raw_input, 0, 100));
 
-// Aceptar si es POST o si hay datos POST (por si nginx convierte el método)
-if ($request_method !== 'POST' && !$has_post_data) {
+// Aceptar si es POST, si hay datos POST, o si es GET con parámetro ci
+// (El último caso es para manejar redirects que convierten POST a GET)
+if ($request_method !== 'POST' && !$has_post_data && !$has_get_ci) {
     http_response_code(405);
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
-        'message' => "Método no permitido. Use POST. Método recibido: $request_method",
+        'message' => "Método no permitido. Use POST o GET con parámetro 'ci'. Método recibido: $request_method",
         'data' => null,
-            'debug' => [
+        'debug' => [
             'REQUEST_METHOD' => $request_method,
             'has_post_data' => $has_post_data,
+            'has_get_ci' => $has_get_ci,
             'POST_count' => count($_POST),
+            'GET_count' => count($_GET),
             'input_length' => strlen($raw_input)
         ]
     ]);
@@ -61,11 +68,19 @@ if ($request_method !== 'POST' && !$has_post_data) {
 header('Content-Type: application/json');
 
 try {
-    // Obtener CI del POST (puede venir como form-urlencoded o multipart)
-    $ci = trim($_POST['ci'] ?? '');
+    // Obtener CI del POST, GET o input raw (en orden de prioridad)
+    $ci = '';
     
-    // Si no está en $_POST, intentar leer del input raw (ya leído anteriormente)
-    if (empty($ci) && !empty($raw_input)) {
+    // 1. Primero intentar POST
+    if (!empty($_POST['ci'])) {
+        $ci = trim($_POST['ci']);
+    }
+    // 2. Si no está en $_POST, intentar GET (por si un redirect convirtió POST a GET)
+    elseif (!empty($_GET['ci'])) {
+        $ci = trim($_GET['ci']);
+    }
+    // 3. Si no está en $_POST ni $_GET, intentar leer del input raw
+    elseif (!empty($raw_input)) {
         parse_str($raw_input, $parsed);
         $ci = trim($parsed['ci'] ?? '');
     }
