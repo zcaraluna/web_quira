@@ -2485,6 +2485,29 @@ $distribucion_unidad = $pdo->query("
                                 </div>
                             </div>
 
+                            <!-- Cargar Preinscriptos -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-upload mr-2"></i>Cargar Preinscriptos</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3">Suba un archivo CSV con los datos de preinscriptos. El formato debe ser: CI, NOMBRE COMPLETO, NACIMIENTO, SEXO (H/M), UNIDAD.</p>
+                                        <form id="form-cargar-preinscriptos" enctype="multipart/form-data">
+                                            <div class="form-group">
+                                                <label for="archivo_csv">Seleccionar archivo CSV</label>
+                                                <input type="file" class="form-control-file" id="archivo_csv" name="archivo_csv" accept=".csv" required>
+                                                <small class="form-text text-muted">Formato esperado: CSV con separador ; o ,</small>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary" id="btn-cargar-preinscriptos">
+                                                <i class="fas fa-upload mr-2"></i>Cargar Preinscriptos
+                                            </button>
+                                        </form>
+                                        <div id="preinscriptos-status" class="mt-3" style="display: none;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Configuración General -->
                             <div class="col-lg-6 mb-4">
                                 <div class="card">
@@ -5115,6 +5138,70 @@ $distribucion_unidad = $pdo->query("
                 statusDiv.style.display = 'none';
             }, 3000);
         }
+
+        // Manejar carga de preinscriptos
+        document.addEventListener('DOMContentLoaded', function() {
+            const formCargarPreinscriptos = document.getElementById('form-cargar-preinscriptos');
+            if (formCargarPreinscriptos) {
+                formCargarPreinscriptos.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(formCargarPreinscriptos);
+                    const statusDiv = document.getElementById('preinscriptos-status');
+                    const btnCargar = document.getElementById('btn-cargar-preinscriptos');
+                    const archivoInput = document.getElementById('archivo_csv');
+                    
+                    // Validar que hay un archivo seleccionado
+                    if (!archivoInput.files || !archivoInput.files[0]) {
+                        statusDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle mr-2"></i>Por favor, seleccione un archivo CSV.</div>';
+                        statusDiv.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Mostrar estado de carga
+                    statusDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin mr-2"></i>Procesando archivo, por favor espere...</div>';
+                    statusDiv.style.display = 'block';
+                    btnCargar.disabled = true;
+                    
+                    // Enviar archivo
+                    fetch('cargar_preinscriptos.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            statusDiv.innerHTML = `<div class="alert alert-success">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <strong>¡Carga exitosa!</strong><br>
+                                Registros procesados: ${data.insertados || 0}<br>
+                                Registros actualizados: ${data.actualizados || 0}<br>
+                                Errores: ${data.errores || 0}
+                                ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
+                            </div>`;
+                        } else {
+                            statusDiv.innerHTML = `<div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                <strong>Error:</strong> ${data.message || 'Error desconocido'}
+                            </div>`;
+                        }
+                        statusDiv.style.display = 'block';
+                        btnCargar.disabled = false;
+                        
+                        // Resetear el formulario
+                        formCargarPreinscriptos.reset();
+                    })
+                    .catch(error => {
+                        statusDiv.innerHTML = `<div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <strong>Error de comunicación:</strong> ${error.message}
+                        </div>`;
+                        statusDiv.style.display = 'block';
+                        btnCargar.disabled = false;
+                    });
+                });
+            }
+        });
 
     </script>
 
