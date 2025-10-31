@@ -745,9 +745,16 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="cedula"><i class="fas fa-id-card"></i> Cédula *</label>
-                                        <input type="text" class="form-control" id="cedula" name="cedula" 
-                                               value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" 
-                                               pattern="[0-9]+" title="Solo números" required>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="cedula" name="cedula" 
+                                                   value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" 
+                                                   pattern="[0-9]+" title="Solo números" required>
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-info btn-sm" onclick="buscarPreinscripto()" title="Buscar en preinscriptos">
+                                                    <i class="fas fa-search"></i> Buscar
+                                                </button>
+                                            </div>
+                                        </div>
                                         <small class="form-text text-muted">Solo números, sin puntos ni guiones</small>
                                     </div>
                                 </div>
@@ -1574,6 +1581,104 @@ Por favor verifique:
         } catch (error) {
             console.error('❌ Error en actualización manual:', error);
             showToast('Error al actualizar el aparato: ' + error.message, 'error');
+        }
+    }
+    
+    // Función para buscar preinscripto por CI
+    async function buscarPreinscripto() {
+        const cedulaInput = document.getElementById('cedula');
+        const ci = cedulaInput.value.trim();
+        
+        if (!ci) {
+            showToast('Por favor ingrese una CI para buscar', 'warning');
+            cedulaInput.focus();
+            return;
+        }
+        
+        // Validar que sea solo números
+        if (!/^\d+$/.test(ci)) {
+            showToast('La CI debe contener solo números', 'error');
+            return;
+        }
+        
+        try {
+            // Mostrar indicador de carga
+            const buscarBtn = cedulaInput.closest('.input-group').querySelector('button');
+            const originalText = buscarBtn.innerHTML;
+            buscarBtn.disabled = true;
+            buscarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+            
+            const formData = new FormData();
+            formData.append('ci', ci);
+            
+            const response = await fetch('buscar_preinscripto_ajax.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            // Restaurar botón
+            buscarBtn.disabled = false;
+            buscarBtn.innerHTML = originalText;
+            
+            if (data.success && data.data) {
+                // Completar los campos del formulario
+                const preinscripto = data.data;
+                
+                // Nombre completo
+                if (document.getElementById('nombre_completo')) {
+                    document.getElementById('nombre_completo').value = preinscripto.nombre_completo;
+                }
+                
+                // Fecha de nacimiento
+                if (document.getElementById('fecha_nacimiento')) {
+                    document.getElementById('fecha_nacimiento').value = preinscripto.fecha_nacimiento;
+                    // Calcular edad automáticamente
+                    calcularEdad();
+                }
+                
+                // Sexo
+                if (document.getElementById('sexo')) {
+                    document.getElementById('sexo').value = preinscripto.sexo;
+                }
+                
+                // Unidad
+                if (document.getElementById('unidad')) {
+                    // Buscar la opción que coincida con el valor
+                    const unidadSelect = document.getElementById('unidad');
+                    const unidadValue = preinscripto.unidad;
+                    
+                    // Buscar por texto exacto primero
+                    let found = false;
+                    for (let option of unidadSelect.options) {
+                        if (option.text === unidadValue) {
+                            option.selected = true;
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    // Si no se encuentra, intentar por valor
+                    if (!found) {
+                        unidadSelect.value = unidadValue;
+                    }
+                }
+                
+                showToast('Datos del preinscripto cargados correctamente', 'success');
+            } else {
+                showToast(data.message || 'No se encontró ningún preinscripto con esa CI', 'warning');
+            }
+        } catch (error) {
+            console.error('Error al buscar preinscripto:', error);
+            showToast('Error al buscar preinscripto: ' + error.message, 'error');
+            
+            // Restaurar botón en caso de error
+            const buscarBtn = cedulaInput.closest('.input-group').querySelector('button');
+            if (buscarBtn) {
+                buscarBtn.disabled = false;
+                buscarBtn.innerHTML = '<i class="fas fa-search"></i> Buscar';
+            }
         }
     }
     

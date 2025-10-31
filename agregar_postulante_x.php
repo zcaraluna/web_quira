@@ -497,9 +497,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="cedula"><i class="fas fa-id-card"></i> Cédula *</label>
-                                        <input type="text" class="form-control" id="cedula" name="cedula" 
-                                               value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" 
-                                               pattern="[0-9]+" title="Solo números" required>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="cedula" name="cedula" 
+                                                   value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" 
+                                                   pattern="[0-9]+" title="Solo números" required>
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-info btn-sm" onclick="buscarPreinscripto()" title="Buscar en preinscriptos">
+                                                    <i class="fas fa-search"></i> Buscar
+                                                </button>
+                                            </div>
+                                        </div>
                                         <small class="form-text text-muted">Solo números, sin puntos ni guiones</small>
                                     </div>
                                 </div>
@@ -630,25 +637,172 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             document.getElementById('mobile-warning').style.display = 'flex';
         }
         
-        // Auto-calcular edad cuando cambie la fecha de nacimiento
-        document.getElementById('fecha_nacimiento').addEventListener('change', function() {
-            const fechaNac = new Date(this.value);
-            const hoy = new Date();
-            let edad = hoy.getFullYear() - fechaNac.getFullYear();
-            const mes = hoy.getMonth() - fechaNac.getMonth();
+        // Función para calcular edad
+        function calcularEdad() {
+            const fechaNac = document.getElementById('fecha_nacimiento').value;
+            if (!fechaNac) {
+                document.getElementById('edad').value = '';
+                return;
+            }
             
-            if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+            const fechaNacDate = new Date(fechaNac);
+            const hoy = new Date();
+            let edad = hoy.getFullYear() - fechaNacDate.getFullYear();
+            const mes = hoy.getMonth() - fechaNacDate.getMonth();
+            
+            if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacDate.getDate())) {
                 edad--;
             }
             
             if (edad < 0) {
                 alert('La fecha de nacimiento no puede ser futura');
-                this.value = '';
+                document.getElementById('fecha_nacimiento').value = '';
                 document.getElementById('edad').value = '';
             } else {
                 document.getElementById('edad').value = edad;
             }
-        });
+        }
+        
+        // Auto-calcular edad cuando cambie la fecha de nacimiento
+        document.getElementById('fecha_nacimiento').addEventListener('change', calcularEdad);
+        
+        // Función para mostrar mensajes toast
+        function showToast(message, type = 'info') {
+            // Crear toast si no existe
+            let toast = document.getElementById('toast-container');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-container';
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                `;
+                document.body.appendChild(toast);
+            }
+            
+            const toastElement = document.createElement('div');
+            const bgColor = type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : type === 'error' ? '#dc3545' : '#17a2b8';
+            
+            toastElement.style.cssText = `
+                background: ${bgColor};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 4px;
+                margin-bottom: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                animation: slideIn 0.3s ease-out;
+            `;
+            toastElement.textContent = message;
+            
+            toast.appendChild(toastElement);
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                if (toastElement.parentNode) {
+                    toastElement.parentNode.removeChild(toastElement);
+                }
+            }, 3000);
+        }
+        
+        // Función para buscar preinscripto por CI
+        async function buscarPreinscripto() {
+            const cedulaInput = document.getElementById('cedula');
+            const ci = cedulaInput.value.trim();
+            
+            if (!ci) {
+                showToast('Por favor ingrese una CI para buscar', 'warning');
+                cedulaInput.focus();
+                return;
+            }
+            
+            // Validar que sea solo números
+            if (!/^\d+$/.test(ci)) {
+                showToast('La CI debe contener solo números', 'error');
+                return;
+            }
+            
+            try {
+                // Mostrar indicador de carga
+                const buscarBtn = cedulaInput.closest('.input-group').querySelector('button');
+                const originalText = buscarBtn.innerHTML;
+                buscarBtn.disabled = true;
+                buscarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+                
+                const formData = new FormData();
+                formData.append('ci', ci);
+                
+                const response = await fetch('buscar_preinscripto_ajax.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Restaurar botón
+                buscarBtn.disabled = false;
+                buscarBtn.innerHTML = originalText;
+                
+                if (data.success && data.data) {
+                    // Completar los campos del formulario
+                    const preinscripto = data.data;
+                    
+                    // Nombre completo
+                    if (document.getElementById('nombre_completo')) {
+                        document.getElementById('nombre_completo').value = preinscripto.nombre_completo;
+                    }
+                    
+                    // Fecha de nacimiento
+                    if (document.getElementById('fecha_nacimiento')) {
+                        document.getElementById('fecha_nacimiento').value = preinscripto.fecha_nacimiento;
+                        // Calcular edad automáticamente
+                        calcularEdad();
+                    }
+                    
+                    // Sexo
+                    if (document.getElementById('sexo')) {
+                        document.getElementById('sexo').value = preinscripto.sexo;
+                    }
+                    
+                    // Unidad
+                    if (document.getElementById('unidad')) {
+                        // Buscar la opción que coincida con el valor
+                        const unidadSelect = document.getElementById('unidad');
+                        const unidadValue = preinscripto.unidad;
+                        
+                        // Buscar por texto exacto primero
+                        let found = false;
+                        for (let option of unidadSelect.options) {
+                            if (option.text === unidadValue) {
+                                option.selected = true;
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        // Si no se encuentra, intentar por valor
+                        if (!found) {
+                            unidadSelect.value = unidadValue;
+                        }
+                    }
+                    
+                    showToast('Datos del preinscripto cargados correctamente', 'success');
+                } else {
+                    showToast(data.message || 'No se encontró ningún preinscripto con esa CI', 'warning');
+                }
+            } catch (error) {
+                console.error('Error al buscar preinscripto:', error);
+                showToast('Error al buscar preinscripto: ' + error.message, 'error');
+                
+                // Restaurar botón en caso de error
+                const buscarBtn = cedulaInput.closest('.input-group').querySelector('button');
+                if (buscarBtn) {
+                    buscarBtn.disabled = false;
+                    buscarBtn.innerHTML = '<i class="fas fa-search"></i> Buscar';
+                }
+            }
+        }
         
         // Validación del formulario
         document.getElementById('postulante-form').addEventListener('submit', function(e) {
