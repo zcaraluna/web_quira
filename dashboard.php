@@ -5471,58 +5471,99 @@ $distribucion_unidad = $pdo->query("
                     
                     console.log('✅ FormData preparado correctamente');
                     
-                    // Enviar usando XMLHttpRequest (más confiable para archivos que fetch)
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'cargar_preinscriptos.php', true);
+                    // Construir URLs (similar a buscar_preinscripto_ajax)
+                    const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                    const url = window.location.origin + basePath + 'cargar_preinscriptos.php';
+                    const urlWithoutExt = window.location.origin + basePath + 'cargar_preinscriptos';
                     
-                    // NO establecer Content-Type manualmente - dejar que el navegador lo establezca automáticamente
-                    // con el boundary correcto para multipart/form-data
+                    console.log('📤 Enviando archivo a:', url);
                     
-                    xhr.onload = function() {
+                    // Intentar primero con fetch (para detectar redirects como en buscar_preinscripto_ajax)
+                    // Si falla, usar XMLHttpRequest como fallback
+                    fetch(url, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                        redirect: 'follow'
+                    })
+                    .then(response => {
+                        console.log('📥 Respuesta recibida:', response.status, response.statusText);
+                        console.log('📋 URL final:', response.url);
+                        
+                        // Si la URL cambió (se perdió el .php) o hay un error, usar XMLHttpRequest como fallback
+                        if ((response.url !== url && !response.url.includes('.php')) || response.status >= 400) {
+                            console.log('⚠️ Problema detectado, usando XMLHttpRequest como fallback...');
+                            throw new Error('Redirect o error detectado');
+                        }
+                        
+                        return response.text();
+                    })
+                    .then(responseText => {
                         procesado = true;
                         if (timeoutHandle) clearTimeout(timeoutHandle);
                         btnCargar.disabled = false;
                         
-                        // Intentar parsear la respuesta como JSON
-                        let data = null;
                         try {
-                            data = JSON.parse(xhr.responseText);
-                        } catch (e) {
-                            // Si no es JSON, mostrar el contenido raw (puede ser un error HTML)
-                            console.error('Respuesta no es JSON:', xhr.responseText.substring(0, 500));
-                            procesarRespuesta({
-                                success: false,
-                                message: 'El servidor devolvió una respuesta inesperada. Revisa la consola del navegador (F12) para más detalles.'
-                            });
-                            return;
-                        }
-                        
-                        // Procesar la respuesta
-                        if (xhr.status === 200) {
+                            const data = JSON.parse(responseText);
                             procesarRespuesta(data);
-                        } else {
-                            // Error HTTP con respuesta JSON
+                        } catch (e) {
+                            console.error('Error parseando JSON:', e);
                             procesarRespuesta({
                                 success: false,
-                                message: data.message || `Error HTTP ${xhr.status}: ${xhr.statusText}`
+                                message: 'Respuesta inesperada del servidor. Revisa la consola.'
                             });
                         }
-                    };
-                    
-                    xhr.onerror = function() {
-                        procesado = true;
-                        if (timeoutHandle) clearTimeout(timeoutHandle);
-                        btnCargar.disabled = false;
-                        procesarRespuesta({
-                            success: false,
-                            message: 'Error de red al enviar el archivo. Verifica tu conexión.'
-                        });
-                    };
+                    })
+                    .catch(error => {
+                        console.log('⚠️ Fetch falló, usando XMLHttpRequest:', error);
+                        
+                        // Fallback a XMLHttpRequest (más confiable para archivos)
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', url, true);
+                        
+                        xhr.onload = function() {
+                            procesado = true;
+                            if (timeoutHandle) clearTimeout(timeoutHandle);
+                            btnCargar.disabled = false;
+                            
+                            let data = null;
+                            try {
+                                data = JSON.parse(xhr.responseText);
+                            } catch (e) {
+                                console.error('Respuesta no es JSON:', xhr.responseText.substring(0, 500));
+                                procesarRespuesta({
+                                    success: false,
+                                    message: 'El servidor devolvió una respuesta inesperada. Revisa la consola del navegador (F12) para más detalles.'
+                                });
+                                return;
+                            }
+                            
+                            if (xhr.status === 200) {
+                                procesarRespuesta(data);
+                            } else {
+                                procesarRespuesta({
+                                    success: false,
+                                    message: data.message || `Error HTTP ${xhr.status}: ${xhr.statusText}`
+                                });
+                            }
+                        };
+                        
+                        xhr.onerror = function() {
+                            procesado = true;
+                            if (timeoutHandle) clearTimeout(timeoutHandle);
+                            btnCargar.disabled = false;
+                            procesarRespuesta({
+                                success: false,
+                                message: 'Error de red al enviar el archivo. Verifica tu conexión.'
+                            });
+                        };
+                        
+                        xhr.send(formData);
+                    });
                     
                     // Timeout de seguridad
                     timeoutHandle = setTimeout(function() {
                         if (!procesado) {
-                            xhr.abort();
                             procesado = true;
                             btnCargar.disabled = false;
                             procesarRespuesta({
@@ -5531,9 +5572,6 @@ $distribucion_unidad = $pdo->query("
                             });
                         }
                     }, 30000); // 30 segundos
-                    
-                    // Enviar request
-                    xhr.send(formData);
                 });
             }
         });
