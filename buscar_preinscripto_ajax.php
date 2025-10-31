@@ -7,18 +7,37 @@
 // Configurar zona horaria
 date_default_timezone_set('America/Asuncion');
 
+// Iniciar sesión y verificar login
 session_start();
 require_once 'config.php';
-requireLogin();
+
+// Verificar que el usuario esté logueado ANTES de verificar método
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'message' => 'Sesión no iniciada. Por favor, inicie sesión.',
+        'data' => null
+    ]);
+    exit;
+}
+
+// Verificar método de petición
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'message' => 'Método no permitido. Use POST.',
+        'data' => null
+    ]);
+    exit;
+}
 
 header('Content-Type: application/json');
 
 try {
-    // Verificar método de petición
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new Exception('Método no permitido');
-    }
-    
     // Obtener CI del POST
     $ci = trim($_POST['ci'] ?? '');
     

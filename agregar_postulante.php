@@ -1613,8 +1613,15 @@ Por favor verifique:
             
             const response = await fetch('buscar_preinscripto_ajax.php', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'same-origin' // Incluir cookies de sesión
             });
+            
+            // Verificar si la respuesta es JSON válida
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error('La respuesta del servidor no es JSON válida');
+            }
             
             const data = await response.json();
             
