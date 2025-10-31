@@ -5478,53 +5478,19 @@ $distribucion_unidad = $pdo->query("
                     
                     console.log('📤 Enviando archivo a:', url);
                     
-                    // Intentar primero con fetch (para detectar redirects como en buscar_preinscripto_ajax)
-                    // Si falla, usar XMLHttpRequest como fallback
-                    fetch(url, {
-                        method: 'POST',
-                        body: formData,
-                        credentials: 'same-origin',
-                        redirect: 'follow'
-                    })
-                    .then(response => {
-                        console.log('📥 Respuesta recibida:', response.status, response.statusText);
-                        console.log('📋 URL final:', response.url);
-                        
-                        // Si la URL cambió (se perdió el .php) o hay un error, usar XMLHttpRequest como fallback
-                        if ((response.url !== url && !response.url.includes('.php')) || response.status >= 400) {
-                            console.log('⚠️ Problema detectado, usando XMLHttpRequest como fallback...');
-                            throw new Error('Redirect o error detectado');
-                        }
-                        
-                        return response.text();
-                    })
-                    .then(responseText => {
-                        procesado = true;
-                        if (timeoutHandle) clearTimeout(timeoutHandle);
-                        btnCargar.disabled = false;
-                        
-                        try {
-                            const data = JSON.parse(responseText);
-                            procesarRespuesta(data);
-                        } catch (e) {
-                            console.error('Error parseando JSON:', e);
-                            procesarRespuesta({
-                                success: false,
-                                message: 'Respuesta inesperada del servidor. Revisa la consola.'
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.log('⚠️ Fetch falló, usando XMLHttpRequest:', error);
-                        
-                        // Fallback a XMLHttpRequest (más confiable para archivos)
-                        const xhr = new XMLHttpRequest();
-                        xhr.open('POST', url, true);
-                        
-                        xhr.onload = function() {
+                    // Usar XMLHttpRequest directamente (más confiable para archivos y evita problemas de redirect)
+                    // No usar fetch porque puede causar redirects que convierten POST a GET
+                    const xhr = new XMLHttpRequest();
+                    
+                    // Usar el evento onreadystatechange para mayor compatibilidad
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4) { // Request completo
                             procesado = true;
                             if (timeoutHandle) clearTimeout(timeoutHandle);
                             btnCargar.disabled = false;
+                            
+                            console.log('📥 Respuesta recibida:', xhr.status, xhr.statusText);
+                            console.log('📋 URL final:', xhr.responseURL || url);
                             
                             let data = null;
                             try {
@@ -5533,7 +5499,7 @@ $distribucion_unidad = $pdo->query("
                                 console.error('Respuesta no es JSON:', xhr.responseText.substring(0, 500));
                                 procesarRespuesta({
                                     success: false,
-                                    message: 'El servidor devolvió una respuesta inesperada. Revisa la consola del navegador (F12) para más detalles.'
+                                    message: 'El servidor devolvió una respuesta inesperada. Revisa la consola del navegador (F12) para más detalles. Respuesta: ' + xhr.responseText.substring(0, 200)
                                 });
                                 return;
                             }
@@ -5546,20 +5512,43 @@ $distribucion_unidad = $pdo->query("
                                     message: data.message || `Error HTTP ${xhr.status}: ${xhr.statusText}`
                                 });
                             }
-                        };
-                        
-                        xhr.onerror = function() {
-                            procesado = true;
-                            if (timeoutHandle) clearTimeout(timeoutHandle);
-                            btnCargar.disabled = false;
-                            procesarRespuesta({
-                                success: false,
-                                message: 'Error de red al enviar el archivo. Verifica tu conexión.'
-                            });
-                        };
-                        
-                        xhr.send(formData);
-                    });
+                        }
+                    };
+                    
+                    xhr.onerror = function() {
+                        procesado = true;
+                        if (timeoutHandle) clearTimeout(timeoutHandle);
+                        btnCargar.disabled = false;
+                        console.error('❌ Error de red:', xhr.status, xhr.statusText);
+                        procesarRespuesta({
+                            success: false,
+                            message: 'Error de red al enviar el archivo. Verifica tu conexión. Status: ' + xhr.status
+                        });
+                    };
+                    
+                    xhr.ontimeout = function() {
+                        procesado = true;
+                        if (timeoutHandle) clearTimeout(timeoutHandle);
+                        btnCargar.disabled = false;
+                        console.error('⏱️ Timeout del request');
+                        procesarRespuesta({
+                            success: false,
+                            message: 'Timeout: El servidor no respondió a tiempo.'
+                        });
+                    };
+                    
+                    // Configurar timeout del request (30 segundos)
+                    xhr.timeout = 30000;
+                    
+                    // Abrir la conexión - usar POST explícitamente
+                    xhr.open('POST', url, true);
+                    
+                    // NO establecer Content-Type manualmente - dejar que el navegador lo establezca
+                    // automáticamente con el boundary correcto para multipart/form-data
+                    
+                    // Enviar el archivo
+                    console.log('📤 Enviando request...');
+                    xhr.send(formData);
                     
                     // Timeout de seguridad
                     timeoutHandle = setTimeout(function() {
