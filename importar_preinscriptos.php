@@ -207,23 +207,17 @@ try {
         }
     }
     
-    // Preparar statement para INSERT/UPDATE
+    // Preparar statement para INSERT (ignorar duplicados)
     $stmt = $pdo->prepare("
         INSERT INTO preinscriptos (ci, nombre_completo, fecha_nacimiento, sexo, unidad, fecha_actualizacion)
         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT (ci) DO UPDATE SET
-            nombre_completo = EXCLUDED.nombre_completo,
-            fecha_nacimiento = EXCLUDED.fecha_nacimiento,
-            sexo = EXCLUDED.sexo,
-            unidad = EXCLUDED.unidad,
-            fecha_actualizacion = CURRENT_TIMESTAMP
+        ON CONFLICT (ci) DO NOTHING
     ");
     
     // Contadores
     $total_lines = count($lines);
     $processed = 0;
     $inserted = 0;
-    $updated = 0;
     $errors = 0;
     
     echo "\n📊 Procesando líneas de datos...\n";
@@ -326,17 +320,12 @@ try {
             }
         }
         
-        // Verificar si ya existe (para contar insertados vs actualizados)
-        $check_stmt = $pdo->prepare("SELECT id FROM preinscriptos WHERE ci = ?");
-        $check_stmt->execute([$ci]);
-        $exists = $check_stmt->fetchColumn();
-        
         try {
             $stmt->execute([$ci, $nombre_completo, $fecha_nacimiento, $sexo, $unidad]);
             
-            if ($exists) {
-                $updated++;
-            } else {
+            // rowCount() devuelve el número de filas afectadas
+            // Si es > 0, significa que se insertó (duplicados no afectan filas)
+            if ($stmt->rowCount() > 0) {
                 $inserted++;
             }
             
@@ -356,9 +345,10 @@ try {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
     echo "📊 Resumen:\n";
     echo "  • Total procesados: $processed\n";
-    echo "  • Insertados: $inserted\n";
-    echo "  • Actualizados: $updated\n";
-    echo "  • Errores: $errors\n";
+    echo "  • Insertados (nuevos): $inserted\n";
+    if ($errors > 0) {
+        echo "  • Errores: $errors\n";
+    }
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
     
 } catch (Exception $e) {
