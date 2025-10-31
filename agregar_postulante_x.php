@@ -469,12 +469,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
+                                        <label for="id_k40_disabled"><i class="fas fa-fingerprint"></i> ID en K40</label>
+                                        <input type="text" class="form-control" id="id_k40_disabled" 
+                                               value="NO DISPONIBLE" readonly style="background-color: #f8f9fa; color: #6c757d;">
+                                        <small class="form-text text-muted">No disponible en modo manual</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                         <label for="fecha_registro"><i class="fas fa-calendar"></i> Fecha Registro</label>
                                         <input type="text" class="form-control" id="fecha_registro" name="fecha_registro" 
                                                value="<?= date('d/m/Y H:i:s') ?>" readonly>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <div class="row">
                                 <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="nombre_completo"><i class="fas fa-user"></i> Nombre Completo *</label>
+                                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
+                                               value="<?= htmlspecialchars($_POST['nombre_completo'] ?? '') ?>" 
+                                               style="text-transform: uppercase;" required>
+                                        <small class="form-text text-muted">Ingrese el nombre completo (nombres y apellidos)</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="cedula"><i class="fas fa-id-card"></i> Cédula *</label>
+                                        <input type="text" class="form-control" id="cedula" name="cedula" 
+                                               value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" 
+                                               pattern="[0-9]+" title="Solo números" required>
+                                        <small class="form-text text-muted">Solo números, sin puntos ni guiones</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row" style="display: none;">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="telefono"><i class="fas fa-phone"></i> Teléfono</label>
+                                        <input type="text" class="form-control" id="telefono" name="telefono" 
+                                               value="<?= htmlspecialchars($_POST['telefono'] ?? '') ?>">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="fecha_nacimiento"><i class="fas fa-calendar"></i> Fecha Nacimiento</label>
+                                        <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" 
+                                               value="<?= htmlspecialchars($_POST['fecha_nacimiento'] ?? '') ?>" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="edad"><i class="fas fa-birthday-cake"></i> Edad</label>
+                                        <input type="text" class="form-control" id="edad" name="edad" readonly>
+                                        <small class="form-text text-muted">Se calcula automáticamente</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="sexo"><i class="fas fa-venus-mars"></i> Sexo *</label>
                                         <select class="form-control" id="sexo" name="sexo" required>
@@ -486,59 +542,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                             
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label for="nombre_completo"><i class="fas fa-user"></i> Nombre Completo *</label>
-                                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
-                                               value="<?= htmlspecialchars($_POST['nombre_completo'] ?? '') ?>" 
-                                               style="text-transform: uppercase;" required>
-                                        <small class="form-text text-muted">Ingrese el nombre completo (nombres y apellidos)</small>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="cedula"><i class="fas fa-id-card"></i> Cédula *</label>
-                                        <input type="text" class="form-control" id="cedula" name="cedula" 
-                                               value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" 
-                                               pattern="[0-9]+" title="Solo números" required>
-                                        <small class="form-text text-muted">Solo números, sin puntos ni guiones</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6" style="display: none;">
-                                    <div class="form-group">
-                                        <label for="telefono"><i class="fas fa-phone"></i> Teléfono</label>
-                                        <input type="text" class="form-control" id="telefono" name="telefono" 
-                                               value="<?= htmlspecialchars($_POST['telefono'] ?? '') ?>">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="fecha_nacimiento"><i class="fas fa-calendar"></i> Fecha Nacimiento *</label>
-                                        <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" 
-                                               value="<?= htmlspecialchars($_POST['fecha_nacimiento'] ?? '') ?>" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="edad"><i class="fas fa-birthday-cake"></i> Edad</label>
-                                        <input type="text" class="form-control" id="edad" name="edad" readonly>
-                                        <small class="form-text text-muted">Se calcula automáticamente</small>
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <!-- Sección 2: Información del Registro -->
                             <h6 class="text-primary font-weight-bold mb-3 mt-4"><i class="fas fa-clipboard-list"></i> INFORMACIÓN DEL REGISTRO</h6>
                             
                             <div class="row">
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="unidad"><i class="fas fa-building"></i> Unidad *</label>
                                         <select class="form-control" id="unidad" name="unidad" required>
@@ -552,50 +560,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </select>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="observaciones"><i class="fas fa-sticky-note"></i> Observaciones</label>
-                                <textarea class="form-control" id="observaciones" name="observaciones" rows="3" 
-                                          placeholder="Observaciones adicionales..."><?= htmlspecialchars($_POST['observaciones'] ?? '') ?></textarea>
-                            </div>
-                            
-                            <!-- Sección 3: Información Biométrica (Deshabilitada) -->
-                            <h6 class="text-muted font-weight-bold mb-3 mt-4"><i class="fas fa-fingerprint"></i> INFORMACIÓN BIOMÉTRICA (NO DISPONIBLE)</h6>
-                            
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                <strong>Modo Sin Biométrico:</strong> Este postulante será registrado sin datos biométricos. 
-                                No se generará ID en K40 ni se registrará huella dactilar.
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="dedo_registrado_disabled"><i class="fas fa-hand-paper"></i> Dedo Registrado</label>
+                                        <input type="text" class="form-control" id="dedo_registrado_disabled" 
+                                               value="NO REGISTRADO" readonly style="background-color: #f8f9fa; color: #6c757d;">
+                                        <small class="form-text text-muted">No disponible en modo manual</small>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="id_k40_disabled"><i class="fas fa-fingerprint"></i> ID en K40</label>
-                                        <input type="text" class="form-control" id="id_k40_disabled" 
-                                               value="NO DISPONIBLE" readonly style="background-color: #f8f9fa; color: #6c757d;">
+                                        <label for="aparato_biometrico_disabled"><i class="fas fa-fingerprint"></i> Aparato Biométrico</label>
+                                        <input type="text" class="form-control" id="aparato_biometrico_disabled" 
+                                               value="SIN DISPOSITIVO" readonly style="background-color: #f8f9fa; color: #6c757d;">
                                         <small class="form-text text-muted">No disponible en modo manual</small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="aparato_disabled"><i class="fas fa-desktop"></i> Aparato Biométrico</label>
-                                        <input type="text" class="form-control" id="aparato_disabled" 
-                                               value="SIN DISPOSITIVO" readonly style="background-color: #f8f9fa; color: #6c757d;">
+                                        <label for="capturador_disabled"><i class="fas fa-user-check"></i> Capturador huella</label>
+                                        <input type="text" class="form-control" id="capturador_disabled" 
+                                               value="NO APLICA" readonly style="background-color: #f8f9fa; color: #6c757d;">
                                         <small class="form-text text-muted">No disponible en modo manual</small>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Botones de acción -->
-                            <div class="text-center mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg mr-3">
-                                    <i class="fas fa-save mr-2"></i>GUARDAR POSTULANTE
-                                </button>
-                                <a href="dashboard.php" class="btn btn-outline-secondary btn-lg px-4 py-2">
-                                    <i class="fas fa-times mr-2"></i> CANCELAR
-                                </a>
+                            <!-- Campo Observaciones -->
+                            <div class="row">
+                                <div class="col-md-6 offset-md-3">
+                                    <div class="form-group">
+                                        <label for="observaciones"><i class="fas fa-sticky-note"></i> Observaciones</label>
+                                        <textarea class="form-control" id="observaciones" name="observaciones" rows="2"><?= htmlspecialchars($_POST['observaciones'] ?? '') ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mt-5">
+                                <div class="d-flex justify-content-center gap-3">
+                                    <button type="submit" class="btn btn-success btn-lg px-4 py-2" id="submit-btn">
+                                        <i class="fas fa-save mr-2"></i> GUARDAR POSTULANTE
+                                    </button>
+                                    <a href="dashboard.php" class="btn btn-outline-secondary btn-lg px-4 py-2">
+                                        <i class="fas fa-times mr-2"></i> CANCELAR
+                                    </a>
+                                </div>
                             </div>
                         </form>
                     </div>
