@@ -745,33 +745,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 buscarBtn.disabled = true;
                 buscarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
                 
-                // Usar URLSearchParams para asegurar POST
-                const params = new URLSearchParams();
-                params.append('ci', ci);
-                
+                // Usar XMLHttpRequest en lugar de fetch para evitar problemas
                 console.log('📤 Enviando petición POST a buscar_preinscripto_ajax.php');
                 console.log('📦 Datos:', { ci: ci });
                 
-                const response = await fetch('buscar_preinscripto_ajax.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: params.toString(),
-                    credentials: 'same-origin'
+                const data = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'buscar_preinscripto_ajax.php', true);
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    
+                    xhr.onload = function() {
+                        console.log('📥 Respuesta recibida:', xhr.status, xhr.statusText);
+                        
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                const responseData = JSON.parse(xhr.responseText);
+                                resolve(responseData);
+                            } catch (e) {
+                                reject(new Error('Error al parsear JSON: ' + e.message));
+                            }
+                        } else {
+                            try {
+                                const errorData = JSON.parse(xhr.responseText);
+                                reject(new Error(errorData.message || 'Error del servidor'));
+                            } catch (e) {
+                                reject(new Error('Error del servidor: ' + xhr.status));
+                            }
+                        }
+                    };
+                    
+                    xhr.onerror = function() {
+                        reject(new Error('Error de red al enviar la petición'));
+                    };
+                    
+                    xhr.send('ci=' + encodeURIComponent(ci));
                 });
-                
-                console.log('📥 Respuesta recibida:', response.status, response.statusText);
-                console.log('📋 Headers:', Object.fromEntries(response.headers.entries()));
-                
-                // Verificar si la respuesta es JSON válida
-                const contentType = response.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    throw new Error('La respuesta del servidor no es JSON válida');
-                }
-                
-                const data = await response.json();
                 
                 // Restaurar botón
                 buscarBtn.disabled = false;
