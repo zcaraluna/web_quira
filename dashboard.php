@@ -5471,83 +5471,112 @@ $distribucion_unidad = $pdo->query("
                     
                     console.log('✅ FormData preparado correctamente');
                     
-                    // Construir URLs - usar un nombre diferente para evitar rewrite rules
-                    const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-                    const url = window.location.origin + basePath + 'upload_preinscriptos.php';
+                    // Leer el archivo como base64 para evitar problemas de multipart/form-data
+                    console.log('📖 Leyendo archivo como base64...');
+                    const reader = new FileReader();
                     
-                    console.log('📤 Enviando archivo a:', url);
-                    
-                    // Usar XMLHttpRequest directamente (más confiable para archivos y evita problemas de redirect)
-                    // No usar fetch porque puede causar redirects que convierten POST a GET
-                    const xhr = new XMLHttpRequest();
-                    
-                    // Usar el evento onreadystatechange para mayor compatibilidad
-                    xhr.onreadystatechange = function() {
-                        if (xhr.readyState === 4) { // Request completo
+                    reader.onload = function(e) {
+                        const base64Content = e.target.result.split(',')[1]; // Remover el prefijo data:...
+                        const fileName = archivo.name;
+                        
+                        console.log('✅ Archivo convertido a base64, tamaño:', base64Content.length);
+                        
+                        // Construir URLs - usar un nombre diferente para evitar rewrite rules
+                        const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                        const url = window.location.origin + basePath + 'upload_preinscriptos.php';
+                        
+                        console.log('📤 Enviando archivo (base64) a:', url);
+                        
+                        // Enviar como JSON (evita problemas de multipart/form-data y redirects)
+                        const xhr = new XMLHttpRequest();
+                        
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) { // Request completo
+                                procesado = true;
+                                if (timeoutHandle) clearTimeout(timeoutHandle);
+                                btnCargar.disabled = false;
+                                
+                                console.log('📥 Respuesta recibida:', xhr.status, xhr.statusText);
+                                console.log('📋 URL final:', xhr.responseURL || url);
+                                
+                                let data = null;
+                                try {
+                                    data = JSON.parse(xhr.responseText);
+                                } catch (e) {
+                                    console.error('Respuesta no es JSON:', xhr.responseText.substring(0, 500));
+                                    procesarRespuesta({
+                                        success: false,
+                                        message: 'El servidor devolvió una respuesta inesperada. Revisa la consola del navegador (F12) para más detalles. Respuesta: ' + xhr.responseText.substring(0, 200)
+                                    });
+                                    return;
+                                }
+                                
+                                if (xhr.status === 200) {
+                                    procesarRespuesta(data);
+                                } else {
+                                    procesarRespuesta({
+                                        success: false,
+                                        message: data.message || `Error HTTP ${xhr.status}: ${xhr.statusText}`
+                                    });
+                                }
+                            }
+                        };
+                        
+                        xhr.onerror = function() {
                             procesado = true;
                             if (timeoutHandle) clearTimeout(timeoutHandle);
                             btnCargar.disabled = false;
-                            
-                            console.log('📥 Respuesta recibida:', xhr.status, xhr.statusText);
-                            console.log('📋 URL final:', xhr.responseURL || url);
-                            
-                            let data = null;
-                            try {
-                                data = JSON.parse(xhr.responseText);
-                            } catch (e) {
-                                console.error('Respuesta no es JSON:', xhr.responseText.substring(0, 500));
-                                procesarRespuesta({
-                                    success: false,
-                                    message: 'El servidor devolvió una respuesta inesperada. Revisa la consola del navegador (F12) para más detalles. Respuesta: ' + xhr.responseText.substring(0, 200)
-                                });
-                                return;
-                            }
-                            
-                            if (xhr.status === 200) {
-                                procesarRespuesta(data);
-                            } else {
-                                procesarRespuesta({
-                                    success: false,
-                                    message: data.message || `Error HTTP ${xhr.status}: ${xhr.statusText}`
-                                });
-                            }
-                        }
+                            console.error('❌ Error de red:', xhr.status, xhr.statusText);
+                            procesarRespuesta({
+                                success: false,
+                                message: 'Error de red al enviar el archivo. Verifica tu conexión. Status: ' + xhr.status
+                            });
+                        };
+                        
+                        xhr.ontimeout = function() {
+                            procesado = true;
+                            if (timeoutHandle) clearTimeout(timeoutHandle);
+                            btnCargar.disabled = false;
+                            console.error('⏱️ Timeout del request');
+                            procesarRespuesta({
+                                success: false,
+                                message: 'Timeout: El servidor no respondió a tiempo.'
+                            });
+                        };
+                        
+                        // Configurar timeout del request (30 segundos)
+                        xhr.timeout = 30000;
+                        
+                        // Abrir la conexión - usar POST explícitamente
+                        xhr.open('POST', url, true);
+                        
+                        // Establecer Content-Type como JSON
+                        xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                        
+                        // Preparar datos JSON
+                        const jsonData = JSON.stringify({
+                            archivo_csv_base64: base64Content,
+                            nombre_archivo: fileName
+                        });
+                        
+                        // Enviar el archivo como JSON
+                        console.log('📤 Enviando request JSON...');
+                        xhr.send(jsonData);
                     };
                     
-                    xhr.onerror = function() {
+                    reader.onerror = function() {
                         procesado = true;
                         if (timeoutHandle) clearTimeout(timeoutHandle);
                         btnCargar.disabled = false;
-                        console.error('❌ Error de red:', xhr.status, xhr.statusText);
+                        console.error('❌ Error leyendo archivo');
                         procesarRespuesta({
                             success: false,
-                            message: 'Error de red al enviar el archivo. Verifica tu conexión. Status: ' + xhr.status
+                            message: 'Error al leer el archivo.'
                         });
                     };
                     
-                    xhr.ontimeout = function() {
-                        procesado = true;
-                        if (timeoutHandle) clearTimeout(timeoutHandle);
-                        btnCargar.disabled = false;
-                        console.error('⏱️ Timeout del request');
-                        procesarRespuesta({
-                            success: false,
-                            message: 'Timeout: El servidor no respondió a tiempo.'
-                        });
-                    };
-                    
-                    // Configurar timeout del request (30 segundos)
-                    xhr.timeout = 30000;
-                    
-                    // Abrir la conexión - usar POST explícitamente
-                    xhr.open('POST', url, true);
-                    
-                    // NO establecer Content-Type manualmente - dejar que el navegador lo establezca
-                    // automáticamente con el boundary correcto para multipart/form-data
-                    
-                    // Enviar el archivo
-                    console.log('📤 Enviando request...');
-                    xhr.send(formData);
+                    // Leer el archivo como Data URL (base64)
+                    reader.readAsDataURL(archivo);
                     
                     // Timeout de seguridad
                     timeoutHandle = setTimeout(function() {

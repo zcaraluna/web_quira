@@ -38,24 +38,43 @@ if (!isset($_SESSION['user_id']) || $_SESSION['rol'] !== 'SUPERADMIN') {
 
 try {
     // Debug: Log de información del request
-    error_log('DEBUG cargar_preinscriptos.php - REQUEST_METHOD: ' . ($_SERVER['REQUEST_METHOD'] ?? 'NO_METHOD'));
-    error_log('DEBUG - Content-Type: ' . ($_SERVER['CONTENT_TYPE'] ?? 'NO_CONTENT_TYPE'));
-    error_log('DEBUG - POST keys: ' . (empty($_POST) ? 'VACIO' : implode(', ', array_keys($_POST))));
-    error_log('DEBUG - FILES keys: ' . (empty($_FILES) ? 'VACIO' : implode(', ', array_keys($_FILES))));
-    error_log('DEBUG - FILES content: ' . print_r($_FILES, true));
-    error_log('DEBUG - php://input length: ' . strlen(file_get_contents('php://input')));
+    $request_method = $_SERVER['REQUEST_METHOD'] ?? 'NO_METHOD';
+    $content_type = $_SERVER['CONTENT_TYPE'] ?? 'NO_CONTENT_TYPE';
+    error_log('DEBUG upload_preinscriptos.php - REQUEST_METHOD: ' . $request_method);
+    error_log('DEBUG - Content-Type: ' . $content_type);
     
-    // Verificar que se haya enviado un archivo
-    if (!isset($_FILES['archivo_csv'])) {
-        $error_code = isset($_FILES['archivo_csv']['error']) ? $_FILES['archivo_csv']['error'] : 'NO_FILE';
-        $error_msg = 'No se recibió ningún archivo. ';
+    // Leer el contenido raw del request
+    $raw_input = file_get_contents('php://input');
+    error_log('DEBUG - php://input length: ' . strlen($raw_input));
+    
+    $archivo_content = null;
+    $nombre_archivo = null;
+    
+    // Verificar si viene como JSON (base64) o como multipart/form-data
+    if (strpos($content_type, 'application/json') !== false) {
+        // Archivo viene como JSON con base64
+        error_log('DEBUG - Procesando como JSON (base64)');
+        $json_data = json_decode($raw_input, true);
         
-        // Verificar límites de PHP
-        $max_upload = ini_get('upload_max_filesize');
-        $max_post = ini_get('post_max_size');
-        $error_msg .= "Límites PHP: upload_max_filesize=$max_upload, post_max_size=$max_post. ";
+        if (!$json_data || !isset($json_data['archivo_csv_base64'])) {
+            throw new Exception('No se recibió el archivo en formato JSON. Se espera: {"archivo_csv_base64": "...", "nombre_archivo": "..."}');
+        }
         
-        if ($error_code !== 'NO_FILE' && $error_code !== UPLOAD_ERR_OK) {
+        $archivo_content = base64_decode($json_data['archivo_csv_base64'], true);
+        if ($archivo_content === false) {
+            throw new Exception('Error al decodificar el archivo base64.');
+        }
+        
+        $nombre_archivo = $json_data['nombre_archivo'] ?? 'archivo.csv';
+        
+        error_log('DEBUG - Archivo decodificado, tamaño: ' . strlen($archivo_content) . ', nombre: ' . $nombre_archivo);
+        
+    } elseif (isset($_FILES['archivo_csv'])) {
+        // Archivo viene como multipart/form-data (método tradicional)
+        error_log('DEBUG - Procesando como multipart/form-data');
+        $archivo = $_FILES['archivo_csv'];
+        
+        if ($archivo['error'] !== UPLOAD_ERR_OK) {
             $upload_errors = [
                 UPLOAD_ERR_INI_SIZE => 'El archivo excede upload_max_filesize',
                 UPLOAD_ERR_FORM_SIZE => 'El archivo excede MAX_FILE_SIZE del formulario',
@@ -65,37 +84,31 @@ try {
                 UPLOAD_ERR_CANT_WRITE => 'Error al escribir el archivo en disco',
                 UPLOAD_ERR_EXTENSION => 'Una extensión PHP detuvo la carga'
             ];
-            $error_msg .= 'Código de error: ' . ($upload_errors[$error_code] ?? "Error desconocido ($error_code)");
+            $error_code = $archivo['error'];
+            throw new Exception('Error en la carga del archivo: ' . ($upload_errors[$error_code] ?? "Error desconocido ($error_code)"));
         }
         
-        throw new Exception($error_msg);
+        $archivo_content = file_get_contents($archivo['tmp_name']);
+        $nombre_archivo = $archivo['name'];
+        
+    } else {
+        // No se recibió archivo de ninguna forma
+        throw new Exception('No se recibió ningún archivo. Se puede enviar como JSON (base64) o multipart/form-data.');
     }
     
-    if ($_FILES['archivo_csv']['error'] !== UPLOAD_ERR_OK) {
-        $error_code = $_FILES['archivo_csv']['error'];
-        $upload_errors = [
-            UPLOAD_ERR_INI_SIZE => 'El archivo excede upload_max_filesize',
-            UPLOAD_ERR_FORM_SIZE => 'El archivo excede MAX_FILE_SIZE del formulario',
-            UPLOAD_ERR_PARTIAL => 'El archivo se subió parcialmente',
-            UPLOAD_ERR_NO_FILE => 'No se subió ningún archivo',
-            UPLOAD_ERR_NO_TMP_DIR => 'Falta el directorio temporal',
-            UPLOAD_ERR_CANT_WRITE => 'Error al escribir el archivo en disco',
-            UPLOAD_ERR_EXTENSION => 'Una extensión PHP detuvo la carga'
-        ];
-        $error_msg = 'Error en la carga del archivo: ' . ($upload_errors[$error_code] ?? "Error desconocido ($error_code)");
-        throw new Exception($error_msg);
+    // Validar que tenemos el contenido del archivo
+    if (empty($archivo_content)) {
+        throw new Exception('El archivo recibido está vacío.');
     }
-
-    $archivo = $_FILES['archivo_csv'];
     
-    // Validar tipo de archivo
-    $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+    // Validar extensión del nombre del archivo
+    $extension = strtolower(pathinfo($nombre_archivo, PATHINFO_EXTENSION));
     if ($extension !== 'csv') {
-        throw new Exception('El archivo debe ser un CSV (.csv)');
+        throw new Exception('El archivo debe ser un CSV (.csv). Extensión recibida: ' . $extension);
     }
 
-    // Leer contenido del archivo
-    $content = file_get_contents($archivo['tmp_name']);
+    // Usar el contenido del archivo que ya procesamos arriba
+    $content = $archivo_content;
     
     // Remover BOM si existe
     $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
