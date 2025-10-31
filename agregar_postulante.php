@@ -750,7 +750,7 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                                    value="<?= htmlspecialchars($_POST['cedula'] ?? '') ?>" 
                                                    pattern="[0-9]+" title="Solo números" required>
                                             <div class="input-group-append">
-                                                <button type="button" class="btn btn-outline-info btn-sm" onclick="buscarPreinscripto()" title="Buscar en preinscriptos">
+                                                <button type="button" class="btn btn-outline-info btn-sm" id="btn-buscar-preinscripto" title="Buscar en preinscriptos">
                                                     <i class="fas fa-search"></i> Buscar
                                                 </button>
                                             </div>
@@ -2193,6 +2193,16 @@ Por favor verifique:
         // Solo permitir números
         e.target.value = e.target.value.replace(/[^0-9]/g, '');
     });
+    
+    // Event listener para el botón de buscar preinscripto
+    const btnBuscarPreinscripto = document.getElementById('btn-buscar-preinscripto');
+    if (btnBuscarPreinscripto) {
+        btnBuscarPreinscripto.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            buscarPreinscripto();
+        });
+    }
     
     // Verificación de ID en tiempo real
     document.getElementById('id_k40').addEventListener('input', function(e) {
