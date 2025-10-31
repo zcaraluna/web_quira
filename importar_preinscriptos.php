@@ -279,21 +279,26 @@ try {
         $nombre_completo = trim($nombre_completo, '"');
         $unidad_raw = trim($unidad_raw, '"');
         
-        // Convertir sexo H/M a Hombre/Mujer (o mantener si ya está completo)
-        $sexo = '';
+        // Convertir sexo a H/M (el constraint de la tabla solo acepta H o M)
+        $sexo = null;
         if (!empty($sexo_raw)) {
-            $sexo_upper = strtoupper($sexo_raw);
+            $sexo_upper = strtoupper(trim($sexo_raw));
             if ($sexo_upper === 'H' || $sexo_upper === 'HOMBRE') {
-                $sexo = 'Hombre';
+                $sexo = 'H';
             } elseif ($sexo_upper === 'M' || $sexo_upper === 'MUJER') {
-                $sexo = 'Mujer';
+                $sexo = 'M';
             } else {
-                $sexo = $sexo_raw;
+                // Si no es H o M, intentar el primer carácter
+                $sexo = strtoupper(substr($sexo_raw, 0, 1));
+                if ($sexo !== 'H' && $sexo !== 'M') {
+                    $sexo = null; // No válido
+                }
             }
         }
         
-        // Procesar unidad (limpiar comillas escapadas)
-        $unidad = str_replace('""', '"', $unidad_raw);
+        // Procesar unidad (limpiar comillas escapadas y comillas externas)
+        $unidad = trim($unidad_raw, '"'); // Remover comillas externas si existen
+        $unidad = str_replace('""', '"', $unidad); // Convertir comillas escapadas a comillas normales
         
         // Procesar fecha de nacimiento (múltiples formatos)
         $fecha_nacimiento = null;
