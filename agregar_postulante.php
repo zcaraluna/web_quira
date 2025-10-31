@@ -735,15 +735,6 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="nombre_completo"><i class="fas fa-user"></i> Nombre Completo *</label>
-                                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
-                                               value="<?= htmlspecialchars($_POST['nombre_completo'] ?? '') ?>" 
-                                               style="text-transform: uppercase;" required>
-                                        <small class="form-text text-muted">Ingrese el nombre completo (nombres y apellidos)</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
                                         <label for="cedula"><i class="fas fa-id-card"></i> Cédula *</label>
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="cedula" name="cedula" 
@@ -756,6 +747,15 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                             </div>
                                         </div>
                                         <small class="form-text text-muted">Solo números, sin puntos ni guiones</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="nombre_completo"><i class="fas fa-user"></i> Nombre Completo *</label>
+                                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
+                                               value="<?= htmlspecialchars($_POST['nombre_completo'] ?? '') ?>" 
+                                               style="text-transform: uppercase;" required>
+                                        <small class="form-text text-muted">Ingrese el nombre completo (nombres y apellidos)</small>
                                     </div>
                                 </div>
                             </div>
