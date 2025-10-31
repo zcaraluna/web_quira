@@ -1623,8 +1623,9 @@ Por favor verifique:
             buscarBtn.disabled = true;
             buscarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
             
-            const formData = new FormData();
-            formData.append('ci', ci);
+            // Usar URLSearchParams para asegurar POST
+            const params = new URLSearchParams();
+            params.append('ci', ci);
             
             console.log('📤 Enviando petición POST a buscar_preinscripto_ajax.php');
             console.log('📦 Datos:', { ci: ci });
@@ -1632,9 +1633,10 @@ Por favor verifique:
             const response = await fetch('buscar_preinscripto_ajax.php', {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: formData,
+                body: params.toString(),
                 credentials: 'same-origin'
             });
             

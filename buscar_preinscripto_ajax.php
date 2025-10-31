@@ -24,12 +24,13 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Verificar método de petición
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+$request_method = $_SERVER['REQUEST_METHOD'];
+if ($request_method !== 'POST') {
     http_response_code(405);
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
-        'message' => 'Método no permitido. Use POST.',
+        'message' => "Método no permitido. Use POST. Método recibido: $request_method",
         'data' => null
     ]);
     exit;
@@ -38,8 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 header('Content-Type: application/json');
 
 try {
-    // Obtener CI del POST
+    // Obtener CI del POST (puede venir como form-urlencoded o multipart)
     $ci = trim($_POST['ci'] ?? '');
+    
+    // Si no está en $_POST, intentar leer del input raw (por si viene como JSON)
+    if (empty($ci)) {
+        $input = file_get_contents('php://input');
+        parse_str($input, $parsed);
+        $ci = trim($parsed['ci'] ?? '');
+    }
     
     if (empty($ci)) {
         throw new Exception('CI no proporcionado');
