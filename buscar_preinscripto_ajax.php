@@ -24,14 +24,33 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Verificar método de petición
-$request_method = $_SERVER['REQUEST_METHOD'];
-if ($request_method !== 'POST') {
+// Algunos servidores/proxies pueden convertir POST a GET, así que verificamos ambas cosas:
+// 1. El método HTTP declarado
+// 2. Si hay datos POST (lo cual indica que fue POST originalmente)
+
+$request_method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$has_post_data = !empty($_POST) || !empty(file_get_contents('php://input'));
+
+// Debug: Log del método recibido
+error_log("DEBUG buscar_preinscripto_ajax.php - REQUEST_METHOD: $request_method");
+error_log("DEBUG - Has POST data: " . ($has_post_data ? 'YES' : 'NO'));
+error_log("DEBUG - POST data: " . print_r($_POST, true));
+error_log("DEBUG - php://input: " . substr(file_get_contents('php://input'), 0, 100));
+
+// Aceptar si es POST o si hay datos POST (por si nginx convierte el método)
+if ($request_method !== 'POST' && !$has_post_data) {
     http_response_code(405);
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
         'message' => "Método no permitido. Use POST. Método recibido: $request_method",
-        'data' => null
+        'data' => null,
+        'debug' => [
+            'REQUEST_METHOD' => $request_method,
+            'has_post_data' => $has_post_data,
+            'POST_count' => count($_POST),
+            'input_length' => strlen(file_get_contents('php://input'))
+        ]
     ]);
     exit;
 }

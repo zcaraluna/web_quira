@@ -745,15 +745,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 buscarBtn.disabled = true;
                 buscarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
                 
-                // Usar XMLHttpRequest en lugar de fetch para evitar problemas
-                console.log('📤 Enviando petición POST a buscar_preinscripto_ajax.php');
+                // Usar XMLHttpRequest con URL absoluta para evitar problemas de reescritura
+                const url = window.location.pathname.replace(/[^/]*$/, '') + 'buscar_preinscripto_ajax.php';
+                console.log('📤 Enviando petición POST a:', url);
                 console.log('📦 Datos:', { ci: ci });
                 
                 const data = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'buscar_preinscripto_ajax.php', true);
+                    xhr.open('POST', url, true);
                     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.setRequestHeader('Cache-Control', 'no-cache');
                     
                     xhr.onload = function() {
                         console.log('📥 Respuesta recibida:', xhr.status, xhr.statusText);
