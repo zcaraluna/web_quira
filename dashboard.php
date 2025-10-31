@@ -5439,13 +5439,44 @@ $distribucion_unidad = $pdo->query("
                     statusDiv.style.display = 'block';
                     btnCargar.disabled = true;
                     
+                    // Validar que el archivo existe
+                    const archivo = archivoInput.files[0];
+                    if (!archivo) {
+                        procesarRespuesta({
+                            success: false,
+                            message: 'No se seleccionó ningún archivo.'
+                        });
+                        return;
+                    }
+                    
+                    console.log('📤 Preparando envío de archivo:', {
+                        nombre: archivo.name,
+                        tamaño: archivo.size,
+                        tipo: archivo.type
+                    });
+                    
                     // Preparar FormData
                     const formData = new FormData();
-                    formData.append('archivo_csv', archivoInput.files[0]);
+                    formData.append('archivo_csv', archivo);
+                    
+                    // Verificar que el FormData tiene el archivo
+                    if (!formData.has('archivo_csv')) {
+                        console.error('❌ Error: FormData no contiene el archivo');
+                        procesarRespuesta({
+                            success: false,
+                            message: 'Error al preparar el archivo para el envío.'
+                        });
+                        return;
+                    }
+                    
+                    console.log('✅ FormData preparado correctamente');
                     
                     // Enviar usando XMLHttpRequest (más confiable para archivos que fetch)
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', 'cargar_preinscriptos.php', true);
+                    
+                    // NO establecer Content-Type manualmente - dejar que el navegador lo establezca automáticamente
+                    // con el boundary correcto para multipart/form-data
                     
                     xhr.onload = function() {
                         procesado = true;

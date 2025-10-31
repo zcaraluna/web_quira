@@ -38,10 +38,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['rol'] !== 'SUPERADMIN') {
 
 try {
     // Debug: Log de información del request
-    error_log('DEBUG cargar_preinscriptos.php - REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD']);
-    error_log('DEBUG - POST keys: ' . implode(', ', array_keys($_POST)));
-    error_log('DEBUG - FILES keys: ' . implode(', ', array_keys($_FILES)));
+    error_log('DEBUG cargar_preinscriptos.php - REQUEST_METHOD: ' . ($_SERVER['REQUEST_METHOD'] ?? 'NO_METHOD'));
+    error_log('DEBUG - Content-Type: ' . ($_SERVER['CONTENT_TYPE'] ?? 'NO_CONTENT_TYPE'));
+    error_log('DEBUG - POST keys: ' . (empty($_POST) ? 'VACIO' : implode(', ', array_keys($_POST))));
+    error_log('DEBUG - FILES keys: ' . (empty($_FILES) ? 'VACIO' : implode(', ', array_keys($_FILES))));
     error_log('DEBUG - FILES content: ' . print_r($_FILES, true));
+    error_log('DEBUG - php://input length: ' . strlen(file_get_contents('php://input')));
     
     // Verificar que se haya enviado un archivo
     if (!isset($_FILES['archivo_csv'])) {
