@@ -2493,7 +2493,10 @@ $distribucion_unidad = $pdo->query("
                                     </div>
                                     <div class="card-body">
                                         <p class="text-muted mb-3">Suba un archivo CSV con los datos de preinscriptos. El formato debe ser: CI, NOMBRE COMPLETO, NACIMIENTO, SEXO (H/M), UNIDAD.</p>
-                                        <form id="form-cargar-preinscriptos" enctype="multipart/form-data" method="POST">
+                                        <!-- iframe oculto para recibir la respuesta del formulario -->
+                                        <iframe id="iframe-cargar-preinscriptos" name="iframe-cargar-preinscriptos" style="display: none;"></iframe>
+                                        
+                                        <form id="form-cargar-preinscriptos" enctype="multipart/form-data" method="POST" action="cargar_preinscriptos.php?iframe=1" target="iframe-cargar-preinscriptos">
                                             <div class="form-group">
                                                 <label for="archivo_csv">Seleccionar archivo CSV</label>
                                                 <input type="file" class="form-control-file" id="archivo_csv" name="archivo_csv" accept=".csv" required>
@@ -5354,16 +5357,96 @@ $distribucion_unidad = $pdo->query("
             }
             
             if (formCargarPreinscriptos) {
-                formCargarPreinscriptos.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                // Escuchar mensajes postMessage del iframe
+                window.addEventListener('message', function(event) {
+                    // Verificar que el mensaje viene del iframe (mismo origen)
+                    if (event.source !== document.getElementById('iframe-cargar-preinscriptos').contentWindow) {
+                        return;
+                    }
                     
-                    const formData = new FormData(formCargarPreinscriptos);
+                    const data = event.data;
+                    const statusDiv = document.getElementById('preinscriptos-status');
+                    const btnCargar = document.getElementById('btn-cargar-preinscriptos');
+                    
+                    if (typeof data === 'object' && data !== null && ('success' in data || 'message' in data)) {
+                        btnCargar.disabled = false;
+                        
+                        if (data.success) {
+                            statusDiv.innerHTML = `<div class="alert alert-success">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <strong>¡Carga exitosa!</strong><br>
+                                Registros procesados: ${data.insertados || 0}<br>
+                                Registros actualizados: ${data.actualizados || 0}<br>
+                                Errores: ${data.errores || 0}
+                                ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
+                            </div>`;
+                            // Ocultar vista previa después de carga exitosa
+                            document.getElementById('vista-previa-preinscriptos').style.display = 'none';
+                            // Resetear formulario
+                            formCargarPreinscriptos.reset();
+                        } else {
+                            statusDiv.innerHTML = `<div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                <strong>Error:</strong> ${data.message || 'Error desconocido'}
+                            </div>`;
+                        }
+                        statusDiv.style.display = 'block';
+                    }
+                });
+                
+                // También intentar leer el contenido del iframe directamente (fallback)
+                const iframe = document.getElementById('iframe-cargar-preinscriptos');
+                iframe.addEventListener('load', function() {
+                    const statusDiv = document.getElementById('preinscriptos-status');
+                    const btnCargar = document.getElementById('btn-cargar-preinscriptos');
+                    
+                    // Esperar un momento para que el script del iframe ejecute postMessage
+                    setTimeout(function() {
+                        // Si no se recibió mensaje, intentar leer el body del iframe como fallback
+                        try {
+                            const iframeContent = iframe.contentDocument.body.innerText || iframe.contentDocument.body.textContent || '';
+                            if (iframeContent) {
+                                try {
+                                    const data = JSON.parse(iframeContent);
+                                    if (data.success !== undefined) {
+                                        btnCargar.disabled = false;
+                                        
+                                        if (data.success) {
+                                            statusDiv.innerHTML = `<div class="alert alert-success">
+                                                <i class="fas fa-check-circle mr-2"></i>
+                                                <strong>¡Carga exitosa!</strong><br>
+                                                Registros procesados: ${data.insertados || 0}<br>
+                                                Registros actualizados: ${data.actualizados || 0}<br>
+                                                Errores: ${data.errores || 0}
+                                                ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
+                                            </div>`;
+                                            document.getElementById('vista-previa-preinscriptos').style.display = 'none';
+                                            formCargarPreinscriptos.reset();
+                                        } else {
+                                            statusDiv.innerHTML = `<div class="alert alert-danger">
+                                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                                <strong>Error:</strong> ${data.message || 'Error desconocido'}
+                                            </div>`;
+                                        }
+                                        statusDiv.style.display = 'block';
+                                    }
+                                } catch (e) {
+                                    // No es JSON, ignorar
+                                }
+                            }
+                        } catch (e) {
+                            // Error de CORS, el postMessage debería haber funcionado
+                        }
+                    }, 500);
+                });
+                
+                formCargarPreinscriptos.addEventListener('submit', function(e) {
                     const statusDiv = document.getElementById('preinscriptos-status');
                     const btnCargar = document.getElementById('btn-cargar-preinscriptos');
                     
                     // Validar que hay un archivo seleccionado
                     if (!archivoInput.files || !archivoInput.files[0]) {
+                        e.preventDefault();
                         statusDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle mr-2"></i>Por favor, seleccione un archivo CSV.</div>';
                         statusDiv.style.display = 'block';
                         return;
@@ -5374,65 +5457,8 @@ $distribucion_unidad = $pdo->query("
                     statusDiv.style.display = 'block';
                     btnCargar.disabled = true;
                     
-                    // Usar XMLHttpRequest para asegurar POST (fetch a veces se convierte a GET por rewrite rules)
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'cargar_preinscriptos.php', true);
-                    
-                    xhr.onload = function() {
-                        btnCargar.disabled = false;
-                        
-                        if (xhr.status === 200) {
-                            try {
-                                const data = JSON.parse(xhr.responseText);
-                                if (data.success) {
-                                    statusDiv.innerHTML = `<div class="alert alert-success">
-                                        <i class="fas fa-check-circle mr-2"></i>
-                                        <strong>¡Carga exitosa!</strong><br>
-                                        Registros procesados: ${data.insertados || 0}<br>
-                                        Registros actualizados: ${data.actualizados || 0}<br>
-                                        Errores: ${data.errores || 0}
-                                        ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
-                                    </div>`;
-                                    // Ocultar vista previa después de carga exitosa
-                                    document.getElementById('vista-previa-preinscriptos').style.display = 'none';
-                                } else {
-                                    statusDiv.innerHTML = `<div class="alert alert-danger">
-                                        <i class="fas fa-exclamation-circle mr-2"></i>
-                                        <strong>Error:</strong> ${data.message || 'Error desconocido'}
-                                    </div>`;
-                                }
-                            } catch (e) {
-                                statusDiv.innerHTML = `<div class="alert alert-danger">
-                                    <i class="fas fa-exclamation-circle mr-2"></i>
-                                    <strong>Error:</strong> No se pudo procesar la respuesta del servidor.
-                                </div>`;
-                            }
-                        } else {
-                            let errorMsg = 'Error desconocido';
-                            try {
-                                const data = JSON.parse(xhr.responseText);
-                                errorMsg = data.message || errorMsg;
-                            } catch (e) {
-                                errorMsg = `Error HTTP ${xhr.status}`;
-                            }
-                            statusDiv.innerHTML = `<div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle mr-2"></i>
-                                <strong>Error:</strong> ${errorMsg}
-                            </div>`;
-                        }
-                        statusDiv.style.display = 'block';
-                    };
-                    
-                    xhr.onerror = function() {
-                        btnCargar.disabled = false;
-                        statusDiv.innerHTML = `<div class="alert alert-danger">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            <strong>Error de comunicación:</strong> No se pudo conectar al servidor.
-                        </div>`;
-                        statusDiv.style.display = 'block';
-                    };
-                    
-                    xhr.send(formData);
+                    // El formulario se enviará automáticamente al iframe
+                    // La respuesta se procesará mediante postMessage o lectura del iframe
                 });
             }
         });

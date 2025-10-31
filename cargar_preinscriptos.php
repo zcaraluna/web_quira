@@ -262,23 +262,53 @@ try {
         }
     }
     
-    echo json_encode([
+    $resultado = [
         'success' => true,
         'insertados' => $insertados,
         'actualizados' => $actualizados,
         'errores' => $errores,
         'mensaje' => $mensaje,
         'total_procesados' => $insertados + $actualizados
-    ]);
+    ];
+    
+    // Si se está llamando desde un iframe, devolver HTML con script para comunicar al padre
+    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) || isset($_GET['iframe'])) {
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>';
+        echo '<script>';
+        echo 'if (window.parent !== window) {';
+        echo '  window.parent.postMessage(' . json_encode($resultado) . ', "*");';
+        echo '}';
+        echo 'document.body.innerHTML = ' . json_encode(json_encode($resultado)) . ';';
+        echo '</script>';
+        echo '</body></html>';
+    } else {
+        // Respuesta JSON normal para AJAX
+        echo json_encode($resultado);
+    }
     
 } catch (Exception $e) {
     http_response_code(400);
-    echo json_encode([
+    $error_resultado = [
         'success' => false,
         'message' => $e->getMessage(),
         'insertados' => 0,
         'actualizados' => 0,
         'errores' => 0
-    ]);
+    ];
+    
+    // Si se está llamando desde un iframe, devolver HTML con script para comunicar al padre
+    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) || isset($_GET['iframe'])) {
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>';
+        echo '<script>';
+        echo 'if (window.parent !== window) {';
+        echo '  window.parent.postMessage(' . json_encode($error_resultado) . ', "*");';
+        echo '}';
+        echo 'document.body.innerHTML = ' . json_encode(json_encode($error_resultado)) . ';';
+        echo '</script>';
+        echo '</body></html>';
+    } else {
+        // Respuesta JSON normal para AJAX
+        echo json_encode($error_resultado);
+    }
 }
 
