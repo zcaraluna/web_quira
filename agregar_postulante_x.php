@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cedula = trim($_POST['cedula']);
         $fecha_nacimiento = $_POST['fecha_nacimiento'];
         $telefono = trim($_POST['telefono']);
-        $unidad = strtoupper(trim($_POST['unidad']));
+        $unidad = trim($_POST['unidad']);
         $sexo = $_POST['sexo'];
         $observaciones = trim($_POST['observaciones']);
         
