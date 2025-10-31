@@ -5452,29 +5452,28 @@ $distribucion_unidad = $pdo->query("
                         if (timeoutHandle) clearTimeout(timeoutHandle);
                         btnCargar.disabled = false;
                         
-                        if (xhr.status === 200) {
-                            try {
-                                const data = JSON.parse(xhr.responseText);
-                                procesarRespuesta(data);
-                            } catch (e) {
-                                // Si no es JSON, puede ser HTML (del iframe antiguo)
-                                console.log('Respuesta no JSON:', xhr.responseText.substring(0, 200));
-                                procesarRespuesta({
-                                    success: false,
-                                    message: 'Respuesta inesperada del servidor. Revisa la consola para más detalles.'
-                                });
-                            }
-                        } else {
-                            let errorMsg = 'Error del servidor';
-                            try {
-                                const data = JSON.parse(xhr.responseText);
-                                errorMsg = data.message || errorMsg;
-                            } catch (e) {
-                                errorMsg = `Error HTTP ${xhr.status}`;
-                            }
+                        // Intentar parsear la respuesta como JSON
+                        let data = null;
+                        try {
+                            data = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            // Si no es JSON, mostrar el contenido raw (puede ser un error HTML)
+                            console.error('Respuesta no es JSON:', xhr.responseText.substring(0, 500));
                             procesarRespuesta({
                                 success: false,
-                                message: errorMsg
+                                message: 'El servidor devolvió una respuesta inesperada. Revisa la consola del navegador (F12) para más detalles.'
+                            });
+                            return;
+                        }
+                        
+                        // Procesar la respuesta
+                        if (xhr.status === 200) {
+                            procesarRespuesta(data);
+                        } else {
+                            // Error HTTP con respuesta JSON
+                            procesarRespuesta({
+                                success: false,
+                                message: data.message || `Error HTTP ${xhr.status}: ${xhr.statusText}`
                             });
                         }
                     };

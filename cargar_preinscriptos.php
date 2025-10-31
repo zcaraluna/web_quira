@@ -7,27 +7,33 @@
 // Configurar zona horaria
 date_default_timezone_set('America/Asuncion');
 
+// Evitar que se muestren errores directamente
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 // Iniciar sesión y verificar login
 session_start();
 require_once 'config.php';
 
-// Verificar que el usuario esté logueado y sea SUPERADMIN
-if (!isset($_SESSION['user_id']) || $_SESSION['rol'] !== 'SUPERADMIN') {
-    http_response_code(403);
-    header('Content-Type: application/json');
+// Siempre devolver JSON (ya no usamos iframe)
+header('Content-Type: application/json; charset=UTF-8');
+
+// Función para enviar error JSON y salir
+function enviarErrorJSON($mensaje, $codigo = 400) {
+    http_response_code($codigo);
     echo json_encode([
         'success' => false,
-        'message' => 'Acceso denegado. Se requiere rol SUPERADMIN.',
-        'data' => null
+        'message' => $mensaje,
+        'insertados' => 0,
+        'actualizados' => 0,
+        'errores' => 0
     ]);
     exit;
 }
 
-// Determinar si se está llamando desde un iframe
-$es_iframe = isset($_GET['iframe']) || (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'dashboard') !== false);
-
-if (!$es_iframe) {
-    header('Content-Type: application/json');
+// Verificar que el usuario esté logueado y sea SUPERADMIN
+if (!isset($_SESSION['user_id']) || $_SESSION['rol'] !== 'SUPERADMIN') {
+    enviarErrorJSON('Acceso denegado. Se requiere rol SUPERADMIN.', 403);
 }
 
 try {
@@ -324,46 +330,13 @@ try {
         'total_procesados' => $insertados + $actualizados
     ];
     
-    // Si se está llamando desde un iframe, devolver HTML con script para comunicar al padre
-    if ($es_iframe) {
-        header('Content-Type: text/html; charset=UTF-8');
-        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>';
-        echo '<script>';
-        echo 'if (window.parent !== window) {';
-        echo '  window.parent.postMessage(' . json_encode($resultado) . ', "*");';
-        echo '}';
-        echo 'document.body.innerHTML = ' . json_encode(json_encode($resultado)) . ';';
-        echo '</script>';
-        echo '</body></html>';
-    } else {
-        // Respuesta JSON normal para AJAX
-        echo json_encode($resultado);
-    }
+    // Devolver respuesta JSON
+    echo json_encode($resultado);
     
 } catch (Exception $e) {
-    http_response_code(400);
-    $error_resultado = [
-        'success' => false,
-        'message' => $e->getMessage(),
-        'insertados' => 0,
-        'actualizados' => 0,
-        'errores' => 0
-    ];
-    
-    // Si se está llamando desde un iframe, devolver HTML con script para comunicar al padre
-    if ($es_iframe) {
-        header('Content-Type: text/html; charset=UTF-8');
-        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>';
-        echo '<script>';
-        echo 'if (window.parent !== window) {';
-        echo '  window.parent.postMessage(' . json_encode($error_resultado) . ', "*");';
-        echo '}';
-        echo 'document.body.innerHTML = ' . json_encode(json_encode($error_resultado)) . ';';
-        echo '</script>';
-        echo '</body></html>';
-    } else {
-        // Respuesta JSON normal para AJAX
-        echo json_encode($error_resultado);
-    }
+    enviarErrorJSON($e->getMessage(), 400);
+} catch (Error $e) {
+    // Capturar errores fatales de PHP también
+    enviarErrorJSON('Error del servidor: ' . $e->getMessage(), 500);
 }
 
