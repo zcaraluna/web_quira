@@ -5471,10 +5471,9 @@ $distribucion_unidad = $pdo->query("
                     
                     console.log('✅ FormData preparado correctamente');
                     
-                    // Construir URLs (similar a buscar_preinscripto_ajax)
+                    // Construir URLs - usar un nombre diferente para evitar rewrite rules
                     const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-                    const url = window.location.origin + basePath + 'cargar_preinscriptos.php';
-                    const urlWithoutExt = window.location.origin + basePath + 'cargar_preinscriptos';
+                    const url = window.location.origin + basePath + 'upload_preinscriptos.php';
                     
                     console.log('📤 Enviando archivo a:', url);
                     
