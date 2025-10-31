@@ -708,8 +708,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Función para buscar preinscripto por CI
         async function buscarPreinscripto() {
+            console.log('🔍 buscarPreinscripto() llamada');
+            
             const cedulaInput = document.getElementById('cedula');
+            if (!cedulaInput) {
+                console.error('❌ Campo cédula no encontrado');
+                showToast('Error: Campo cédula no encontrado', 'error');
+                return;
+            }
+            
             const ci = cedulaInput.value.trim();
+            console.log('📝 CI ingresada:', ci);
             
             if (!ci) {
                 showToast('Por favor ingrese una CI para buscar', 'warning');
@@ -725,7 +734,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             try {
                 // Mostrar indicador de carga
-                const buscarBtn = cedulaInput.closest('.input-group').querySelector('button');
+                const buscarBtn = cedulaInput.closest('.input-group').querySelector('#btn-buscar-preinscripto');
+                if (!buscarBtn) {
+                    console.error('❌ Botón de buscar no encontrado');
+                    showToast('Error: Botón de buscar no encontrado', 'error');
+                    return;
+                }
+                
                 const originalText = buscarBtn.innerHTML;
                 buscarBtn.disabled = true;
                 buscarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
@@ -733,11 +748,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const formData = new FormData();
                 formData.append('ci', ci);
                 
+                console.log('📤 Enviando petición POST a buscar_preinscripto_ajax.php');
+                console.log('📦 Datos:', { ci: ci });
+                
                 const response = await fetch('buscar_preinscripto_ajax.php', {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     body: formData,
-                    credentials: 'same-origin' // Incluir cookies de sesión
+                    credentials: 'same-origin'
                 });
+                
+                console.log('📥 Respuesta recibida:', response.status, response.statusText);
+                console.log('📋 Headers:', Object.fromEntries(response.headers.entries()));
                 
                 // Verificar si la respuesta es JSON válida
                 const contentType = response.headers.get("content-type");
@@ -814,11 +838,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Event listener para el botón de buscar preinscripto
         const btnBuscarPreinscripto = document.getElementById('btn-buscar-preinscripto');
         if (btnBuscarPreinscripto) {
+            console.log('✅ Botón de buscar encontrado, agregando event listener');
             btnBuscarPreinscripto.addEventListener('click', function(e) {
+                console.log('🖱️ Click en botón buscar detectado');
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
                 buscarPreinscripto();
+                return false;
             });
+        } else {
+            console.error('❌ Botón btn-buscar-preinscripto no encontrado');
         }
         
         // Validación del formulario
