@@ -214,8 +214,13 @@ try {
             $unidad = $unidad_raw;
             
             // Limpiar comillas dobles que puedan estar en la unidad
-            if (!empty($unidad) && $unidad[0] === '"' && substr($unidad, -1) === '"') {
-                $unidad = substr($unidad, 1, -1);
+            if (!empty($unidad)) {
+                // Remover comillas externas
+                if ($unidad[0] === '"' && substr($unidad, -1) === '"') {
+                    $unidad = substr($unidad, 1, -1);
+                }
+                // Reemplazar comillas escapadas ("") por comillas simples
+                $unidad = str_replace('""', '"', $unidad);
             }
             
             // Verificar si el registro ya existe

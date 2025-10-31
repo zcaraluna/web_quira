@@ -2493,12 +2493,38 @@ $distribucion_unidad = $pdo->query("
                                     </div>
                                     <div class="card-body">
                                         <p class="text-muted mb-3">Suba un archivo CSV con los datos de preinscriptos. El formato debe ser: CI, NOMBRE COMPLETO, NACIMIENTO, SEXO (H/M), UNIDAD.</p>
-                                        <form id="form-cargar-preinscriptos" enctype="multipart/form-data">
+                                        <form id="form-cargar-preinscriptos" enctype="multipart/form-data" method="POST">
                                             <div class="form-group">
                                                 <label for="archivo_csv">Seleccionar archivo CSV</label>
                                                 <input type="file" class="form-control-file" id="archivo_csv" name="archivo_csv" accept=".csv" required>
                                                 <small class="form-text text-muted">Formato esperado: CSV con separador ; o ,</small>
                                             </div>
+                                            
+                                            <!-- Vista previa -->
+                                            <div id="vista-previa-preinscriptos" class="mb-3" style="display: none;">
+                                                <div class="card border-info">
+                                                    <div class="card-header bg-info text-white">
+                                                        <i class="fas fa-eye mr-2"></i>Vista Previa del Archivo
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <p class="mb-1"><strong>Total de registros:</strong> <span id="prev-total">0</span></p>
+                                                                <p class="mb-1"><strong>Mujeres:</strong> <span id="prev-mujeres">0</span></p>
+                                                                <p class="mb-1"><strong>Hombres:</strong> <span id="prev-hombres">0</span></p>
+                                                                <p class="mb-1"><strong>Sin sexo:</strong> <span id="prev-sin-sexo">0</span></p>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <p class="mb-1"><strong>Unidades encontradas:</strong></p>
+                                                                <div id="prev-unidades" style="max-height: 150px; overflow-y: auto; font-size: 0.9em;">
+                                                                    <ul class="list-unstyled mb-0" id="prev-unidades-list"></ul>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
                                             <button type="submit" class="btn btn-primary" id="btn-cargar-preinscriptos">
                                                 <i class="fas fa-upload mr-2"></i>Cargar Preinscriptos
                                             </button>
@@ -5139,17 +5165,202 @@ $distribucion_unidad = $pdo->query("
             }, 3000);
         }
 
+        // Función para parsear CSV
+        function parseCSVPreview(text) {
+            // Remover BOM si existe
+            text = text.replace(/^\uFEFF/, '');
+            
+            // Detectar delimitador
+            const hasSemicolon = text.indexOf(';') !== -1;
+            const hasComma = text.indexOf(',') !== -1;
+            const delimiter = (hasSemicolon && text.split(';').length >= text.split(',').length) ? ';' : ',';
+            
+            const lines = text.split('\n').filter(line => line.trim());
+            if (lines.length === 0) return null;
+            
+            // Leer headers
+            const headerLine = lines[0].trim();
+            const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+            
+            // Mapear columnas
+            const columnMap = {};
+            headers.forEach((h, i) => {
+                if (h.includes('ci') || h.includes('cedula') || h.includes('cédula')) {
+                    columnMap.ci = i;
+                } else if (h.includes('nombre') && h.includes('completo')) {
+                    columnMap.nombre_completo = i;
+                } else if (h.includes('nacimiento') || h.includes('fecha')) {
+                    columnMap.fecha_nacimiento = i;
+                } else if (h.includes('sexo') || h.includes('genero') || h.includes('género')) {
+                    columnMap.sexo = i;
+                } else if (h.includes('unidad')) {
+                    columnMap.unidad = i;
+                }
+            });
+            
+            if (!columnMap.ci || !columnMap.nombre_completo) {
+                return null; // Formato no válido
+            }
+            
+            // Procesar líneas de datos
+            const datos = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Parsear línea respetando comillas (usar función de parsing más robusta)
+                const campos = [];
+                let campo = '';
+                let dentroComillas = false;
+                let j = 0;
+                
+                while (j < line.length) {
+                    const char = line[j];
+                    
+                    if (char === '"') {
+                        // Manejar comillas escapadas ("")
+                        if (j + 1 < line.length && line[j + 1] === '"' && dentroComillas) {
+                            campo += '"'; // Comilla escapada
+                            j += 2;
+                            continue;
+                        }
+                        dentroComillas = !dentroComillas;
+                        j++;
+                    } else if (char === delimiter && !dentroComillas) {
+                        // Fin de campo
+                        campos.push(campo.trim());
+                        campo = '';
+                        j++;
+                    } else {
+                        campo += char;
+                        j++;
+                    }
+                }
+                // Agregar último campo
+                if (campo || campos.length > 0) {
+                    campos.push(campo.trim());
+                }
+                
+                if (campos.length >= Math.max(columnMap.ci, columnMap.nombre_completo) + 1) {
+                    datos.push(campos);
+                }
+            }
+            
+            return { datos, columnMap };
+        }
+        
+        // Función para mostrar vista previa
+        function mostrarVistaPrevia(archivo) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const parsed = parseCSVPreview(text);
+                
+                const vistaPreviaDiv = document.getElementById('vista-previa-preinscriptos');
+                
+                if (!parsed || parsed.datos.length === 0) {
+                    vistaPreviaDiv.style.display = 'none';
+                    return;
+                }
+                
+                // Calcular estadísticas
+                let mujeres = 0;
+                let hombres = 0;
+                let sinSexo = 0;
+                const unidadesSet = new Set();
+                
+                parsed.datos.forEach(row => {
+                    if (parsed.columnMap.sexo !== undefined && row[parsed.columnMap.sexo]) {
+                        const sexo = row[parsed.columnMap.sexo].trim().toUpperCase();
+                        if (sexo === 'M' || sexo === 'MUJER') {
+                            mujeres++;
+                        } else if (sexo === 'H' || sexo === 'HOMBRE') {
+                            hombres++;
+                        } else {
+                            sinSexo++;
+                        }
+                    } else {
+                        sinSexo++;
+                    }
+                    
+                    if (parsed.columnMap.unidad !== undefined && row[parsed.columnMap.unidad]) {
+                        let unidad = row[parsed.columnMap.unidad].trim();
+                        // Limpiar comillas dobles
+                        if (unidad.startsWith('"') && unidad.endsWith('"')) {
+                            unidad = unidad.slice(1, -1);
+                        }
+                        // Limpiar comillas escapadas
+                        unidad = unidad.replace(/""/g, '"');
+                        if (unidad) {
+                            unidadesSet.add(unidad);
+                        }
+                    }
+                });
+                
+                // Mostrar estadísticas
+                document.getElementById('prev-total').textContent = parsed.datos.length;
+                document.getElementById('prev-mujeres').textContent = mujeres;
+                document.getElementById('prev-hombres').textContent = hombres;
+                document.getElementById('prev-sin-sexo').textContent = sinSexo;
+                
+                // Mostrar unidades
+                const unidadesList = document.getElementById('prev-unidades-list');
+                unidadesList.innerHTML = '';
+                const unidadesArray = Array.from(unidadesSet).sort();
+                
+                if (unidadesArray.length === 0) {
+                    unidadesList.innerHTML = '<li class="text-muted">No se encontraron unidades</li>';
+                } else if (unidadesArray.length <= 5) {
+                    unidadesArray.forEach(unidad => {
+                        const li = document.createElement('li');
+                        li.textContent = unidad;
+                        unidadesList.appendChild(li);
+                    });
+                } else {
+                    unidadesArray.slice(0, 5).forEach(unidad => {
+                        const li = document.createElement('li');
+                        li.textContent = unidad;
+                        unidadesList.appendChild(li);
+                    });
+                    const li = document.createElement('li');
+                    li.className = 'text-muted';
+                    li.textContent = `... y ${unidadesArray.length - 5} más`;
+                    unidadesList.appendChild(li);
+                }
+                
+                vistaPreviaDiv.style.display = 'block';
+            };
+            reader.onerror = function() {
+                document.getElementById('vista-previa-preinscriptos').style.display = 'none';
+            };
+            reader.readAsText(archivo, 'UTF-8');
+        }
+        
         // Manejar carga de preinscriptos
         document.addEventListener('DOMContentLoaded', function() {
             const formCargarPreinscriptos = document.getElementById('form-cargar-preinscriptos');
+            const archivoInput = document.getElementById('archivo_csv');
+            
+            // Vista previa cuando se selecciona un archivo
+            if (archivoInput) {
+                archivoInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file && file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')) {
+                        mostrarVistaPrevia(file);
+                    } else {
+                        document.getElementById('vista-previa-preinscriptos').style.display = 'none';
+                    }
+                });
+            }
+            
             if (formCargarPreinscriptos) {
                 formCargarPreinscriptos.addEventListener('submit', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     
                     const formData = new FormData(formCargarPreinscriptos);
                     const statusDiv = document.getElementById('preinscriptos-status');
                     const btnCargar = document.getElementById('btn-cargar-preinscriptos');
-                    const archivoInput = document.getElementById('archivo_csv');
                     
                     // Validar que hay un archivo seleccionado
                     if (!archivoInput.files || !archivoInput.files[0]) {
@@ -5163,42 +5374,65 @@ $distribucion_unidad = $pdo->query("
                     statusDiv.style.display = 'block';
                     btnCargar.disabled = true;
                     
-                    // Enviar archivo
-                    fetch('cargar_preinscriptos.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            statusDiv.innerHTML = `<div class="alert alert-success">
-                                <i class="fas fa-check-circle mr-2"></i>
-                                <strong>¡Carga exitosa!</strong><br>
-                                Registros procesados: ${data.insertados || 0}<br>
-                                Registros actualizados: ${data.actualizados || 0}<br>
-                                Errores: ${data.errores || 0}
-                                ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
-                            </div>`;
+                    // Usar XMLHttpRequest para asegurar POST (fetch a veces se convierte a GET por rewrite rules)
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'cargar_preinscriptos.php', true);
+                    
+                    xhr.onload = function() {
+                        btnCargar.disabled = false;
+                        
+                        if (xhr.status === 200) {
+                            try {
+                                const data = JSON.parse(xhr.responseText);
+                                if (data.success) {
+                                    statusDiv.innerHTML = `<div class="alert alert-success">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        <strong>¡Carga exitosa!</strong><br>
+                                        Registros procesados: ${data.insertados || 0}<br>
+                                        Registros actualizados: ${data.actualizados || 0}<br>
+                                        Errores: ${data.errores || 0}
+                                        ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
+                                    </div>`;
+                                    // Ocultar vista previa después de carga exitosa
+                                    document.getElementById('vista-previa-preinscriptos').style.display = 'none';
+                                } else {
+                                    statusDiv.innerHTML = `<div class="alert alert-danger">
+                                        <i class="fas fa-exclamation-circle mr-2"></i>
+                                        <strong>Error:</strong> ${data.message || 'Error desconocido'}
+                                    </div>`;
+                                }
+                            } catch (e) {
+                                statusDiv.innerHTML = `<div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-circle mr-2"></i>
+                                    <strong>Error:</strong> No se pudo procesar la respuesta del servidor.
+                                </div>`;
+                            }
                         } else {
+                            let errorMsg = 'Error desconocido';
+                            try {
+                                const data = JSON.parse(xhr.responseText);
+                                errorMsg = data.message || errorMsg;
+                            } catch (e) {
+                                errorMsg = `Error HTTP ${xhr.status}`;
+                            }
                             statusDiv.innerHTML = `<div class="alert alert-danger">
                                 <i class="fas fa-exclamation-circle mr-2"></i>
-                                <strong>Error:</strong> ${data.message || 'Error desconocido'}
+                                <strong>Error:</strong> ${errorMsg}
                             </div>`;
                         }
                         statusDiv.style.display = 'block';
+                    };
+                    
+                    xhr.onerror = function() {
                         btnCargar.disabled = false;
-                        
-                        // Resetear el formulario
-                        formCargarPreinscriptos.reset();
-                    })
-                    .catch(error => {
                         statusDiv.innerHTML = `<div class="alert alert-danger">
                             <i class="fas fa-exclamation-circle mr-2"></i>
-                            <strong>Error de comunicación:</strong> ${error.message}
+                            <strong>Error de comunicación:</strong> No se pudo conectar al servidor.
                         </div>`;
                         statusDiv.style.display = 'block';
-                        btnCargar.disabled = false;
-                    });
+                    };
+                    
+                    xhr.send(formData);
                 });
             }
         });
