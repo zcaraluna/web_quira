@@ -5481,9 +5481,9 @@ $distribucion_unidad = $pdo->query("
                         
                         console.log('✅ Archivo convertido a base64, tamaño:', base64Content.length);
                         
-                        // Construir URLs - usar un nombre diferente para evitar rewrite rules
+                        // Construir URLs - usar un nombre con 'api_' para evitar rewrite rules
                         const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-                        const url = window.location.origin + basePath + 'upload_preinscriptos.php';
+                        const url = window.location.origin + basePath + 'api_upload_preinscriptos.php';
                         
                         console.log('📤 Enviando archivo (base64) a:', url);
                         
