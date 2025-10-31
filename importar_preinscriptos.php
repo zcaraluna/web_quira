@@ -46,29 +46,65 @@ try {
         exit(1);
     }
     
+    // Leer el contenido completo del archivo para detectar BOM y separador
+    $content = file_get_contents($csv_file);
+    
+    // Remover BOM si existe (UTF-8 BOM: EF BB BF)
+    $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
+    
+    // Guardar temporalmente sin BOM
+    $temp_file = tempnam(sys_get_temp_dir(), 'csv_import_');
+    file_put_contents($temp_file, $content);
+    
+    // Detectar el separador (puede ser ; o ,)
+    $first_line = explode("\n", $content)[0];
+    $separator = (strpos($first_line, ';') !== false) ? ';' : ',';
+    
+    echo "Separador detectado: '$separator'\n";
+    
     // Abrir archivo CSV
-    $handle = fopen($csv_file, 'r');
+    $handle = fopen($temp_file, 'r');
     if (!$handle) {
         throw new Exception("No se pudo abrir el archivo CSV");
     }
     
     // Leer encabezado (primera línea)
-    $header = fgetcsv($handle, 0, ';');
+    $header = fgetcsv($handle, 0, $separator);
     if (!$header) {
         throw new Exception("No se pudo leer el encabezado del CSV");
     }
     
-    echo "Encabezado detectado: " . implode(', ', $header) . "\n\n";
+    // Normalizar encabezado: trim y remover BOM/espacios invisibles
+    $header_normalized = array_map(function($col) {
+        // Remover BOM y espacios
+        $col = trim($col);
+        // Remover cualquier carácter no imprimible al inicio
+        $col = preg_replace('/^[\x00-\x1F\x80-\xFF]+/', '', $col);
+        return $col;
+    }, $header);
+    
+    echo "Encabezado detectado: " . implode(', ', $header_normalized) . "\n\n";
     
     // Verificar que las columnas esperadas están presentes
     $expected_columns = ['CI', 'NOMBRE COMPLETO', 'NACIMIENTO', 'SEXO', 'UNIDAD'];
-    $header_normalized = array_map('trim', $header);
     
+    // Crear mapa de índices de columnas
+    $column_map = [];
     foreach ($expected_columns as $expected) {
-        if (!in_array($expected, $header_normalized)) {
-            throw new Exception("Columna esperada '$expected' no encontrada en el CSV");
+        $found = false;
+        foreach ($header_normalized as $index => $col) {
+            if (strtoupper(trim($col)) === strtoupper($expected)) {
+                $column_map[$expected] = $index;
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            throw new Exception("Columna esperada '$expected' no encontrada en el CSV. Columnas encontradas: " . implode(', ', $header_normalized));
         }
     }
+    
+    echo "Columnas mapeadas correctamente.\n\n";
     
     // Preparar statement para inserción
     $stmt = $pdo->prepare("
@@ -94,22 +130,22 @@ try {
     echo "Iniciando importación...\n\n";
     
     // Leer y procesar cada línea
-    while (($data = fgetcsv($handle, 0, ';')) !== FALSE) {
+    while (($data = fgetcsv($handle, 0, $separator)) !== FALSE) {
         $line_number++;
         
-        // Validar que tenga 5 columnas
+        // Validar que tenga suficientes columnas
         if (count($data) < 5) {
             $errors++;
             $error_details[] = "Línea $line_number: No tiene suficientes columnas (" . count($data) . " encontradas, 5 esperadas)";
             continue;
         }
         
-        // Extraer datos
-        $ci = trim($data[0]);
-        $nombre_completo = trim($data[1]);
-        $nacimiento_str = trim($data[2]);
-        $sexo = strtoupper(trim($data[3]));
-        $unidad = trim($data[4]);
+        // Extraer datos usando el mapa de columnas
+        $ci = isset($data[$column_map['CI']]) ? trim($data[$column_map['CI']]) : '';
+        $nombre_completo = isset($data[$column_map['NOMBRE COMPLETO']]) ? trim($data[$column_map['NOMBRE COMPLETO']]) : '';
+        $nacimiento_str = isset($data[$column_map['NACIMIENTO']]) ? trim($data[$column_map['NACIMIENTO']]) : '';
+        $sexo = isset($data[$column_map['SEXO']]) ? strtoupper(trim($data[$column_map['SEXO']])) : '';
+        $unidad = isset($data[$column_map['UNIDAD']]) ? trim($data[$column_map['UNIDAD']]) : '';
         
         // Limpiar comillas dobles de la unidad (formato CSV con comillas)
         $unidad = str_replace('""', '"', $unidad); // Reemplazar "" por "
@@ -190,6 +226,11 @@ try {
     }
     
     fclose($handle);
+    
+    // Eliminar archivo temporal
+    if (file_exists($temp_file)) {
+        unlink($temp_file);
+    }
     
     // Commit transacción
     $pdo->commit();
