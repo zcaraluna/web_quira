@@ -23,7 +23,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['rol'] !== 'SUPERADMIN') {
     exit;
 }
 
-header('Content-Type: application/json');
+// Determinar si se está llamando desde un iframe
+$es_iframe = isset($_GET['iframe']) || (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'dashboard') !== false);
+
+if (!$es_iframe) {
+    header('Content-Type: application/json');
+}
 
 try {
     // Verificar que se haya enviado un archivo
@@ -278,7 +283,8 @@ try {
     ];
     
     // Si se está llamando desde un iframe, devolver HTML con script para comunicar al padre
-    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) || isset($_GET['iframe'])) {
+    if ($es_iframe) {
+        header('Content-Type: text/html; charset=UTF-8');
         echo '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>';
         echo '<script>';
         echo 'if (window.parent !== window) {';
@@ -303,7 +309,8 @@ try {
     ];
     
     // Si se está llamando desde un iframe, devolver HTML con script para comunicar al padre
-    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) || isset($_GET['iframe'])) {
+    if ($es_iframe) {
+        header('Content-Type: text/html; charset=UTF-8');
         echo '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>';
         echo '<script>';
         echo 'if (window.parent !== window) {';

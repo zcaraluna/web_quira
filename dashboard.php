@@ -5380,88 +5380,85 @@ $distribucion_unidad = $pdo->query("
             }
             
             if (formCargarPreinscriptos) {
+                // Variables para rastrear el estado de procesamiento
+                let procesado = false;
+                let timeoutHandle = null;
+                const iframe = document.getElementById('iframe-cargar-preinscriptos');
+                
+                // Función para procesar la respuesta del servidor
+                function procesarRespuesta(data) {
+                    procesado = true;
+                    if (timeoutHandle) clearTimeout(timeoutHandle);
+                    
+                    const statusDiv = document.getElementById('preinscriptos-status');
+                    const btnCargar = document.getElementById('btn-cargar-preinscriptos');
+                    btnCargar.disabled = false;
+                    
+                    if (data.success) {
+                        statusDiv.innerHTML = `<div class="alert alert-success">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <strong>¡Carga exitosa!</strong><br>
+                            Registros procesados: ${data.insertados || 0}<br>
+                            Registros actualizados: ${data.actualizados || 0}<br>
+                            Errores: ${data.errores || 0}
+                            ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
+                        </div>`;
+                        document.getElementById('vista-previa-preinscriptos').style.display = 'none';
+                        formCargarPreinscriptos.reset();
+                    } else {
+                        statusDiv.innerHTML = `<div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <strong>Error:</strong> ${data.message || 'Error desconocido'}
+                        </div>`;
+                    }
+                    statusDiv.style.display = 'block';
+                }
+                
                 // Escuchar mensajes postMessage del iframe
                 window.addEventListener('message', function(event) {
-                    // Verificar que el mensaje viene del iframe (mismo origen)
-                    if (event.source !== document.getElementById('iframe-cargar-preinscriptos').contentWindow) {
+                    if (event.source !== iframe.contentWindow || procesado) {
                         return;
                     }
                     
                     const data = event.data;
-                    const statusDiv = document.getElementById('preinscriptos-status');
-                    const btnCargar = document.getElementById('btn-cargar-preinscriptos');
-                    
                     if (typeof data === 'object' && data !== null && ('success' in data || 'message' in data)) {
-                        btnCargar.disabled = false;
-                        
-                        if (data.success) {
-                            statusDiv.innerHTML = `<div class="alert alert-success">
-                                <i class="fas fa-check-circle mr-2"></i>
-                                <strong>¡Carga exitosa!</strong><br>
-                                Registros procesados: ${data.insertados || 0}<br>
-                                Registros actualizados: ${data.actualizados || 0}<br>
-                                Errores: ${data.errores || 0}
-                                ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
-                            </div>`;
-                            // Ocultar vista previa después de carga exitosa
-                            document.getElementById('vista-previa-preinscriptos').style.display = 'none';
-                            // Resetear formulario
-                            formCargarPreinscriptos.reset();
-                        } else {
-                            statusDiv.innerHTML = `<div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle mr-2"></i>
-                                <strong>Error:</strong> ${data.message || 'Error desconocido'}
-                            </div>`;
-                        }
-                        statusDiv.style.display = 'block';
+                        procesarRespuesta(data);
                     }
                 });
                 
-                // También intentar leer el contenido del iframe directamente (fallback)
-                const iframe = document.getElementById('iframe-cargar-preinscriptos');
-                iframe.addEventListener('load', function() {
-                    const statusDiv = document.getElementById('preinscriptos-status');
-                    const btnCargar = document.getElementById('btn-cargar-preinscriptos');
-                    
-                    // Esperar un momento para que el script del iframe ejecute postMessage
-                    setTimeout(function() {
-                        // Si no se recibió mensaje, intentar leer el body del iframe como fallback
-                        try {
-                            const iframeContent = iframe.contentDocument.body.innerText || iframe.contentDocument.body.textContent || '';
-                            if (iframeContent) {
-                                try {
-                                    const data = JSON.parse(iframeContent);
-                                    if (data.success !== undefined) {
-                                        btnCargar.disabled = false;
-                                        
-                                        if (data.success) {
-                                            statusDiv.innerHTML = `<div class="alert alert-success">
-                                                <i class="fas fa-check-circle mr-2"></i>
-                                                <strong>¡Carga exitosa!</strong><br>
-                                                Registros procesados: ${data.insertados || 0}<br>
-                                                Registros actualizados: ${data.actualizados || 0}<br>
-                                                Errores: ${data.errores || 0}
-                                                ${data.mensaje ? '<br><small>' + data.mensaje + '</small>' : ''}
-                                            </div>`;
-                                            document.getElementById('vista-previa-preinscriptos').style.display = 'none';
-                                            formCargarPreinscriptos.reset();
-                                        } else {
-                                            statusDiv.innerHTML = `<div class="alert alert-danger">
-                                                <i class="fas fa-exclamation-circle mr-2"></i>
-                                                <strong>Error:</strong> ${data.message || 'Error desconocido'}
-                                            </div>`;
+                // Listener para cuando el iframe carga (fallback si postMessage falla)
+                if (iframe) {
+                    iframe.addEventListener('load', function() {
+                        if (procesado) return;
+                        
+                        setTimeout(function() {
+                            if (procesado) return;
+                            
+                            try {
+                                const iframeContent = iframe.contentDocument.body.innerText || iframe.contentDocument.body.textContent || '';
+                                if (iframeContent) {
+                                    try {
+                                        const data = JSON.parse(iframeContent);
+                                        if (data.success !== undefined) {
+                                            procesarRespuesta(data);
                                         }
-                                        statusDiv.style.display = 'block';
+                                    } catch (e) {
+                                        // Si no es JSON y tiene contenido significativo, puede ser un error
+                                        if (!procesado && iframeContent.length > 50) {
+                                            console.log('Respuesta del iframe (no JSON):', iframeContent.substring(0, 200));
+                                            procesarRespuesta({
+                                                success: false,
+                                                message: 'Respuesta inesperada del servidor. Revisa la consola para más detalles.'
+                                            });
+                                        }
                                     }
-                                } catch (e) {
-                                    // No es JSON, ignorar
                                 }
+                            } catch (e) {
+                                console.log('Error leyendo iframe (probablemente CORS):', e);
                             }
-                        } catch (e) {
-                            // Error de CORS, el postMessage debería haber funcionado
-                        }
-                    }, 500);
-                });
+                        }, 2000);
+                    });
+                }
                 
                 formCargarPreinscriptos.addEventListener('submit', function(e) {
                     const statusDiv = document.getElementById('preinscriptos-status');
@@ -5475,13 +5472,28 @@ $distribucion_unidad = $pdo->query("
                         return;
                     }
                     
+                    // Resetear flag de procesamiento
+                    procesado = false;
+                    
+                    // Limpiar timeout anterior si existe
+                    if (timeoutHandle) {
+                        clearTimeout(timeoutHandle);
+                    }
+                    
                     // Mostrar estado de carga
                     statusDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin mr-2"></i>Procesando archivo, por favor espere...</div>';
                     statusDiv.style.display = 'block';
                     btnCargar.disabled = true;
                     
-                    // El formulario se enviará automáticamente al iframe
-                    // La respuesta se procesará mediante postMessage o lectura del iframe
+                    // Timeout de seguridad: si después de 30 segundos no hay respuesta, mostrar error
+                    timeoutHandle = setTimeout(function() {
+                        if (!procesado) {
+                            procesarRespuesta({
+                                success: false,
+                                message: 'Timeout: El proceso está tomando más tiempo del esperado. Verifica los logs del servidor o intenta nuevamente.'
+                            });
+                        }
+                    }, 30000); // 30 segundos
                 });
             }
         });
