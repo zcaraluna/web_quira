@@ -1623,13 +1623,16 @@ Por favor verifique:
             buscarBtn.disabled = true;
             buscarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
             
-            // Usar XMLHttpRequest con URL absoluta para evitar problemas de reescritura
-            const url = window.location.pathname.replace(/[^/]*$/, '') + 'buscar_preinscripto_ajax.php';
+            // Construir URL absoluta para evitar problemas de reescritura
+            // Usar window.location.origin + pathname para garantizar URL completa
+            const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+            const url = window.location.origin + basePath + 'buscar_preinscripto_ajax.php';
             console.log('📤 Enviando petición POST a:', url);
             console.log('📦 Datos:', { ci: ci });
             
             const data = await new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
+                // Usar URL absoluta completa para evitar redirects que cambien POST a GET
                 xhr.open('POST', url, true);
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');

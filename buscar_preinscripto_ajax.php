@@ -29,13 +29,16 @@ if (!isset($_SESSION['user_id'])) {
 // 2. Si hay datos POST (lo cual indica que fue POST originalmente)
 
 $request_method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$has_post_data = !empty($_POST) || !empty(file_get_contents('php://input'));
+// Leer php://input una sola vez (solo se puede leer una vez)
+$raw_input = file_get_contents('php://input');
+$has_post_data = !empty($_POST) || !empty($raw_input);
 
 // Debug: Log del método recibido
 error_log("DEBUG buscar_preinscripto_ajax.php - REQUEST_METHOD: $request_method");
 error_log("DEBUG - Has POST data: " . ($has_post_data ? 'YES' : 'NO'));
 error_log("DEBUG - POST data: " . print_r($_POST, true));
-error_log("DEBUG - php://input: " . substr(file_get_contents('php://input'), 0, 100));
+error_log("DEBUG - php://input length: " . strlen($raw_input));
+error_log("DEBUG - php://input preview: " . substr($raw_input, 0, 100));
 
 // Aceptar si es POST o si hay datos POST (por si nginx convierte el método)
 if ($request_method !== 'POST' && !$has_post_data) {
@@ -45,11 +48,11 @@ if ($request_method !== 'POST' && !$has_post_data) {
         'success' => false,
         'message' => "Método no permitido. Use POST. Método recibido: $request_method",
         'data' => null,
-        'debug' => [
+            'debug' => [
             'REQUEST_METHOD' => $request_method,
             'has_post_data' => $has_post_data,
             'POST_count' => count($_POST),
-            'input_length' => strlen(file_get_contents('php://input'))
+            'input_length' => strlen($raw_input)
         ]
     ]);
     exit;
@@ -61,10 +64,9 @@ try {
     // Obtener CI del POST (puede venir como form-urlencoded o multipart)
     $ci = trim($_POST['ci'] ?? '');
     
-    // Si no está en $_POST, intentar leer del input raw (por si viene como JSON)
-    if (empty($ci)) {
-        $input = file_get_contents('php://input');
-        parse_str($input, $parsed);
+    // Si no está en $_POST, intentar leer del input raw (ya leído anteriormente)
+    if (empty($ci) && !empty($raw_input)) {
+        parse_str($raw_input, $parsed);
         $ci = trim($parsed['ci'] ?? '');
     }
     
