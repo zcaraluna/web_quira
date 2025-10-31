@@ -81,23 +81,27 @@ function parseCSVLine($line, $delimiter) {
         if ($char === '"') {
             // Manejar comillas escapadas ("")
             if ($i + 1 < strlen($line) && $line[$i + 1] === '"' && $inside_quotes) {
+                // Comilla escapada: agregar una comilla al campo
                 $current_field .= '"';
                 $i += 2;
                 continue;
             }
+            // Es una comilla delimitadora: cambiar estado pero NO agregar al campo
             $inside_quotes = !$inside_quotes;
         } elseif ($char === $delimiter && !$inside_quotes) {
-            $fields[] = trim($current_field);
+            // Delimitador fuera de comillas: fin del campo
+            $fields[] = $current_field;
             $current_field = '';
         } else {
+            // Cualquier otro carácter: agregarlo al campo actual
             $current_field .= $char;
         }
         $i++;
     }
     
-    // Agregar último campo
+    // Agregar último campo (sin trim, lo haremos después si es necesario)
     if ($current_field || count($fields) > 0) {
-        $fields[] = trim($current_field);
+        $fields[] = $current_field;
     }
     
     return $fields;
@@ -290,12 +294,19 @@ try {
             }
         }
         
-        // Procesar unidad (limpiar comillas escapadas y comillas externas)
-        // Primero convertir comillas escapadas a comillas normales
-        $unidad = str_replace('""', '"', $unidad_raw);
-        // Luego remover solo las comillas delimitadoras externas (si el campo empieza Y termina con comilla)
-        if (substr($unidad, 0, 1) === '"' && substr($unidad, -1) === '"') {
-            $unidad = substr($unidad, 1, -1); // Remover primera y última comilla
+        // Procesar unidad
+        // El CSV tiene: " Colegio de Policía ""Sgto. Aydte. JOSE MERLO SARAVIA"" "
+        // parseCSVLine devuelve: " Colegio de Policía ""Sgto. Aydte. JOSE MERLO SARAVIA"" " (sin comillas externas)
+        $unidad = trim($unidad_raw); // Eliminar espacios
+        $unidad = str_replace('""', '"', $unidad); // Convertir "" a "
+        
+        // Si la unidad tiene comilla de apertura pero no de cierre, agregarla
+        if (strpos($unidad, '"') !== false && substr($unidad, -1) !== '"') {
+            // Contar comillas - si es impar, falta una de cierre
+            $quote_count = substr_count($unidad, '"');
+            if ($quote_count % 2 !== 0) {
+                $unidad = $unidad . '"';
+            }
         }
         
         // Procesar fecha de nacimiento (múltiples formatos)
