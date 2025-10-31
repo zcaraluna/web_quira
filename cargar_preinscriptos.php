@@ -147,6 +147,12 @@ try {
         
         if (empty($linea)) continue;
         
+        // Saltar líneas que solo tienen delimitadores vacíos (ej: ";;;;")
+        $campos_check = str_getcsv($linea, $delimiter);
+        if (empty(array_filter($campos_check, function($c) { return !empty(trim($c)); }))) {
+            continue; // Línea vacía o solo delimitadores
+        }
+        
         try {
             $campos = str_getcsv($linea, $delimiter);
             

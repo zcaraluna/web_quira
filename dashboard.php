@@ -5178,11 +5178,24 @@ $distribucion_unidad = $pdo->query("
             const hasComma = text.indexOf(',') !== -1;
             const delimiter = (hasSemicolon && text.split(';').length >= text.split(',').length) ? ';' : ',';
             
-            const lines = text.split('\n').filter(line => line.trim());
+            // Dividir líneas preservando saltos de línea para parsing correcto
+            const lines = text.split(/\r?\n/);
             if (lines.length === 0) return null;
             
+            // Encontrar la línea de header (puede estar en diferentes posiciones)
+            let headerIndex = -1;
+            for (let idx = 0; idx < Math.min(lines.length, 10); idx++) {
+                const line = lines[idx].trim();
+                if (line.toLowerCase().includes('ci') && line.toLowerCase().includes('nombre')) {
+                    headerIndex = idx;
+                    break;
+                }
+            }
+            
+            if (headerIndex === -1) return null; // No se encontró header válido
+            
             // Leer headers
-            const headerLine = lines[0].trim();
+            const headerLine = lines[headerIndex].trim();
             const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
             
             // Mapear columnas
@@ -5205,11 +5218,14 @@ $distribucion_unidad = $pdo->query("
                 return null; // Formato no válido
             }
             
-            // Procesar líneas de datos
+            // Procesar líneas de datos (empezar después del header)
             const datos = [];
-            for (let i = 1; i < lines.length; i++) {
+            for (let i = headerIndex + 1; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (!line) continue;
+                // Saltar líneas vacías, muy cortas, o que solo contengan delimitadores vacíos
+                if (!line || line.length < 5) continue;
+                // Saltar líneas que solo tienen delimitadores sin contenido (ej: ";;;;")
+                if (line.split(delimiter).every(campo => !campo.trim() || campo.trim().length === 0)) continue;
                 
                 // Parsear línea respetando comillas (usar función de parsing más robusta)
                 const campos = [];
@@ -5244,8 +5260,15 @@ $distribucion_unidad = $pdo->query("
                     campos.push(campo.trim());
                 }
                 
-                if (campos.length >= Math.max(columnMap.ci, columnMap.nombre_completo) + 1) {
-                    datos.push(campos);
+                // Validar que tenga al menos CI y nombre completo, y que no estén vacíos
+                if (campos.length > Math.max(columnMap.ci || 0, columnMap.nombre_completo || 0)) {
+                    const ci = campos[columnMap.ci] ? campos[columnMap.ci].trim() : '';
+                    const nombreCompleto = campos[columnMap.nombre_completo] ? campos[columnMap.nombre_completo].trim() : '';
+                    
+                    // Solo agregar si tiene CI y nombre completo válidos (no vacíos)
+                    if (ci && nombreCompleto) {
+                        datos.push(campos);
+                    }
                 }
             }
             
