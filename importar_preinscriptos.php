@@ -68,37 +68,7 @@ if ($header_index === -1) {
 
 echo "✅ Header encontrado en línea " . ($header_index + 1) . "\n";
 
-// Leer headers
-$header_line = trim($lines[$header_index]);
-$headers = array_map('trim', explode($delimiter, $header_line));
-$headers = array_map(function($h) {
-    return strtolower(trim($h, '"'));
-}, $headers);
-
-// Mapear columnas
-$column_map = [];
-foreach ($headers as $index => $header) {
-    $header_clean = strtolower(trim($header));
-    if (stripos($header_clean, 'ci') !== false || stripos($header_clean, 'cedula') !== false || stripos($header_clean, 'cédula') !== false) {
-        $column_map['ci'] = $index;
-    } elseif (stripos($header_clean, 'nombre') !== false && stripos($header_clean, 'completo') !== false) {
-        $column_map['nombre_completo'] = $index;
-    } elseif (stripos($header_clean, 'nacimiento') !== false || stripos($header_clean, 'fecha') !== false) {
-        $column_map['fecha_nacimiento'] = $index;
-    } elseif (stripos($header_clean, 'sexo') !== false || stripos($header_clean, 'genero') !== false || stripos($header_clean, 'género') !== false) {
-        $column_map['sexo'] = $index;
-    } elseif (stripos($header_clean, 'unidad') !== false) {
-        $column_map['unidad'] = $index;
-    }
-}
-
-if (!isset($column_map['ci']) || !isset($column_map['nombre_completo'])) {
-    die("❌ Error: Columna esperada 'CI' o 'NOMBRE COMPLETO' no encontrada en el CSV.\n");
-}
-
-echo "✅ Columnas mapeadas correctamente\n";
-
-// Función para parsear línea CSV respetando comillas
+// Función para parsear línea CSV respetando comillas (debe estar antes de usarse)
 function parseCSVLine($line, $delimiter) {
     $fields = [];
     $current_field = '';
@@ -133,6 +103,40 @@ function parseCSVLine($line, $delimiter) {
     return $fields;
 }
 
+// Leer headers usando la función parseCSVLine para respetar comillas
+$header_line = trim($lines[$header_index]);
+$headers = parseCSVLine($header_line, $delimiter);
+$headers = array_map(function($h) {
+    return strtolower(trim($h, '"'));
+}, $headers);
+
+// Mapear columnas
+$column_map = [];
+foreach ($headers as $index => $header) {
+    $header_clean = strtolower(trim($header));
+    if (stripos($header_clean, 'ci') !== false || stripos($header_clean, 'cedula') !== false || stripos($header_clean, 'cédula') !== false) {
+        $column_map['ci'] = $index;
+    } elseif (stripos($header_clean, 'nombre') !== false && stripos($header_clean, 'completo') !== false) {
+        $column_map['nombre_completo'] = $index;
+    } elseif (stripos($header_clean, 'nacimiento') !== false || stripos($header_clean, 'fecha') !== false) {
+        $column_map['fecha_nacimiento'] = $index;
+    } elseif (stripos($header_clean, 'sexo') !== false || stripos($header_clean, 'genero') !== false || stripos($header_clean, 'género') !== false) {
+        $column_map['sexo'] = $index;
+    } elseif (stripos($header_clean, 'unidad') !== false) {
+        $column_map['unidad'] = $index;
+    }
+}
+
+if (!isset($column_map['ci']) || !isset($column_map['nombre_completo'])) {
+    die("❌ Error: Columna esperada 'CI' o 'NOMBRE COMPLETO' no encontrada en el CSV.\n");
+}
+
+echo "✅ Columnas mapeadas correctamente\n";
+echo "📋 Mapa de columnas:\n";
+foreach ($column_map as $field => $index) {
+    echo "   • $field: índice $index\n";
+}
+
 // Conectar a la base de datos
 try {
     $pdo = getDBConnection();
@@ -162,6 +166,25 @@ try {
             CREATE INDEX idx_preinscriptos_ci ON preinscriptos (ci);
         ");
         echo "✅ Tabla creada\n";
+    } else {
+        // Verificar y corregir estructura de la tabla si es necesario
+        echo "📋 Verificando estructura de la tabla...\n";
+        try {
+            $check_sexo = $pdo->query("
+                SELECT character_maximum_length 
+                FROM information_schema.columns 
+                WHERE table_name = 'preinscriptos' 
+                AND column_name = 'sexo'
+            ")->fetchColumn();
+            
+            if ($check_sexo !== null && $check_sexo < 10) {
+                echo "🔧 Actualizando columna 'sexo' de VARCHAR($check_sexo) a VARCHAR(10)...\n";
+                $pdo->exec("ALTER TABLE preinscriptos ALTER COLUMN sexo TYPE VARCHAR(10)");
+                echo "✅ Columna actualizada\n";
+            }
+        } catch (Exception $e) {
+            echo "⚠️ No se pudo verificar/actualizar la estructura: " . $e->getMessage() . "\n";
+        }
     }
     
     // Preparar statement para INSERT/UPDATE
@@ -205,15 +228,30 @@ try {
         }
         
         // Extraer datos usando el mapa de columnas
-        $ci = isset($column_map['ci']) ? trim($fields[$column_map['ci']]) : '';
-        $nombre_completo = isset($column_map['nombre_completo']) ? trim($fields[$column_map['nombre_completo']]) : '';
-        $fecha_nacimiento_raw = isset($column_map['fecha_nacimiento']) ? trim($fields[$column_map['fecha_nacimiento']]) : '';
-        $sexo_raw = isset($column_map['sexo']) ? trim($fields[$column_map['sexo']]) : '';
-        $unidad_raw = isset($column_map['unidad']) ? trim($fields[$column_map['unidad']]) : '';
+        $ci = isset($column_map['ci']) && isset($fields[$column_map['ci']]) ? trim($fields[$column_map['ci']]) : '';
+        $nombre_completo = isset($column_map['nombre_completo']) && isset($fields[$column_map['nombre_completo']]) ? trim($fields[$column_map['nombre_completo']]) : '';
+        $fecha_nacimiento_raw = isset($column_map['fecha_nacimiento']) && isset($fields[$column_map['fecha_nacimiento']]) ? trim($fields[$column_map['fecha_nacimiento']]) : '';
+        $sexo_raw = isset($column_map['sexo']) && isset($fields[$column_map['sexo']]) ? trim($fields[$column_map['sexo']]) : '';
+        $unidad_raw = isset($column_map['unidad']) && isset($fields[$column_map['unidad']]) ? trim($fields[$column_map['unidad']]) : '';
         
         // Validar CI y nombre completo (requeridos)
         if (empty($ci) || empty($nombre_completo)) {
+            // Debug: mostrar qué campos tenemos
+            if ($i === $header_index + 1) {
+                echo "  🔍 Debug línea " . ($i + 1) . ": campos parseados: " . count($fields) . "\n";
+                echo "     Mapa de columnas: CI={$column_map['ci']}, NOMBRE={$column_map['nombre_completo']}\n";
+                echo "     Valores: CI='$ci', NOMBRE='$nombre_completo'\n";
+            }
             $errors++;
+            continue;
+        }
+        
+        // Validar que CI sea numérico (no una fecha)
+        if (!preg_match('/^\d+$/', $ci)) {
+            $errors++;
+            if ($i === $header_index + 1) {
+                echo "  ⚠️ Línea " . ($i + 1) . ": CI no es numérico: '$ci' (probablemente las columnas están desalineadas)\n";
+            }
             continue;
         }
         
