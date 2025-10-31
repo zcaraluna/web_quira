@@ -415,6 +415,21 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
         }
+        .btn-success:disabled,
+        .btn-secondary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #submit-btn.btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: white;
+        }
+        #submit-btn.btn-secondary:hover:not(:disabled) {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
         .btn-outline-secondary {
             border-color: #6c757d;
             color: #6c757d;
@@ -861,7 +876,7 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                             
                             <div class="form-group mt-5">
                                 <div class="d-flex justify-content-center gap-3">
-                                    <button type="submit" class="btn btn-success btn-lg px-4 py-2" id="submit-btn">
+                                    <button type="submit" class="btn btn-success btn-lg px-4 py-2" id="submit-btn" disabled>
                                         <i class="fas fa-save mr-2"></i> GUARDAR POSTULANTE
                                     </button>
                                     <a href="dashboard.php" class="btn btn-outline-secondary btn-lg px-4 py-2">
@@ -916,12 +931,39 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
      // También detectar en resize
      window.addEventListener('resize', detectarDispositivoMovil);
      
-     // Variables globales (replica exacta del software original)
-     let zktecoBridge = null;
+    // Variables globales (replica exacta del software original)
+    let zktecoBridge = null;
     let postulanteId = <?= $postulante_id ? json_encode($postulante_id) : 'null' ?>;
     let esModoPrueba = <?= $es_modo_prueba ? 'true' : 'false' ?>;
     let dispositivoConectado = false;
     let ultimoUID = null;
+    
+    // Función para verificar y habilitar el botón de guardar
+    function verificarYHabilitarBoton() {
+        const submitBtn = document.getElementById('submit-btn');
+        const aparatoBiometrico = document.getElementById('aparato_biometrico');
+        
+        if (submitBtn && aparatoBiometrico) {
+            const valorAparato = aparatoBiometrico.value.trim();
+            const dispositivoDetectado = valorAparato !== '' && 
+                                         valorAparato !== 'Detectando dispositivo...' && 
+                                         valorAparato !== 'Dispositivo no detectado';
+            
+            if (dispositivoDetectado) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-secondary');
+                submitBtn.classList.add('btn-success');
+                submitBtn.title = 'Listo para guardar';
+                console.log('✅ Botón habilitado - Dispositivo detectado:', valorAparato);
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.remove('btn-success');
+                submitBtn.classList.add('btn-secondary');
+                submitBtn.title = 'Esperando detección del dispositivo biométrico...';
+                console.log('⏳ Botón deshabilitado - Esperando detección del dispositivo');
+            }
+        }
+    }
     
      // Inicializar cuando el DOM esté listo (replica exacta del software original)
      document.addEventListener('DOMContentLoaded', async () => {
@@ -947,12 +989,18 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                 console.log('Desconectado del bridge ZKTeco');
                 updateDeviceStatus('Desconectado del bridge ZKTeco', 'disconnected');
                 dispositivoConectado = false;
+                // Deshabilitar botón cuando se desconecta
+                document.getElementById('aparato_biometrico').value = 'Detectando dispositivo...';
+                verificarYHabilitarBoton();
             });
             
             zktecoBridge.onError((error) => {
                 console.error('Error en bridge ZKTeco:', error);
                 updateDeviceStatus('Error en la conexión: ' + error, 'disconnected');
                 dispositivoConectado = false;
+                // Deshabilitar botón cuando hay error
+                document.getElementById('aparato_biometrico').value = 'Detectando dispositivo...';
+                verificarYHabilitarBoton();
             });
             
             // Paso 3: Conectar al bridge
@@ -981,12 +1029,21 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                     console.log('❌ Error: No se pudo conectar al dispositivo biométrico');
                     updateDeviceStatus('Error: No se pudo conectar al dispositivo biométrico', 'disconnected');
                     mostrarAvisoConexion();
+                    // Asegurar que el campo vuelva a "Detectando dispositivo..." y deshabilitar botón
+                    document.getElementById('aparato_biometrico').value = 'Detectando dispositivo...';
+                    verificarYHabilitarBoton();
                 }
             }
             
         } catch (error) {
             console.error('Error inicializando bridge:', error);
             updateDeviceStatus('Error: No se pudo conectar al bridge ZKTeco - ' + error.message, 'disconnected');
+            // Asegurar que el campo vuelva a "Detectando dispositivo..." y deshabilitar botón
+            const aparatoInput = document.getElementById('aparato_biometrico');
+            if (aparatoInput) {
+                aparatoInput.value = 'Detectando dispositivo...';
+            }
+            verificarYHabilitarBoton();
         }
     });
     
@@ -1001,6 +1058,9 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
             // Actualizar aparato biométrico
             document.getElementById('aparato_biometrico').value = 'APARATO DE PRUEBA (0X0AB0) - MODO PRUEBA';
             document.getElementById('serial_aparato').value = '0X0AB0';
+            
+            // Habilitar botón en modo prueba
+            verificarYHabilitarBoton();
             
             console.log(`Modo prueba: ID simulado generado: ${uidSimulado}`);
             
@@ -1044,27 +1104,42 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                          
                         if (data.success && data.aparato) {
                             document.getElementById('aparato_biometrico').value = data.aparato.nombre;
+                        verificarYHabilitarBoton();
                             document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
                             console.log(`✅ Aparato biométrico actualizado: ${data.aparato.nombre}`);
+                            // Habilitar botón cuando se detecta el dispositivo
+                            verificarYHabilitarBoton();
                         } else {
                             document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.device_info.serial_number})`;
+                        verificarYHabilitarBoton();
                             document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
                             console.log(`❌ Aparato no encontrado en BD, usando serial: ${deviceInfo.device_info.serial_number}`);
                             console.log('Respuesta del servidor:', data);
+                            // Habilitar botón aunque no esté en BD (tiene serial válido)
+                            verificarYHabilitarBoton();
                         }
                      } else {
                          document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.device_info.serial_number})`;
+                        verificarYHabilitarBoton();
+                         document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
                          console.log('❌ Error HTTP obteniendo datos del aparato, status:', response.status);
                          const errorText = await response.text();
                          console.log('Error response:', errorText);
+                         // Habilitar botón aunque haya error HTTP (tiene serial válido)
+                         verificarYHabilitarBoton();
                      }
                  } catch (error) {
                      console.error('❌ Error consultando aparato:', error);
                      document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.device_info.serial_number})`;
+                     document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
+                     // Habilitar botón aunque haya error (tiene serial válido)
+                     verificarYHabilitarBoton();
                  }
              } else {
                  console.log('No se pudo obtener el serial del dispositivo');
                  document.getElementById('aparato_biometrico').value = 'Dispositivo no detectado';
+                 // No habilitar botón si no hay serial
+                 verificarYHabilitarBoton();
              }
             
         } catch (error) {
@@ -1475,6 +1550,7 @@ Por favor verifique:
                     
                     if (data.success && data.aparato) {
                         document.getElementById('aparato_biometrico').value = data.aparato.nombre;
+                        verificarYHabilitarBoton();
                         document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
                         console.log(`✅ Aparato actualizado manualmente: ${data.aparato.nombre}`);
                         
@@ -1482,6 +1558,7 @@ Por favor verifique:
                         showToast('Aparato actualizado: ' + data.aparato.nombre, 'success');
                     } else {
                         document.getElementById('aparato_biometrico').value = `Dispositivo (${deviceInfo.device_info.serial_number})`;
+                        verificarYHabilitarBoton();
                         document.getElementById('serial_aparato').value = deviceInfo.device_info.serial_number;
                         console.log(`❌ Aparato no encontrado: ${deviceInfo.device_info.serial_number}`);
                         showToast('Aparato no encontrado en la base de datos', 'warning');
@@ -1931,8 +2008,11 @@ Por favor verifique:
             console.error('Error:', error);
             alert('❌ Error al agregar postulante: ' + error.message);
         } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> GUARDAR POSTULANTE';
+            // Solo restaurar el estado del botón si el formulario no fue exitosamente enviado
+            // Si fue exitoso, la página se recargará o redirigirá, así que no importa
+            // Si falló, verificar el estado del dispositivo antes de habilitar
+            verificarYHabilitarBoton();
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> GUARDAR POSTULANTE';
         }
     });
     
@@ -1976,6 +2056,25 @@ Por favor verifique:
     document.getElementById('nombre_completo').addEventListener('input', function(e) {
         convertirAMayusculas(e.target);
     });
+    
+    // Observar cambios en el campo de aparato biométrico para habilitar/deshabilitar botón
+    const aparatoInput = document.getElementById('aparato_biometrico');
+    if (aparatoInput) {
+        // Observer para detectar cambios en el valor del campo
+        const observer = new MutationObserver(function(mutations) {
+            verificarYHabilitarBoton();
+        });
+        
+        // Observar cambios en el atributo value
+        aparatoInput.addEventListener('input', function() {
+            verificarYHabilitarBoton();
+        });
+        
+        // También verificar periódicamente (cada segundo) por si el cambio se hace programáticamente
+        setInterval(function() {
+            verificarYHabilitarBoton();
+        }, 1000);
+    }
     
     // Validación de cédula en tiempo real
     document.getElementById('cedula').addEventListener('input', function(e) {
