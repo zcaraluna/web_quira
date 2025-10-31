@@ -291,8 +291,12 @@ try {
         }
         
         // Procesar unidad (limpiar comillas escapadas y comillas externas)
-        $unidad = trim($unidad_raw, '"'); // Remover comillas externas si existen
-        $unidad = str_replace('""', '"', $unidad); // Convertir comillas escapadas a comillas normales
+        // Primero convertir comillas escapadas a comillas normales
+        $unidad = str_replace('""', '"', $unidad_raw);
+        // Luego remover solo las comillas delimitadoras externas (si el campo empieza Y termina con comilla)
+        if (substr($unidad, 0, 1) === '"' && substr($unidad, -1) === '"') {
+            $unidad = substr($unidad, 1, -1); // Remover primera y última comilla
+        }
         
         // Procesar fecha de nacimiento (múltiples formatos)
         $fecha_nacimiento = null;
