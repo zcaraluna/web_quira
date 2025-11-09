@@ -121,6 +121,23 @@ foreach ($headers as $idx => $h) {
     echo "   [$idx] = '$h'\n";
 }
 
+function normalizarSexoCsv($valor) {
+    if ($valor === null) {
+        return null;
+    }
+
+    $sigla = strtoupper(trim(trim($valor), "\"' "));
+
+    switch ($sigla) {
+        case 'F':
+            return 'M'; // Mujer
+        case 'M':
+            return 'H'; // Hombre
+        default:
+            return null;
+    }
+}
+
 $column_map = [];
 foreach ($headers as $index => $header) {
     $header_clean = strtolower(trim($header));
@@ -156,30 +173,6 @@ if (!isset($column_map['ci']) || !isset($column_map['nombre_completo'])) {
 }
 
 $max_col = max(array_values($column_map));
-
-$interpreta_siglas_mf = false;
-if (isset($column_map['sexo'])) {
-    for ($i = $header_index + 1; $i < count($lines); $i++) {
-        $line = trim($lines[$i]);
-        if (empty($line) || preg_match('/^[\s' . preg_quote($delimiter, '/') . ']+$/', $line)) {
-            continue;
-        }
-        $fields_preview = parseCSVLine($line, $delimiter);
-        if (count($fields_preview) <= $max_col) {
-            continue;
-        }
-        $sexo_preview = isset($column_map['sexo']) && isset($fields_preview[$column_map['sexo']])
-            ? strtoupper(trim(trim($fields_preview[$column_map['sexo']]), "\"' "))
-            : '';
-        if ($sexo_preview === 'F') {
-            $interpreta_siglas_mf = true;
-            break;
-        }
-    }
-}
-if ($interpreta_siglas_mf) {
-    echo "ℹ️  El archivo utiliza siglas 'M/F' (Masculino/Femenino). Se interpretará 'M' como masculino.\n";
-}
 
 echo "✅ Columnas mapeadas correctamente\n";
 echo "📋 Mapa de columnas:\n";
@@ -305,27 +298,7 @@ try {
         // Convertir sexo a H/M (el constraint de la tabla solo acepta H o M)
         $sexo = null;
         if (!empty($sexo_raw)) {
-            $sexo_upper = strtoupper(trim(trim($sexo_raw), "\"' "));
-            if ($sexo_upper === 'H' || strpos($sexo_upper, 'HOMB') === 0) {
-                $sexo = 'H';
-            } elseif ($sexo_upper === 'F' || strpos($sexo_upper, 'FEM') === 0) {
-                $sexo = 'M';
-            } elseif (strpos($sexo_upper, 'MASC') === 0) {
-                $sexo = 'H';
-            } elseif (strpos($sexo_upper, 'MUJER') === 0) {
-                $sexo = 'M';
-            } elseif ($sexo_upper === 'M') {
-                $sexo = $interpreta_siglas_mf ? 'H' : 'M';
-            } else {
-                $primer_caracter = substr($sexo_upper, 0, 1);
-                if ($primer_caracter === 'H') {
-                    $sexo = 'H';
-                } elseif ($primer_caracter === 'M' || $primer_caracter === 'F') {
-                    $sexo = $primer_caracter === 'F' ? 'M' : ($interpreta_siglas_mf ? 'H' : 'M');
-                } else {
-                    $sexo = null;
-                }
-            }
+            $sexo = normalizarSexoCsv($sexo_raw);
         }
         
         // Procesar unidad
