@@ -949,26 +949,49 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
     function verificarYHabilitarBoton() {
         const submitBtn = document.getElementById('submit-btn');
         const aparatoBiometrico = document.getElementById('aparato_biometrico');
-        
-        if (submitBtn && aparatoBiometrico) {
-            const valorAparato = aparatoBiometrico.value.trim();
-            const dispositivoDetectado = valorAparato !== '' && 
-                                         valorAparato !== 'Detectando dispositivo...' && 
-                                         valorAparato !== 'Dispositivo no detectado';
-            
-            if (dispositivoDetectado) {
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('btn-secondary');
-                submitBtn.classList.add('btn-success');
-                submitBtn.title = 'Listo para guardar';
-                console.log('✅ Botón habilitado - Dispositivo detectado:', valorAparato);
-            } else {
-                submitBtn.disabled = true;
-                submitBtn.classList.remove('btn-success');
-                submitBtn.classList.add('btn-secondary');
-                submitBtn.title = 'Esperando detección del dispositivo biométrico...';
-                console.log('⏳ Botón deshabilitado - Esperando detección del dispositivo');
-            }
+
+        if (!submitBtn || !aparatoBiometrico) {
+            return;
+        }
+
+        const advertenciaUltimoActiva = document.getElementById('advertencia-ultimo-usuario') &&
+                                        document.getElementById('advertencia-ultimo-usuario').style.display !== 'none';
+        const advertenciaManualActiva = document.getElementById('advertencia-usuario-manual') &&
+                                        document.getElementById('advertencia-usuario-manual').style.display !== 'none';
+        const advertenciaIdAdelantadoActiva = document.getElementById('advertencia-id-adelantado') &&
+                                              document.getElementById('advertencia-id-adelantado').style.display !== 'none';
+        const advertenciaActiva = advertenciaUltimoActiva || advertenciaManualActiva || advertenciaIdAdelantadoActiva;
+
+        if (advertenciaActiva) {
+            submitBtn.disabled = true;
+            submitBtn.className = 'btn btn-danger btn-lg px-4 py-2';
+            submitBtn.innerHTML = '<i class="fas fa-ban mr-2"></i> GUARDADO DESHABILITADO';
+            submitBtn.title = 'El guardado se deshabilitó por advertencia de seguridad.';
+            console.log('⛔ Botón bloqueado por advertencia activa');
+            return;
+        }
+
+        const valorAparato = aparatoBiometrico.value.trim();
+        const dispositivoDetectado = valorAparato !== '' &&
+                                     valorAparato !== 'Detectando dispositivo...' &&
+                                     valorAparato !== 'Dispositivo no detectado';
+
+        if (dispositivoDetectado) {
+            submitBtn.disabled = false;
+            submitBtn.className = esModoPrueba
+                ? 'btn btn-warning btn-lg px-4 py-2'
+                : 'btn btn-success btn-lg px-4 py-2';
+            submitBtn.innerHTML = esModoPrueba
+                ? '<i class="fas fa-save mr-2"></i> GUARDAR POSTULANTE (MODO PRUEBA)'
+                : '<i class="fas fa-save mr-2"></i> GUARDAR POSTULANTE';
+            submitBtn.title = esModoPrueba ? 'Modo prueba activo.' : 'Listo para guardar.';
+            console.log('✅ Botón habilitado - Dispositivo detectado:', valorAparato);
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.className = 'btn btn-secondary btn-lg px-4 py-2';
+            submitBtn.innerHTML = '<i class="fas fa-ban mr-2"></i> DISPOSITIVO NO CONECTADO';
+            submitBtn.title = 'Esperando detección del dispositivo biométrico...';
+            console.log('⏳ Botón deshabilitado - Esperando detección del dispositivo');
         }
     }
     
