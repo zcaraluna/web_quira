@@ -155,6 +155,32 @@ if (!isset($column_map['ci']) || !isset($column_map['nombre_completo'])) {
     die("❌ Error: Columna esperada 'CI' o 'NOMBRE COMPLETO' no encontrada en el CSV.\n");
 }
 
+$max_col = max(array_values($column_map));
+
+$interpreta_siglas_mf = false;
+if (isset($column_map['sexo'])) {
+    for ($i = $header_index + 1; $i < count($lines); $i++) {
+        $line = trim($lines[$i]);
+        if (empty($line) || preg_match('/^[\s' . preg_quote($delimiter, '/') . ']+$/', $line)) {
+            continue;
+        }
+        $fields_preview = parseCSVLine($line, $delimiter);
+        if (count($fields_preview) <= $max_col) {
+            continue;
+        }
+        $sexo_preview = isset($column_map['sexo']) && isset($fields_preview[$column_map['sexo']])
+            ? strtoupper(trim(trim($fields_preview[$column_map['sexo']]), "\"' "))
+            : '';
+        if ($sexo_preview === 'F') {
+            $interpreta_siglas_mf = true;
+            break;
+        }
+    }
+}
+if ($interpreta_siglas_mf) {
+    echo "ℹ️  El archivo utiliza siglas 'M/F' (Masculino/Femenino). Se interpretará 'M' como masculino.\n";
+}
+
 echo "✅ Columnas mapeadas correctamente\n";
 echo "📋 Mapa de columnas:\n";
 foreach ($column_map as $field => $index) {
@@ -239,7 +265,6 @@ try {
         $fields = parseCSVLine($line, $delimiter);
         
         // Validar que tenemos suficientes campos
-        $max_col = max(array_values($column_map));
         if (count($fields) <= $max_col) {
             $errors++;
             continue;
@@ -280,16 +305,25 @@ try {
         // Convertir sexo a H/M (el constraint de la tabla solo acepta H o M)
         $sexo = null;
         if (!empty($sexo_raw)) {
-            $sexo_upper = strtoupper(trim($sexo_raw));
-            if ($sexo_upper === 'H' || $sexo_upper === 'HOMBRE') {
+            $sexo_upper = strtoupper(trim(trim($sexo_raw), "\"' "));
+            if ($sexo_upper === 'H' || strpos($sexo_upper, 'HOMB') === 0) {
                 $sexo = 'H';
-            } elseif ($sexo_upper === 'M' || $sexo_upper === 'MUJER') {
+            } elseif ($sexo_upper === 'F' || strpos($sexo_upper, 'FEM') === 0) {
                 $sexo = 'M';
+            } elseif (strpos($sexo_upper, 'MASC') === 0) {
+                $sexo = 'H';
+            } elseif (strpos($sexo_upper, 'MUJER') === 0) {
+                $sexo = 'M';
+            } elseif ($sexo_upper === 'M') {
+                $sexo = $interpreta_siglas_mf ? 'H' : 'M';
             } else {
-                // Si no es H o M, intentar el primer carácter
-                $sexo = strtoupper(substr($sexo_raw, 0, 1));
-                if ($sexo !== 'H' && $sexo !== 'M') {
-                    $sexo = null; // No válido
+                $primer_caracter = substr($sexo_upper, 0, 1);
+                if ($primer_caracter === 'H') {
+                    $sexo = 'H';
+                } elseif ($primer_caracter === 'M' || $primer_caracter === 'F') {
+                    $sexo = $primer_caracter === 'F' ? 'M' : ($interpreta_siglas_mf ? 'H' : 'M');
+                } else {
+                    $sexo = null;
                 }
             }
         }
