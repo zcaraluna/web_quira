@@ -2267,12 +2267,12 @@ $distribucion_unidad = $pdo->query("
                                                 <div class="col-md-8">
                                                     <form method="GET" id="fechaForm">
                                                         <input type="hidden" name="tab" value="reporte">
-                                                        <div class="row">
-                                                            <div class="col-md-3">
+                                                        <div class="form-row align-items-end">
+                                                            <div class="col-lg-3 col-md-4 mb-3">
                                                                 <label for="fecha_reporte" class="form-label">Fecha:</label>
                                                                 <input type="date" class="form-control" id="fecha_reporte" name="fecha_reporte" value="<?= $fecha_reporte ?>">
                                                             </div>
-                                                            <div class="col-md-3">
+                                                            <div class="col-lg-3 col-md-4 mb-3">
                                                                 <label for="unidad_reporte" class="form-label">Unidad:</label>
                                                                 <select class="form-control" id="unidad_reporte" name="unidad_reporte">
                                                                     <option value="">Todas las unidades</option>
@@ -2283,17 +2283,16 @@ $distribucion_unidad = $pdo->query("
                                                                     <?php endforeach; ?>
                                                                 </select>
                                                             </div>
-                                                            <div class="col-md-2">
+                                                            <div class="col-lg-2 col-md-4 mb-3">
                                                                 <label for="hora_desde" class="form-label">Desde:</label>
                                                                 <input type="time" class="form-control" id="hora_desde" name="hora_desde" value="<?= $_GET['hora_desde'] ?? '00:00' ?>">
                                                             </div>
-                                                            <div class="col-md-2">
+                                                            <div class="col-lg-2 col-md-4 mb-3">
                                                                 <label for="hora_hasta" class="form-label">Hasta:</label>
                                                                 <input type="time" class="form-control" id="hora_hasta" name="hora_hasta" value="<?= $_GET['hora_hasta'] ?? '23:59' ?>">
                                                             </div>
-                                                            <div class="col-md-2">
-                                                                <label class="form-label">&nbsp;</label>
-                                                                <button type="submit" class="btn btn-primary btn-block">
+                                                            <div class="col-lg-2 col-md-4 mb-3 d-flex">
+                                                                <button type="submit" class="btn btn-primary btn-block w-100 align-self-end">
                                                                     <i class="fas fa-calendar-check"></i> Aplicar
                                                                 </button>
                                                             </div>
