@@ -5233,7 +5233,7 @@ $distribucion_unidad = $pdo->query("
                         </li>
                         <li class="mb-0">
                             Puede utilizar este
-                            <button type="button" class="btn btn-link p-0 align-baseline" id="btn-ver-video-instrucciones" data-video-url="https://www.youtube.com/embed/VIDEO_ID" aria-label="Abrir videotutorial">
+                            <button type="button" class="btn btn-link p-0 align-baseline" id="btn-ver-video-instrucciones" data-video-src="assets/media/various/zktecok40.mov" aria-label="Abrir videotutorial">
                                 vídeo
                             </button>
                             para ver un tutorial paso a paso.
@@ -5265,9 +5265,10 @@ $distribucion_unidad = $pdo->query("
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <div class="embed-responsive embed-responsive-16by9">
-                        <iframe class="embed-responsive-item" id="iframe-video-tutorial" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
+                    <video id="video-tutorial" class="w-100 d-block" controls preload="none" style="max-height: 70vh; background: #000;">
+                        <source src="" type="video/quicktime">
+                        Tu navegador no soporta la reproducción de video.
+                    </video>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-light" data-dismiss="modal">
@@ -5365,7 +5366,7 @@ $distribucion_unidad = $pdo->query("
             const linkAgregarPostulante = document.getElementById('link-agregar-postulante');
             const btnConfirmarInstrucciones = document.getElementById('btn-confirmar-instrucciones');
             const btnVerVideoInstrucciones = document.getElementById('btn-ver-video-instrucciones');
-            const iframeVideoTutorial = document.getElementById('iframe-video-tutorial');
+            const videoTutorial = document.getElementById('video-tutorial');
             const destinoAgregar = linkAgregarPostulante ? linkAgregarPostulante.getAttribute('data-destino') : null;
 
             if (linkAgregarPostulante && window.jQuery) {
@@ -5384,17 +5385,28 @@ $distribucion_unidad = $pdo->query("
                 });
             }
 
-            if (btnVerVideoInstrucciones && iframeVideoTutorial && window.jQuery) {
+            if (btnVerVideoInstrucciones && videoTutorial && window.jQuery) {
                 btnVerVideoInstrucciones.addEventListener('click', function() {
-                    const videoUrl = btnVerVideoInstrucciones.getAttribute('data-video-url');
-                    if (videoUrl) {
-                        iframeVideoTutorial.src = videoUrl;
+                    const videoSrc = btnVerVideoInstrucciones.getAttribute('data-video-src');
+                    if (videoSrc) {
+                        const source = videoTutorial.querySelector('source');
+                        if (source) {
+                            source.src = videoSrc;
+                        }
+                        videoTutorial.load();
+                        videoTutorial.play().catch(() => {});
                     }
                     $('#modal-video-tutorial').modal('show');
                 });
 
                 $('#modal-video-tutorial').on('hidden.bs.modal', function() {
-                    iframeVideoTutorial.src = '';
+                    videoTutorial.pause();
+                    videoTutorial.currentTime = 0;
+                    const source = videoTutorial.querySelector('source');
+                    if (source) {
+                        source.src = '';
+                    }
+                    videoTutorial.load();
                 });
             }
         });
