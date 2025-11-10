@@ -381,11 +381,34 @@
                 const btnVerVideoInstrucciones = document.getElementById('btn-ver-video-instrucciones');
                 const videoTutorial = document.getElementById('video-tutorial');
                 const destinoAgregar = linkAgregarPostulante ? linkAgregarPostulante.getAttribute('data-destino') : null;
+                const blurTargetElements = Array.from(document.querySelectorAll('body > *:not(.modal)'));
+
+                function setBlurState(active) {
+                    blurTargetElements.forEach(el => {
+                        if (el) {
+                            el.classList.toggle('blurred-background', active);
+                        }
+                    });
+
+                    if (active) {
+                        document.body.classList.add('blurred-background');
+                    } else {
+                        document.body.classList.remove('blurred-background');
+                    }
+                }
 
                 if (linkAgregarPostulante && window.jQuery) {
                     linkAgregarPostulante.addEventListener('click', function(e) {
                         e.preventDefault();
                         $('#modal-instrucciones-postulante').modal('show');
+                    });
+
+                    $('#modal-instrucciones-postulante').on('shown.bs.modal', function() {
+                        setBlurState(true);
+                    });
+
+                    $('#modal-instrucciones-postulante').on('hidden.bs.modal', function() {
+                        setBlurState(false);
                     });
                 }
 
@@ -410,6 +433,7 @@
                             videoTutorial.play().catch(() => {});
                         }
                         $('#modal-video-tutorial').modal('show');
+                    setBlurState(true);
                     });
 
                     $('#modal-video-tutorial').on('hidden.bs.modal', function() {
@@ -420,6 +444,7 @@
                             source.src = '';
                         }
                         videoTutorial.load();
+                    setBlurState(false);
                     });
                 }
 
@@ -436,16 +461,100 @@
         </div>
 
         <style>
-            #modal-instrucciones-postulante .modal-header {
+            .modal-video-content {
+                background: #0f172a;
+                color: #e2e8f0;
+                border-radius: 1rem;
+                overflow: hidden;
+            }
+            .modal-video-header {
                 background-color: #2E5090;
                 border-bottom: none;
+                align-items: center;
+            }
+            .modal-video-header h5 {
+                margin-bottom: 0;
+                font-weight: 700;
+                letter-spacing: 0.4px;
+                color: #cbd5e1;
+            }
+            .modal-video-header .modal-title i {
+                color: #a8b4c7;
+            }
+            .modal-video-header .close {
+                opacity: 0.8;
+                color: #cbd5e1;
+            }
+            .modal-video-header .close:hover {
+                opacity: 1;
+            }
+            .modal-video-body {
+                padding: 0;
+                background: radial-gradient(circle at top, rgba(46, 80, 144, 0.15), transparent 55%), #0b1220;
+            }
+            .modal-video-body .video-wrapper {
+                position: relative;
+                width: 100%;
+                padding-top: 56.25%;
+                background: #000;
+            }
+            .modal-video-body .video-wrapper video {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                background: #000;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            }
+            .modal-video-footer {
+                background: rgba(15, 23, 42, 0.85);
+                border-top: 1px solid rgba(148, 163, 184, 0.15);
+                justify-content: center;
+            }
+            .modal-video-footer .btn-outline-light {
+                border-color: rgba(226, 232, 240, 0.4);
+            }
+            .modal-video-footer .btn-outline-light:hover {
+                background: rgba(226, 232, 240, 0.1);
+            }
+            .modal-video-content {
+                max-width: 820px;
+                margin: 0 auto;
+            }
+            .modal-video-body .video-wrapper {
+                padding-top: 56.25%;
+            }
+            @media (max-width: 992px) {
+                .modal-video-content {
+                    max-width: 90vw;
+                }
+            }
+            @media (max-width: 768px) {
+                .modal-video-content {
+                    border-radius: 0.75rem;
+                }
+                .modal-video-footer {
+                    flex-direction: column;
+                    gap: 0.75rem;
+                }
+            }
+            .blurred-background {
+                filter: blur(6px);
+                transition: filter 0.3s ease;
+            }
+            body.blurred-background {
+                overflow: hidden;
+            }
+            #modal-instrucciones-postulante .modal-header .close {
+                opacity: 0.7;
                 color: #ffffff;
+                transition: color 0.2s ease, opacity 0.2s ease;
             }
-            #modal-instrucciones-postulante .modal-body {
-                color: #4a5568;
-            }
-            #modal-instrucciones-postulante .modal-body .lead {
-                color: #404a5a;
+            #modal-instrucciones-postulante .modal-header .close:hover {
+                color: #ff4d4f;
+                opacity: 1;
             }
             #modal-instrucciones-postulante .btn-guide-action {
                 padding: 0.65rem 1.75rem;
@@ -482,64 +591,22 @@
             #modal-instrucciones-postulante .btn-guide-action i {
                 font-size: 0.95rem;
             }
-            #modal-video-tutorial .modal-content {
-                background: #0f172a;
-                color: #e2e8f0;
-                border-radius: 1rem;
-                overflow: hidden;
-            }
-            #modal-video-tutorial .modal-header {
-                background-color: #2E5090;
-                border-bottom: none;
-                color: #cbd5e1;
-            }
-            #modal-video-tutorial .modal-header .close {
-                color: #cbd5e1;
-                opacity: 0.8;
-            }
-            #modal-video-tutorial .modal-header .close:hover {
-                opacity: 1;
-            }
-            #modal-video-tutorial .modal-body {
-                padding: 0;
-                background: radial-gradient(circle at top, rgba(46, 80, 144, 0.15), transparent 55%), #0b1220;
-            }
-            #modal-video-tutorial .video-wrapper {
-                position: relative;
-                width: 100%;
-                padding-top: 56.25%;
-                background: #000;
-            }
-            #modal-video-tutorial .video-wrapper video {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                background: #000;
-                border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-            }
-            #modal-video-tutorial .modal-footer {
-                background: rgba(15, 23, 42, 0.85);
-                border-top: 1px solid rgba(148, 163, 184, 0.15);
-            }
         </style>
 
         <!-- Modal Instrucciones Agregar Postulante -->
         <div class="modal fade" id="modal-instrucciones-postulante" tabindex="-1" role="dialog" aria-labelledby="modalInstruccionesPostulanteLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div class="modal-content border-0 shadow-lg">
-                    <div class="modal-header">
-                        <h5 class="modal-title font-weight-bold" id="modalInstruccionesPostulanteLabel">
+                    <div class="modal-header text-white" style="background-color: #2E5090; border-bottom: none;">
+                        <h5 class="modal-title font-weight-bold text-white" id="modalInstruccionesPostulanteLabel">
                             <i class="fas fa-fingerprint mr-2"></i> Antes de agregar un postulante
                         </h5>
                         <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div class="modal-body">
-                        <p class="lead mb-4">
+                    <div class="modal-body" style="color: #4a5568;">
+                        <p class="lead mb-4" style="color: #404a5a;">
                             Para agregar un nuevo postulante, asegúrese de registrar el dedo del postulante en el dispositivo biométrico que tiene conectado a su computadora.
                         </p>
                         <ol class="pl-4 mb-0">
@@ -561,7 +628,7 @@
                             </li>
                         </ol>
                     </div>
-                    <div class="modal-footer d-flex flex-column flex-md-row align-items-center justify-content-center w-100" style="gap: 0.75rem;">
+                    <div class="modal-footer d-flex flex-column flex-md-row align-items-center justify-content-center w-100" style="gap: 0.75rem; border-top: none;">
                         <button type="button" class="btn btn-guide-action btn-guide-secondary" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i> Cerrar
                         </button>
@@ -576,16 +643,16 @@
         <!-- Modal Video Tutorial -->
         <div class="modal fade" id="modal-video-tutorial" tabindex="-1" role="dialog" aria-labelledby="modalVideoTutorialLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
+                <div class="modal-content modal-video-content shadow-lg">
+                    <div class="modal-header modal-video-header text-white">
                         <h5 class="modal-title" id="modalVideoTutorialLabel">
                             <i class="fas fa-play-circle mr-2"></i> Videotutorial de registro biométrico
                         </h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body modal-video-body">
                         <div class="video-wrapper">
                             <video id="video-tutorial" class="video-player" controls preload="none">
                                 <source src="" type="video/mp4">
@@ -593,7 +660,7 @@
                             </video>
                         </div>
                     </div>
-                    <div class="modal-footer justify-content-center">
+                    <div class="modal-footer modal-video-footer">
                         <button type="button" class="btn btn-outline-light btn-sm" data-dismiss="modal">
                             <i class="fas fa-times mr-1"></i> Cerrar
                         </button>
