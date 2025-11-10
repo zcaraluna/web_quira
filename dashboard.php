@@ -5221,9 +5221,14 @@ $distribucion_unidad = $pdo->query("
             margin-bottom: 0;
             font-weight: 700;
             letter-spacing: 0.4px;
+            color: #cbd5e1;
+        }
+        .modal-video-header .modal-title i {
+            color: #a8b4c7;
         }
         .modal-video-header .close {
             opacity: 0.8;
+            color: #cbd5e1;
         }
         .modal-video-header .close:hover {
             opacity: 1;
@@ -5300,6 +5305,15 @@ $distribucion_unidad = $pdo->query("
         }
         body.blurred-background {
             overflow: hidden;
+        }
+        #modal-instrucciones-postulante .modal-header .close {
+            opacity: 0.7;
+            color: #ffffff;
+            transition: color 0.2s ease, opacity 0.2s ease;
+        }
+        #modal-instrucciones-postulante .modal-header .close:hover {
+            color: #ff4d4f;
+            opacity: 1;
         }
     </style>
 
