@@ -5322,9 +5322,9 @@ $distribucion_unidad = $pdo->query("
             box-shadow: inset 0 0 0 1px rgba(74, 79, 88, 0.3);
         }
         #modal-instrucciones-postulante .btn-close-instrucciones:hover {
-            color: #e03131;
+            color: #c9191f;
             background-color: #ffffff;
-            box-shadow: inset 0 0 0 1px rgba(224, 49, 49, 0.4);
+            box-shadow: inset 0 0 0 1px rgba(201, 25, 31, 0.6);
         }
     </style>
 
@@ -5349,7 +5349,7 @@ $distribucion_unidad = $pdo->query("
                             Diríjase a su dispositivo biométrico y presione el botón <strong>M/OK</strong>.
                         </li>
                         <li class="mb-3">
-                            Entre en la opción <strong>Usuarios</strong>, elija <strong>Nuevo usuario</strong> y dentro del menú seleccione <strong>Huella</strong> para capturar la huella del postulante.
+                            Entre en la opción <strong>Usuarios</strong>, elija <strong>Nuevo usuario</strong> y dentro del menú seleccione <strong>Huella</strong> para capturar la huella del postulante según las instrucciones del dispositivo.
                         </li>
                         <li class="mb-3">
                             Una vez tomada la huella del postulante, regrese a la pantalla principal del biométrico presionando <strong>ESC</strong> hasta llegar a ese punto.
@@ -5360,7 +5360,7 @@ $distribucion_unidad = $pdo->query("
                                 vídeo
                             </button>
                             para ver un tutorial paso a paso.
-                        </li>
+                            </li>
                     </ol>
                 </div>
                 <div class="modal-footer">
