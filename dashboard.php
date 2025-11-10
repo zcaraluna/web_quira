@@ -1,6 +1,5 @@
 <?php
 session_start();
-require_once 'feature_flags.php';
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['user_id'])) {
@@ -28,7 +27,6 @@ function getRandomHeaderImage() {
 }
 
 $randomHeaderImage = getRandomHeaderImage();
-$showInstructionModals = getFeatureFlag('show_instruction_modals', true);
 
 // Configuración de la base de datos
 $host = 'localhost';
@@ -66,8 +64,6 @@ $unidades_count = $pdo->query("SELECT COUNT(*) FROM unidades")->fetchColumn();
 // Gestión de usuarios - solo para ADMIN y SUPERADMIN
 $mensaje_usuarios = '';
 $tipo_mensaje_usuarios = '';
-$mensaje_configuracion = '';
-$tipo_mensaje_configuracion = '';
 
 // Verificar si hay mensajes en sesión
 if (isset($_SESSION['mensaje_usuarios'])) {
@@ -77,34 +73,12 @@ if (isset($_SESSION['mensaje_usuarios'])) {
     unset($_SESSION['mensaje_usuarios']);
     unset($_SESSION['tipo_mensaje_usuarios']);
 }
-if (isset($_SESSION['mensaje_configuracion'])) {
-    $mensaje_configuracion = $_SESSION['mensaje_configuracion'];
-    $tipo_mensaje_configuracion = $_SESSION['tipo_mensaje_configuracion'];
-    unset($_SESSION['mensaje_configuracion']);
-    unset($_SESSION['tipo_mensaje_configuracion']);
-}
 
 if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';
     
     try {
         switch ($accion) {
-            case 'toggle_modal_instrucciones':
-                if ($_SESSION['rol'] !== 'SUPERADMIN') {
-                    throw new Exception('No está autorizado para cambiar esta configuración');
-                }
-
-                $estado_modal = isset($_POST['modal_instrucciones']) && $_POST['modal_instrucciones'] === '1';
-
-                if (setFeatureFlag('show_instruction_modals', $estado_modal)) {
-                    $_SESSION['mensaje_configuracion'] = $estado_modal
-                        ? 'Los modales de instrucciones fueron habilitados correctamente.'
-                        : 'Los modales de instrucciones fueron deshabilitados correctamente.';
-                    $_SESSION['tipo_mensaje_configuracion'] = 'success';
-                } else {
-                    throw new Exception('No se pudo actualizar la configuración de modales.');
-                }
-                break;
             case 'crear_usuario':
                 $usuario = trim($_POST['usuario']);
                 $nombre = trim($_POST['nombre']);
@@ -415,9 +389,6 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
         } elseif (strpos($accion, 'unidad') !== false) {
             $_SESSION['mensaje_unidades'] = $e->getMessage();
             $_SESSION['tipo_mensaje_unidades'] = 'danger';
-        } elseif ($accion === 'toggle_modal_instrucciones') {
-            $_SESSION['mensaje_configuracion'] = $e->getMessage();
-            $_SESSION['tipo_mensaje_configuracion'] = 'danger';
         } else {
             $_SESSION['mensaje_usuarios'] = $e->getMessage();
             $_SESSION['tipo_mensaje_usuarios'] = 'danger';
@@ -429,8 +400,6 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
         header('Location: dashboard.php#dispositivos');
     } elseif (strpos($accion, 'unidad') !== false) {
         header('Location: dashboard.php#unidades');
-    } elseif ($accion === 'toggle_modal_instrucciones') {
-        header('Location: dashboard.php#configuracion');
     } else {
         header('Location: dashboard.php#usuarios');
     }
@@ -2523,32 +2492,7 @@ $distribucion_unidad = $pdo->query("
                                         <h5 class="mb-0"><i class="fas fa-cog mr-2"></i>Configuración General</h5>
                                     </div>
                                     <div class="card-body">
-                                        <p class="text-muted mb-3">Controla el comportamiento de los modales informativos antes de registrar postulantes.</p>
-                                        <?php if (!empty($mensaje_configuracion)): ?>
-                                        <div class="alert alert-<?= htmlspecialchars($tipo_mensaje_configuracion ?? 'info') ?> alert-dismissible fade show" role="alert">
-                                            <i class="fas fa-<?= ($tipo_mensaje_configuracion ?? '') === 'success' ? 'check-circle' : 'info-circle' ?>"></i>
-                                            <?= htmlspecialchars($mensaje_configuracion) ?>
-                                            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <?php endif; ?>
-                                        <form method="POST">
-                                            <input type="hidden" name="accion" value="toggle_modal_instrucciones">
-                                            <input type="hidden" name="modal_instrucciones" value="0">
-                                            <div class="custom-control custom-switch">
-                                                <input type="checkbox" class="custom-control-input" id="switchModalesInstrucciones" name="modal_instrucciones" value="1" <?= $showInstructionModals ? 'checked' : '' ?>>
-                                                <label class="custom-control-label font-weight-bold" for="switchModalesInstrucciones">
-                                                    Mostrar modales de instrucciones antes de agregar postulantes
-                                                </label>
-                                            </div>
-                                            <small class="text-muted d-block mt-2">
-                                                Este ajuste es global para todos los usuarios con acceso a los formularios de registro.
-                                            </small>
-                                            <button type="submit" class="btn btn-primary btn-sm mt-3">
-                                                <i class="fas fa-save mr-1"></i> Guardar cambios
-                                            </button>
-                                        </form>
+                                        <p class="text-muted">Módulo de configuración en desarrollo...</p>
                                     </div>
                                 </div>
                             </div>
@@ -5581,67 +5525,63 @@ $distribucion_unidad = $pdo->query("
                 e.stopPropagation();
             });
 
-            const modalsEnabled = <?= $showInstructionModals ? 'true' : 'false' ?>;
+            // Modal previo para agregar postulante
+            const linkAgregarPostulante = document.getElementById('link-agregar-postulante');
+            const btnConfirmarInstrucciones = document.getElementById('btn-confirmar-instrucciones');
+            const btnVerVideoInstrucciones = document.getElementById('btn-ver-video-instrucciones');
+            const videoTutorial = document.getElementById('video-tutorial');
+            const destinoAgregar = linkAgregarPostulante ? linkAgregarPostulante.getAttribute('data-destino') : null;
+            const blurTargetElements = Array.from(document.querySelectorAll('body > *:not(.modal)'));
 
-            if (modalsEnabled) {
-                const linkAgregarPostulante = document.getElementById('link-agregar-postulante');
-                const btnConfirmarInstrucciones = document.getElementById('btn-confirmar-instrucciones');
-                const btnVerVideoInstrucciones = document.getElementById('btn-ver-video-instrucciones');
-                const videoTutorial = document.getElementById('video-tutorial');
-                const destinoAgregar = linkAgregarPostulante ? linkAgregarPostulante.getAttribute('data-destino') : null;
-                const blurTargetElements = Array.from(document.querySelectorAll('body > *:not(.modal)'));
+            if (linkAgregarPostulante && window.jQuery) {
+                linkAgregarPostulante.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    $('#modal-instrucciones-postulante').modal('show');
+                });
+            }
 
-                function setBlurState(active) {
-                    blurTargetElements.forEach(el => {
-                        if (el) {
-                            el.classList.toggle('blurred-background', active);
-                        }
-                    });
-                    document.body.classList.toggle('blurred-background', active);
-                }
+            if (btnConfirmarInstrucciones && window.jQuery) {
+                btnConfirmarInstrucciones.addEventListener('click', function() {
+                    $('#modal-instrucciones-postulante').modal('hide');
+                    if (destinoAgregar) {
+                        window.location.href = destinoAgregar;
+                    }
+                });
+            }
 
-                if (linkAgregarPostulante && window.jQuery) {
-                    linkAgregarPostulante.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        $('#modal-instrucciones-postulante').modal('show');
-                    });
-                }
+            function setBlurState(active) {
+                blurTargetElements.forEach(el => {
+                    if (el) {
+                        el.classList.toggle('blurred-background', active);
+                    }
+                });
+            }
 
-                if (btnConfirmarInstrucciones && window.jQuery) {
-                    btnConfirmarInstrucciones.addEventListener('click', function() {
-                        $('#modal-instrucciones-postulante').modal('hide');
-                        if (destinoAgregar) {
-                            window.location.href = destinoAgregar;
-                        }
-                    });
-                }
-
-                if (btnVerVideoInstrucciones && videoTutorial && window.jQuery) {
-                    btnVerVideoInstrucciones.addEventListener('click', function() {
-                        const videoSrc = btnVerVideoInstrucciones.getAttribute('data-video-src');
-                        if (videoSrc) {
-                            const source = videoTutorial.querySelector('source');
-                            if (source) {
-                                source.src = videoSrc;
-                            }
-                            videoTutorial.load();
-                            videoTutorial.play().catch(() => {});
-                        }
-                        $('#modal-video-tutorial').modal('show');
-                        setBlurState(true);
-                    });
-
-                    $('#modal-video-tutorial').on('hidden.bs.modal', function() {
-                        videoTutorial.pause();
-                        videoTutorial.currentTime = 0;
+            if (btnVerVideoInstrucciones && videoTutorial && window.jQuery) {
+                btnVerVideoInstrucciones.addEventListener('click', function() {
+                    const videoSrc = btnVerVideoInstrucciones.getAttribute('data-video-src');
+                    if (videoSrc) {
                         const source = videoTutorial.querySelector('source');
                         if (source) {
-                            source.src = '';
+                            source.src = videoSrc;
                         }
                         videoTutorial.load();
-                        setBlurState(false);
-                    });
-                }
+                        videoTutorial.play().catch(() => {});
+                    }
+                    $('#modal-video-tutorial').modal('show');
+                    setBlurState(true);
+                });
+
+                $('#modal-video-tutorial').on('hidden.bs.modal', function() {
+                    videoTutorial.pause();
+                    videoTutorial.currentTime = 0;
+                    const source = videoTutorial.querySelector('source');
+                    if (source) {
+                        source.src = '';
+                    }
+                    videoTutorial.load();
+                    setBlurState(false);
+                });
             }
         });
     </script>
