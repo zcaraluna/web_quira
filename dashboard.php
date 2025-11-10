@@ -2268,7 +2268,7 @@ $distribucion_unidad = $pdo->query("
                                                     <form method="GET" id="fechaForm">
                                                         <input type="hidden" name="tab" value="reporte">
                                                         <div class="form-row">
-                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                                            <div class="col-lg-4 col-md-6 mb-3">
                                                                 <label for="fecha_reporte" class="form-label">Fecha</label>
                                                                 <div class="input-group input-group-merge">
                                                                     <div class="input-group-prepend">
@@ -2277,7 +2277,27 @@ $distribucion_unidad = $pdo->query("
                                                                     <input type="date" class="form-control" id="fecha_reporte" name="fecha_reporte" value="<?= $fecha_reporte ?>">
                                                                 </div>
                                                             </div>
-                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                                            <div class="col-lg-4 col-md-6 mb-3">
+                                                                <label for="hora_desde" class="form-label">Hora desde</label>
+                                                                <div class="input-group input-group-merge">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                    </div>
+                                                                    <input type="time" class="form-control" id="hora_desde" name="hora_desde" value="<?= $_GET['hora_desde'] ?? '00:00' ?>">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-md-6 mb-3">
+                                                                <label for="hora_hasta" class="form-label">Hora hasta</label>
+                                                                <div class="input-group input-group-merge">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text"><i class="fas fa-hourglass-end"></i></span>
+                                                                    </div>
+                                                                    <input type="time" class="form-control" id="hora_hasta" name="hora_hasta" value="<?= $_GET['hora_hasta'] ?? '23:59' ?>">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-row">
+                                                            <div class="col-lg-4 col-md-6 mb-3">
                                                                 <label for="unidad_reporte" class="form-label">Unidad</label>
                                                                 <div class="input-group input-group-merge">
                                                                     <div class="input-group-prepend">
@@ -2292,34 +2312,18 @@ $distribucion_unidad = $pdo->query("
                                                                     <?php endforeach; ?>
                                                                     </select>
                                                                 </div>
-                                                                <div class="d-flex mt-2">
-                                                                    <button type="button" class="btn btn-outline-primary btn-block" onclick="seleccionarFranja('completo')">
-                                                                        <i class="fas fa-clock"></i> Día Completo
-                                                                    </button>
-                                                                </div>
-                                                                <div class="d-flex mt-2">
-                                                                    <button type="submit" class="btn btn-primary btn-block">
-                                                                        <i class="fas fa-calendar-check"></i> Aplicar Filtros
-                                                                    </button>
-                                                                </div>
                                                             </div>
-                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
-                                                                <label for="hora_desde" class="form-label">Desde</label>
-                                                                <div class="input-group input-group-merge">
-                                                                    <div class="input-group-prepend">
-                                                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                                                    </div>
-                                                                    <input type="time" class="form-control" id="hora_desde" name="hora_desde" value="<?= $_GET['hora_desde'] ?? '00:00' ?>">
-                                                                </div>
+                                                            <div class="col-lg-4 col-md-6 mb-3 d-flex align-items-end">
+                                                                <button type="button" class="btn btn-outline-primary btn-block" onclick="seleccionarFranja('completo')">
+                                                                    <i class="fas fa-clock"></i> Día Completo
+                                                                </button>
                                                             </div>
-                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
-                                                                <label for="hora_hasta" class="form-label">Hasta</label>
-                                                                <div class="input-group input-group-merge">
-                                                                    <div class="input-group-prepend">
-                                                                        <span class="input-group-text"><i class="fas fa-hourglass-end"></i></span>
-                                                                    </div>
-                                                                    <input type="time" class="form-control" id="hora_hasta" name="hora_hasta" value="<?= $_GET['hora_hasta'] ?? '23:59' ?>">
-                                                                </div>
+                                                        </div>
+                                                        <div class="form-row">
+                                                            <div class="col-lg-4 col-md-6 mb-3">
+                                                                <button type="submit" class="btn btn-primary btn-block">
+                                                                    <i class="fas fa-calendar-check"></i> Aplicar Filtros
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </form>
