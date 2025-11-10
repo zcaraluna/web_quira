@@ -106,8 +106,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mensaje = 'Postulante agregado exitosamente (SIN registro biométrico)';
         $tipo_mensaje = 'success';
         
-        // Limpiar formulario después del éxito
-        $_POST = [];
+        $datos_postulante = [
+            'id' => $postulante_id,
+            'nombre_completo' => $nombre_completo,
+            'cedula' => $cedula,
+            'telefono' => $telefono,
+            'fecha_nacimiento' => $fecha_nacimiento,
+            'edad' => $edad,
+            'sexo' => $sexo,
+            'unidad' => $unidad,
+            'observaciones' => $observaciones,
+            'dedo_registrado' => 'NO_REGISTRADO',
+            'aparato_nombre' => 'SIN DISPOSITIVO (REGISTRO MANUAL)',
+            'uid_k40' => 'N/A',
+            'fecha_registro' => $fecha_registro,
+            'problema_judicial' => false
+        ];
+        
+        $_SESSION['postulante_registrado'] = $datos_postulante;
+        header('Location: confirmacion_registro.php');
+        exit;
         
     } catch (Exception $e) {
         $mensaje = $e->getMessage();

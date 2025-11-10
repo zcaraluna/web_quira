@@ -347,7 +347,7 @@
                             <!-- Botones de acción -->
                             <div class="text-center mt-3">
                                 <div class="btn-group" role="group">
-                                    <a href="agregar_postulante.php" class="btn btn-success">
+                                    <a href="agregar_postulante.php" class="btn btn-success" id="link-agregar-postulante" data-destino="agregar_postulante.php">
                                         <i class="fas fa-user-plus mr-1"></i> Registrar Otro
                                     </a>
                                     <a href="dashboard.php" class="btn btn-primary">
@@ -375,15 +375,231 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
         
         <script>
-            // Auto-redireccionar después de 30 segundos (opcional)
-            // setTimeout(() => {
-            //     window.location.href = 'agregar_postulante.php';
-            // }, 30000);
+            document.addEventListener('DOMContentLoaded', function() {
+                const linkAgregarPostulante = document.getElementById('link-agregar-postulante');
+                const btnConfirmarInstrucciones = document.getElementById('btn-confirmar-instrucciones');
+                const btnVerVideoInstrucciones = document.getElementById('btn-ver-video-instrucciones');
+                const videoTutorial = document.getElementById('video-tutorial');
+                const destinoAgregar = linkAgregarPostulante ? linkAgregarPostulante.getAttribute('data-destino') : null;
+
+                if (linkAgregarPostulante && window.jQuery) {
+                    linkAgregarPostulante.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        $('#modal-instrucciones-postulante').modal('show');
+                    });
+                }
+
+                if (btnConfirmarInstrucciones && window.jQuery) {
+                    btnConfirmarInstrucciones.addEventListener('click', function() {
+                        $('#modal-instrucciones-postulante').modal('hide');
+                        if (destinoAgregar) {
+                            window.location.href = destinoAgregar;
+                        }
+                    });
+                }
+
+                if (btnVerVideoInstrucciones && videoTutorial && window.jQuery) {
+                    btnVerVideoInstrucciones.addEventListener('click', function() {
+                        const videoSrc = btnVerVideoInstrucciones.getAttribute('data-video-src');
+                        if (videoSrc) {
+                            const source = videoTutorial.querySelector('source');
+                            if (source) {
+                                source.src = videoSrc;
+                            }
+                            videoTutorial.load();
+                            videoTutorial.play().catch(() => {});
+                        }
+                        $('#modal-video-tutorial').modal('show');
+                    });
+
+                    $('#modal-video-tutorial').on('hidden.bs.modal', function() {
+                        videoTutorial.pause();
+                        videoTutorial.currentTime = 0;
+                        const source = videoTutorial.querySelector('source');
+                        if (source) {
+                            source.src = '';
+                        }
+                        videoTutorial.load();
+                    });
+                }
+
+                // Auto-redireccionar después de 30 segundos (opcional)
+                // setTimeout(() => {
+                //     window.location.href = 'agregar_postulante.php';
+                // }, 30000);
+            });
         </script>
 
         <!-- Footer Simple -->
         <div class="footer-simple" id="footer-link">
             <span id="footer-text">Powered by </span><span id="footer-simple">s1mple</span>
+        </div>
+
+        <style>
+            #modal-instrucciones-postulante .modal-header {
+                background-color: #2E5090;
+                border-bottom: none;
+                color: #ffffff;
+            }
+            #modal-instrucciones-postulante .modal-body {
+                color: #4a5568;
+            }
+            #modal-instrucciones-postulante .modal-body .lead {
+                color: #404a5a;
+            }
+            #modal-instrucciones-postulante .btn-guide-action {
+                padding: 0.65rem 1.75rem;
+                font-weight: 600;
+                letter-spacing: 0.2px;
+                border-radius: 0.625rem;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                box-shadow: 0 6px 18px rgba(46, 80, 144, 0.18);
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+            }
+            #modal-instrucciones-postulante .btn-guide-action:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 24px rgba(46, 80, 144, 0.25);
+            }
+            #modal-instrucciones-postulante .btn-guide-secondary {
+                background: rgba(46, 80, 144, 0.08);
+                color: #2E5090;
+                border: 1px solid rgba(46, 80, 144, 0.35);
+            }
+            #modal-instrucciones-postulante .btn-guide-secondary:hover {
+                background: #2E5090;
+                color: #ffffff;
+                border-color: #2E5090;
+            }
+            #modal-instrucciones-postulante .btn-guide-primary {
+                background: #22c55e;
+                border: none;
+            }
+            #modal-instrucciones-postulante .btn-guide-primary:hover {
+                background: #16a34a;
+            }
+            #modal-instrucciones-postulante .btn-guide-action i {
+                font-size: 0.95rem;
+            }
+            #modal-video-tutorial .modal-content {
+                background: #0f172a;
+                color: #e2e8f0;
+                border-radius: 1rem;
+                overflow: hidden;
+            }
+            #modal-video-tutorial .modal-header {
+                background-color: #2E5090;
+                border-bottom: none;
+                color: #cbd5e1;
+            }
+            #modal-video-tutorial .modal-header .close {
+                color: #cbd5e1;
+                opacity: 0.8;
+            }
+            #modal-video-tutorial .modal-header .close:hover {
+                opacity: 1;
+            }
+            #modal-video-tutorial .modal-body {
+                padding: 0;
+                background: radial-gradient(circle at top, rgba(46, 80, 144, 0.15), transparent 55%), #0b1220;
+            }
+            #modal-video-tutorial .video-wrapper {
+                position: relative;
+                width: 100%;
+                padding-top: 56.25%;
+                background: #000;
+            }
+            #modal-video-tutorial .video-wrapper video {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                background: #000;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            }
+            #modal-video-tutorial .modal-footer {
+                background: rgba(15, 23, 42, 0.85);
+                border-top: 1px solid rgba(148, 163, 184, 0.15);
+            }
+        </style>
+
+        <!-- Modal Instrucciones Agregar Postulante -->
+        <div class="modal fade" id="modal-instrucciones-postulante" tabindex="-1" role="dialog" aria-labelledby="modalInstruccionesPostulanteLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header">
+                        <h5 class="modal-title font-weight-bold" id="modalInstruccionesPostulanteLabel">
+                            <i class="fas fa-fingerprint mr-2"></i> Antes de agregar un postulante
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="lead mb-4">
+                            Para agregar un nuevo postulante, asegúrese de registrar el dedo del postulante en el dispositivo biométrico que tiene conectado a su computadora.
+                        </p>
+                        <ol class="pl-4 mb-0">
+                            <li class="mb-3">
+                                Diríjase a su dispositivo biométrico y presione el botón <strong>M/OK</strong>.
+                            </li>
+                            <li class="mb-3">
+                                Entre en la opción <strong>Usuarios</strong>, elija <strong>Nuevo usuario</strong> y dentro del menú seleccione <strong>Huella</strong> para capturar la huella del postulante según las instrucciones del dispositivo.
+                            </li>
+                            <li class="mb-3">
+                                Una vez tomada la huella del postulante, regrese a la pantalla principal del biométrico presionando <strong>ESC</strong> hasta llegar a ese punto.
+                            </li>
+                            <li class="mb-0">
+                                Puede utilizar este
+                                <button type="button" class="btn btn-link p-0 align-baseline" id="btn-ver-video-instrucciones" data-video-src="assets/media/various/zktecok40.mp4" aria-label="Abrir videotutorial">
+                                    vídeo
+                                </button>
+                                para ver un tutorial paso a paso.
+                            </li>
+                        </ol>
+                    </div>
+                    <div class="modal-footer d-flex flex-column flex-md-row align-items-center justify-content-center w-100" style="gap: 0.75rem;">
+                        <button type="button" class="btn btn-guide-action btn-guide-secondary" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i> Cerrar
+                        </button>
+                        <button type="button" class="btn btn-guide-action btn-guide-primary" id="btn-confirmar-instrucciones">
+                            <i class="fas fa-check mr-1"></i> Ya registré el dedo del postulante
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Video Tutorial -->
+        <div class="modal fade" id="modal-video-tutorial" tabindex="-1" role="dialog" aria-labelledby="modalVideoTutorialLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalVideoTutorialLabel">
+                            <i class="fas fa-play-circle mr-2"></i> Videotutorial de registro biométrico
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="video-wrapper">
+                            <video id="video-tutorial" class="video-player" controls preload="none">
+                                <source src="" type="video/mp4">
+                                Tu navegador no soporta la reproducción de video.
+                            </video>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-outline-light btn-sm" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i> Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Modal -->
