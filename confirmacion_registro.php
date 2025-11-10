@@ -37,6 +37,7 @@
         <!-- Favicon -->
         <link rel="shortcut icon" href="favicon.php">
         
+        <?php if ($showInstructionModals): ?>
         <style>
             .confirmation-card {
                 border: 2px solid #28a745;
@@ -376,6 +377,12 @@
         
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+                const modalsEnabled = <?= $showInstructionModals ? 'true' : 'false' ?>;
+
+                if (!modalsEnabled) {
+                    return;
+                }
+
                 const linkAgregarPostulante = document.getElementById('link-agregar-postulante');
                 const btnConfirmarInstrucciones = document.getElementById('btn-confirmar-instrucciones');
                 const btnVerVideoInstrucciones = document.getElementById('btn-ver-video-instrucciones');
@@ -389,12 +396,7 @@
                             el.classList.toggle('blurred-background', active);
                         }
                     });
-
-                    if (active) {
-                        document.body.classList.add('blurred-background');
-                    } else {
-                        document.body.classList.remove('blurred-background');
-                    }
+                    document.body.classList.toggle('blurred-background', active);
                 }
 
                 if (linkAgregarPostulante && window.jQuery) {
@@ -402,7 +404,6 @@
                         e.preventDefault();
                         $('#modal-instrucciones-postulante').modal('show');
                     });
-
                 }
 
                 if (btnConfirmarInstrucciones && window.jQuery) {
@@ -426,6 +427,7 @@
                             videoTutorial.play().catch(() => {});
                         }
                         $('#modal-video-tutorial').modal('show');
+                        setBlurState(true);
                     });
 
                     $('#modal-video-tutorial').on('hidden.bs.modal', function() {
@@ -436,13 +438,9 @@
                             source.src = '';
                         }
                         videoTutorial.load();
+                        setBlurState(false);
                     });
                 }
-
-                // Auto-redireccionar después de 30 segundos (opcional)
-                // setTimeout(() => {
-                //     window.location.href = 'agregar_postulante.php';
-                // }, 30000);
             });
         </script>
 
@@ -583,7 +581,8 @@
                 font-size: 0.95rem;
             }
         </style>
-
+        <?php endif; ?>
+        <?php if ($showInstructionModals): ?>
         <!-- Modal Instrucciones Agregar Postulante -->
         <div class="modal fade" id="modal-instrucciones-postulante" tabindex="-1" role="dialog" aria-labelledby="modalInstruccionesPostulanteLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -659,6 +658,7 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Modal -->
         <div class="modal-overlay" id="modal-overlay">
