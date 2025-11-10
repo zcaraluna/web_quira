@@ -5209,7 +5209,7 @@ $distribucion_unidad = $pdo->query("
     <div class="modal fade" id="modal-instrucciones-postulante" tabindex="-1" role="dialog" aria-labelledby="modalInstruccionesPostulanteLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #1f2937 100%); border-bottom: none; box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.1);">
                     <h5 class="modal-title font-weight-bold" id="modalInstruccionesPostulanteLabel">
                         <i class="fas fa-fingerprint mr-2"></i>Antes de agregar un postulante
                     </h5>
@@ -5265,10 +5265,12 @@ $distribucion_unidad = $pdo->query("
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <video id="video-tutorial" class="w-100 d-block" controls preload="none" style="max-height: 70vh; background: #000;">
-                        <source src="" type="video/quicktime">
-                        Tu navegador no soporta la reproducción de video.
-                    </video>
+                    <div class="embed-responsive embed-responsive-16by9">
+                        <video id="video-tutorial" class="embed-responsive-item" controls preload="none" style="background: #000;">
+                            <source src="" type="video/mp4">
+                            Tu navegador no soporta la reproducción de video.
+                        </video>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-light" data-dismiss="modal">
