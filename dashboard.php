@@ -772,6 +772,7 @@ try {
     $fecha_reporte = $_GET['fecha_reporte'] ?? date('Y-m-d');
     $hora_desde = $_GET['hora_desde'] ?? '00:00';
     $hora_hasta = $_GET['hora_hasta'] ?? '23:59';
+    $unidad_reporte = isset($_GET['unidad_reporte']) ? trim($_GET['unidad_reporte']) : '';
     
     // Debug temporal - eliminar después de confirmar que funciona
     // file_put_contents('/tmp/debug_quira.txt', "DEBUG: " . date('Y-m-d H:i:s') . " - Fecha: $fecha_reporte, Desde: $hora_desde, Hasta: $hora_hasta\n", FILE_APPEND);
@@ -792,6 +793,12 @@ try {
         error_log("DEBUG FILTRO HORAS: fecha=$fecha_reporte, desde=$hora_desde, hasta=$hora_hasta");
         error_log("DEBUG SQL: $filtro_fecha_hora");
         error_log("DEBUG PARAMS: " . print_r($parametros, true));
+    }
+    
+    // Filtrar por unidad específica si se selecciona
+    if (!empty($unidad_reporte)) {
+        $filtro_fecha_hora .= " AND p.unidad = ?";
+        $parametros[] = $unidad_reporte;
     }
     
     // Postulantes registrados en la fecha específica (con franja horaria)
@@ -2261,15 +2268,26 @@ $distribucion_unidad = $pdo->query("
                                                     <form method="GET" id="fechaForm">
                                                         <input type="hidden" name="tab" value="reporte">
                                                         <div class="row">
-                                                            <div class="col-md-4">
+                                                            <div class="col-md-3">
                                                                 <label for="fecha_reporte" class="form-label">Fecha:</label>
                                                                 <input type="date" class="form-control" id="fecha_reporte" name="fecha_reporte" value="<?= $fecha_reporte ?>">
                                                             </div>
                                                             <div class="col-md-3">
+                                                                <label for="unidad_reporte" class="form-label">Unidad:</label>
+                                                                <select class="form-control" id="unidad_reporte" name="unidad_reporte">
+                                                                    <option value="">Todas las unidades</option>
+                                                                    <?php foreach ($unidades as $unidad): ?>
+                                                                    <option value="<?= htmlspecialchars($unidad['unidad']) ?>" <?= $unidad_reporte === $unidad['unidad'] ? 'selected' : '' ?>>
+                                                                        <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
+                                                                    </option>
+                                                                    <?php endforeach; ?>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-2">
                                                                 <label for="hora_desde" class="form-label">Desde:</label>
                                                                 <input type="time" class="form-control" id="hora_desde" name="hora_desde" value="<?= $_GET['hora_desde'] ?? '00:00' ?>">
                                                             </div>
-                                                            <div class="col-md-3">
+                                                            <div class="col-md-2">
                                                                 <label for="hora_hasta" class="form-label">Hasta:</label>
                                                                 <input type="time" class="form-control" id="hora_hasta" name="hora_hasta" value="<?= $_GET['hora_hasta'] ?? '23:59' ?>">
                                                             </div>
@@ -2281,7 +2299,8 @@ $distribucion_unidad = $pdo->query("
                                                             </div>
                                                         </div>
                                                         <div class="row mt-2">
-                                                            <div class="col-md-12">
+                                                            <div class="col-md-6"></div>
+                                                            <div class="col-md-6 text-md-right">
                                                                 <div class="btn-group btn-group-sm" role="group">
                                                                     <button type="button" class="btn btn-outline-primary" onclick="seleccionarFranja('completo')">
                                                                         <i class="fas fa-clock"></i> Día Completo
@@ -2313,6 +2332,11 @@ $distribucion_unidad = $pdo->query("
                                                                 <?php if (isset($_GET['hora_desde']) && isset($_GET['hora_hasta'])): ?>
                                                                     <br><small class="text-muted">
                                                                         Franja horaria: <?= $_GET['hora_desde'] ?> - <?= $_GET['hora_hasta'] ?>
+                                                                    </small>
+                                                                <?php endif; ?>
+                                                                <?php if (!empty($unidad_reporte)): ?>
+                                                                    <br><small class="text-muted">
+                                                                        Unidad: <?= str_replace('&quot;', '"', htmlspecialchars($unidad_reporte)) ?>
                                                                     </small>
                                                                 <?php endif; ?>
                                                             </h5>
@@ -3646,6 +3670,7 @@ $distribucion_unidad = $pdo->query("
             const fecha = document.getElementById('fecha_reporte').value;
             const horaDesde = document.getElementById('hora_desde').value;
             const horaHasta = document.getElementById('hora_hasta').value;
+            const unidad = document.getElementById('unidad_reporte').value;
             
             // Recargar la página con todos los parámetros
             const url = new URL(window.location);
@@ -3653,6 +3678,11 @@ $distribucion_unidad = $pdo->query("
             url.searchParams.set('fecha_reporte', fecha);
             url.searchParams.set('hora_desde', horaDesde);
             url.searchParams.set('hora_hasta', horaHasta);
+            if (unidad) {
+                url.searchParams.set('unidad_reporte', unidad);
+            } else {
+                url.searchParams.delete('unidad_reporte');
+            }
             window.location.href = url.toString();
         }
         
@@ -3758,6 +3788,21 @@ $distribucion_unidad = $pdo->query("
                             alignment: docx.AlignmentType.CENTER,
                             spacing: { after: 200 }
                         }),
+                        
+                        <?php if (!empty($unidad_reporte)): ?>
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: "Unidad: <?= str_replace('&quot;', '\"', htmlspecialchars($unidad_reporte)) ?>",
+                                    bold: true,
+                                    size: 20,
+                                    color: "2E5090"
+                                })
+                            ],
+                            alignment: docx.AlignmentType.CENTER,
+                            spacing: { after: 200 }
+                        }),
+                        <?php endif; ?>
                         
                         <?php if (isset($_GET['hora_desde']) && isset($_GET['hora_hasta']) && ($_GET['hora_desde'] !== '00:00' || $_GET['hora_hasta'] !== '23:59')): ?>
                         new docx.Paragraph({
@@ -4644,6 +4689,9 @@ $distribucion_unidad = $pdo->query("
                     <div class="header">
                         <div class="title">REPORTE DIARIO - SISTEMA QUIRA</div>
                         <div class="subtitle">Fecha del reporte: ${fechaFormateada}</div>
+                        <?php if (!empty($unidad_reporte)): ?>
+                        <div class="subtitle">Unidad: <?= str_replace('&quot;', '"', htmlspecialchars($unidad_reporte)) ?></div>
+                        <?php endif; ?>
                         <?php if (isset($_GET['hora_desde']) && isset($_GET['hora_hasta']) && ($_GET['hora_desde'] !== '00:00' || $_GET['hora_hasta'] !== '23:59')): ?>
                         <div class="subtitle">Franja horaria: <?= $_GET['hora_desde'] ?> - <?= $_GET['hora_hasta'] ?></div>
                         <?php endif; ?>
