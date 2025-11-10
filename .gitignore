@@ -180,3 +180,6 @@ config_*.php
 # Archivos que se generan automáticamente
 desarrollo_files.txt
 produccion_files.txt
+
+#Archivos grandes
+/assets/media/various/zktecok40.*
