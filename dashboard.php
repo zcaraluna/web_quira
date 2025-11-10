@@ -2314,13 +2314,6 @@ $distribucion_unidad = $pdo->query("
                                                                 </div>
                                                             </div>
                                                             <div class="col-lg-4 col-md-6 mb-3 d-flex align-items-end">
-                                                                <button type="button" class="btn btn-outline-primary btn-block" onclick="seleccionarFranja('completo')">
-                                                                    <i class="fas fa-clock"></i> Día Completo
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-row">
-                                                            <div class="col-lg-4 col-md-6 mb-3">
                                                                 <button type="submit" class="btn btn-primary btn-block">
                                                                     <i class="fas fa-calendar-check"></i> Aplicar Filtros
                                                                 </button>
