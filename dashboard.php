@@ -5248,17 +5248,6 @@ $distribucion_unidad = $pdo->query("
             background: #000;
             border-bottom: 1px solid rgba(148, 163, 184, 0.15);
         }
-        .modal-video-body .video-helper {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.9rem 1.5rem 1.2rem;
-            font-size: 0.875rem;
-            color: #94a3b8;
-        }
-        .modal-video-body .video-helper i {
-            color: #38bdf8;
-        }
         .modal-video-footer {
             background: rgba(15, 23, 42, 0.85);
             border-top: 1px solid rgba(148, 163, 184, 0.15);
@@ -5304,6 +5293,13 @@ $distribucion_unidad = $pdo->query("
                 flex-direction: column;
                 gap: 0.75rem;
             }
+        }
+        .blurred-background {
+            filter: blur(6px);
+            transition: filter 0.3s ease;
+        }
+        body.blurred-background {
+            overflow: hidden;
         }
     </style>
 
@@ -5358,7 +5354,7 @@ $distribucion_unidad = $pdo->query("
     <div class="modal fade" id="modal-video-tutorial" tabindex="-1" role="dialog" aria-labelledby="modalVideoTutorialLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content modal-video-content shadow-lg">
-                <div class="modal-header modal-video-header text-white">
+                <div class="modal-header modal-video-header text-white" style="background-color: #2E5090;">
                     <h5 class="modal-title" id="modalVideoTutorialLabel">
                         <i class="fas fa-play-circle mr-2"></i>Videotutorial de registro biométrico
                     </h5>
@@ -5372,10 +5368,6 @@ $distribucion_unidad = $pdo->query("
                             <source src="" type="video/mp4">
                             Tu navegador no soporta la reproducción de video.
                         </video>
-                    </div>
-                    <div class="video-helper">
-                        <i class="fas fa-info-circle"></i>
-                        <span>Si el video tarda en cargar, espere unos segundos o descárguelo para verlo en su reproductor local.</span>
                     </div>
                 </div>
                 <div class="modal-footer modal-video-footer">
@@ -5476,6 +5468,7 @@ $distribucion_unidad = $pdo->query("
             const btnVerVideoInstrucciones = document.getElementById('btn-ver-video-instrucciones');
             const videoTutorial = document.getElementById('video-tutorial');
             const destinoAgregar = linkAgregarPostulante ? linkAgregarPostulante.getAttribute('data-destino') : null;
+            const blurTargetElements = Array.from(document.querySelectorAll('body > *:not(.modal)'));
 
             if (linkAgregarPostulante && window.jQuery) {
                 linkAgregarPostulante.addEventListener('click', function(e) {
@@ -5493,6 +5486,14 @@ $distribucion_unidad = $pdo->query("
                 });
             }
 
+            function setBlurState(active) {
+                blurTargetElements.forEach(el => {
+                    if (el) {
+                        el.classList.toggle('blurred-background', active);
+                    }
+                });
+            }
+
             if (btnVerVideoInstrucciones && videoTutorial && window.jQuery) {
                 btnVerVideoInstrucciones.addEventListener('click', function() {
                     const videoSrc = btnVerVideoInstrucciones.getAttribute('data-video-src');
@@ -5505,6 +5506,7 @@ $distribucion_unidad = $pdo->query("
                         videoTutorial.play().catch(() => {});
                     }
                     $('#modal-video-tutorial').modal('show');
+                    setBlurState(true);
                 });
 
                 $('#modal-video-tutorial').on('hidden.bs.modal', function() {
@@ -5515,6 +5517,7 @@ $distribucion_unidad = $pdo->query("
                         source.src = '';
                     }
                     videoTutorial.load();
+                    setBlurState(false);
                 });
             }
         });
