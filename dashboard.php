@@ -5363,10 +5363,7 @@ $distribucion_unidad = $pdo->query("
                             </li>
                     </ol>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary text-secondary border-secondary btn-close-instrucciones" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i> Cerrar
-                    </button>
+                <div class="modal-footer justify-content-center">
                     <button type="button" class="btn btn-success" id="btn-confirmar-instrucciones">
                         <i class="fas fa-check mr-1"></i> Ya registré el dedo del postulante
                     </button>
