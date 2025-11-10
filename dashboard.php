@@ -831,13 +831,11 @@ try {
     $stmt_usuarios = $pdo->prepare("
         SELECT 
             p.registrado_por as usuario,
-            COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo') as dispositivo,
             COUNT(*) as cantidad
         FROM postulantes p
-        LEFT JOIN aparatos_biometricos ab ON p.aparato_id = ab.id
         WHERE $filtro_fecha_hora AND p.registrado_por IS NOT NULL
-        GROUP BY p.registrado_por, COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo')
-        ORDER BY p.registrado_por, cantidad DESC
+        GROUP BY p.registrado_por
+        ORDER BY cantidad DESC
     ");
     $stmt_usuarios->execute($parametros);
     $usuarios_registradores_fecha = $stmt_usuarios->fetchAll();
@@ -2400,7 +2398,6 @@ $distribucion_unidad = $pdo->query("
                                                                     <thead>
                                                                         <tr>
                                                                             <th>Usuario</th>
-                                                                            <th>Dispositivo</th>
                                                                             <th>Registros</th>
                                                                         </tr>
                                                                     </thead>
@@ -2408,7 +2405,6 @@ $distribucion_unidad = $pdo->query("
                                                                         <?php foreach ($usuarios_registradores_fecha as $usuario): ?>
                                                                         <tr>
                                                                             <td><strong><?= htmlspecialchars($usuario['usuario']) ?></strong></td>
-                                                                            <td><?= htmlspecialchars($usuario['dispositivo']) ?></td>
                                                                             <td><span class="badge badge-info"><?= $usuario['cantidad'] ?></span></td>
                                                                         </tr>
                                                                         <?php endforeach; ?>
@@ -4013,22 +4009,6 @@ $distribucion_unidad = $pdo->query("
                                                 new docx.Paragraph({
                                                     children: [
                                                         new docx.TextRun({
-                                                            text: "Dispositivo",
-                                                            bold: true,
-                                                            size: 22
-                                                        })
-                                                    ]
-                                                })
-                                            ],
-                                            shading: {
-                                                fill: "F0F0F0"
-                                            }
-                                        }),
-                                        new docx.TableCell({
-                                            children: [
-                                                new docx.Paragraph({
-                                                    children: [
-                                                        new docx.TextRun({
                                                             text: "Registros",
                                                             bold: true,
                                                             size: 22
@@ -4052,18 +4032,6 @@ $distribucion_unidad = $pdo->query("
                                                     children: [
                                                         new docx.TextRun({
                                                             text: "<?= htmlspecialchars($usuario['usuario']) ?>",
-                                                            size: 20
-                                                        })
-                                                    ]
-                                                })
-                                            ]
-                                        }),
-                                        new docx.TableCell({
-                                            children: [
-                                                new docx.Paragraph({
-                                                    children: [
-                                                        new docx.TextRun({
-                                                            text: "<?= htmlspecialchars($usuario['dispositivo']) ?>",
                                                             size: 20
                                                         })
                                                     ]
@@ -4595,7 +4563,6 @@ $distribucion_unidad = $pdo->query("
                             <thead>
                                 <tr>
                                     <th>Usuario</th>
-                                    <th>Dispositivo</th>
                                     <th>Registros</th>
                                 </tr>
                             </thead>
@@ -4603,7 +4570,6 @@ $distribucion_unidad = $pdo->query("
                                 <?php foreach ($usuarios_registradores_fecha as $usuario): ?>
                                 <tr>
                                     <td><?= htmlspecialchars($usuario['usuario']) ?></td>
-                                    <td><?= htmlspecialchars($usuario['dispositivo']) ?></td>
                                     <td><?= $usuario['cantidad'] ?></td>
                                 </tr>
                                 <?php endforeach; ?>
