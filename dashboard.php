@@ -5233,7 +5233,7 @@ $distribucion_unidad = $pdo->query("
                         </li>
                         <li class="mb-0">
                             Puede utilizar este
-                            <button type="button" class="btn btn-link p-0 align-baseline" id="btn-ver-video-instrucciones" data-video-src="assets/media/various/zktecok40.mov" aria-label="Abrir videotutorial">
+                            <button type="button" class="btn btn-link p-0 align-baseline" id="btn-ver-video-instrucciones" data-video-src="assets/media/various/zktecok40.mp4" aria-label="Abrir videotutorial">
                                 vídeo
                             </button>
                             para ver un tutorial paso a paso.
