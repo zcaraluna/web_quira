@@ -5326,6 +5326,44 @@ $distribucion_unidad = $pdo->query("
             background-color: #ffffff;
             box-shadow: inset 0 0 0 1px rgba(201, 25, 31, 0.6);
         }
+        #modal-instrucciones-postulante .btn-guide-action {
+            padding: 0.65rem 1.75rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            border-radius: 0.625rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 6px 18px rgba(46, 80, 144, 0.18);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        #modal-instrucciones-postulante .btn-guide-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(46, 80, 144, 0.25);
+        }
+        #modal-instrucciones-postulante .btn-guide-action i {
+            font-size: 0.95rem;
+        }
+        #modal-instrucciones-postulante .btn-guide-secondary {
+            background: rgba(46, 80, 144, 0.08);
+            color: #2E5090;
+            border: 1px solid rgba(46, 80, 144, 0.35);
+        }
+        #modal-instrucciones-postulante .btn-guide-secondary:hover {
+            background: #2E5090;
+            color: #ffffff;
+            border-color: #2E5090;
+        }
+        #modal-instrucciones-postulante .btn-guide-secondary:hover i {
+            color: #ffffff;
+        }
+        #modal-instrucciones-postulante .btn-guide-primary {
+            background: #22c55e;
+            border: none;
+        }
+        #modal-instrucciones-postulante .btn-guide-primary:hover {
+            background: #16a34a;
+        }
     </style>
 
     <!-- Modal Instrucciones Agregar Postulante -->
@@ -5363,8 +5401,11 @@ $distribucion_unidad = $pdo->query("
                             </li>
                     </ol>
                 </div>
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-success" id="btn-confirmar-instrucciones">
+                <div class="modal-footer d-flex flex-column flex-md-row align-items-center justify-content-center w-100" style="gap: 0.75rem;">
+                    <button type="button" class="btn btn-guide-action btn-guide-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-success btn-guide-action btn-guide-primary" id="btn-confirmar-instrucciones">
                         <i class="fas fa-check mr-1"></i> Ya registré el dedo del postulante
                     </button>
                 </div>
