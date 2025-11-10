@@ -5315,6 +5315,17 @@ $distribucion_unidad = $pdo->query("
             color: #ff4d4f;
             opacity: 1;
         }
+        #modal-instrucciones-postulante .btn-close-instrucciones {
+            background-color: #ffffff;
+            color: #4a4f58;
+            transition: color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: inset 0 0 0 1px rgba(74, 79, 88, 0.3);
+        }
+        #modal-instrucciones-postulante .btn-close-instrucciones:hover {
+            color: #e03131;
+            background-color: #ffffff;
+            box-shadow: inset 0 0 0 1px rgba(224, 49, 49, 0.4);
+        }
     </style>
 
     <!-- Modal Instrucciones Agregar Postulante -->
@@ -5353,7 +5364,7 @@ $distribucion_unidad = $pdo->query("
                     </ol>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary text-secondary border-secondary" data-dismiss="modal">
+                    <button type="button" class="btn btn-outline-secondary text-secondary border-secondary btn-close-instrucciones" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Cerrar
                     </button>
                     <button type="button" class="btn btn-success" id="btn-confirmar-instrucciones">
