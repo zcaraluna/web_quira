@@ -2267,44 +2267,66 @@ $distribucion_unidad = $pdo->query("
                                                 <div class="col-md-8">
                                                     <form method="GET" id="fechaForm">
                                                         <input type="hidden" name="tab" value="reporte">
-                                                        <div class="form-row align-items-end">
-                                                            <div class="col-lg-3 col-md-4 mb-3">
-                                                                <label for="fecha_reporte" class="form-label">Fecha:</label>
-                                                                <input type="date" class="form-control" id="fecha_reporte" name="fecha_reporte" value="<?= $fecha_reporte ?>">
+                                                        <div class="form-row">
+                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                                                <label for="fecha_reporte" class="form-label">Fecha</label>
+                                                                <div class="input-group input-group-merge">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text"><i class="fas fa-calendar-day"></i></span>
+                                                                    </div>
+                                                                    <input type="date" class="form-control" id="fecha_reporte" name="fecha_reporte" value="<?= $fecha_reporte ?>">
+                                                                </div>
                                                             </div>
-                                                            <div class="col-lg-3 col-md-4 mb-3">
-                                                                <label for="unidad_reporte" class="form-label">Unidad:</label>
-                                                                <select class="form-control" id="unidad_reporte" name="unidad_reporte">
+                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                                                <label for="hora_desde" class="form-label">Desde</label>
+                                                                <div class="input-group input-group-merge">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                                    </div>
+                                                                    <input type="time" class="form-control" id="hora_desde" name="hora_desde" value="<?= $_GET['hora_desde'] ?? '00:00' ?>">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                                                <label for="hora_hasta" class="form-label">Hasta</label>
+                                                                <div class="input-group input-group-merge">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text"><i class="fas fa-hourglass-end"></i></span>
+                                                                    </div>
+                                                                    <input type="time" class="form-control" id="hora_hasta" name="hora_hasta" value="<?= $_GET['hora_hasta'] ?? '23:59' ?>">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                                                <label for="unidad_reporte" class="form-label">Unidad</label>
+                                                                <div class="input-group input-group-merge">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text"><i class="fas fa-university"></i></span>
+                                                                    </div>
+                                                                    <select class="form-control" id="unidad_reporte" name="unidad_reporte">
                                                                     <option value="">Todas las unidades</option>
                                                                     <?php foreach ($unidades as $unidad): ?>
                                                                     <option value="<?= htmlspecialchars($unidad['unidad']) ?>" <?= $unidad_reporte === $unidad['unidad'] ? 'selected' : '' ?>>
                                                                         <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
                                                                     </option>
                                                                     <?php endforeach; ?>
-                                                                </select>
-                                                            </div>
-                                                            <div class="col-lg-2 col-md-4 mb-3">
-                                                                <label for="hora_desde" class="form-label">Desde:</label>
-                                                                <input type="time" class="form-control" id="hora_desde" name="hora_desde" value="<?= $_GET['hora_desde'] ?? '00:00' ?>">
-                                                            </div>
-                                                            <div class="col-lg-2 col-md-4 mb-3">
-                                                                <label for="hora_hasta" class="form-label">Hasta:</label>
-                                                                <input type="time" class="form-control" id="hora_hasta" name="hora_hasta" value="<?= $_GET['hora_hasta'] ?? '23:59' ?>">
-                                                            </div>
-                                                            <div class="col-lg-2 col-md-4 mb-3 d-flex">
-                                                                <button type="submit" class="btn btn-primary btn-block w-100 align-self-end">
-                                                                    <i class="fas fa-calendar-check"></i> Aplicar
-                                                                </button>
+                                                                    </select>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div class="row mt-2">
-                                                            <div class="col-md-6"></div>
-                                                            <div class="col-md-6 text-md-right">
-                                                                <div class="btn-group btn-group-sm" role="group">
-                                                                    <button type="button" class="btn btn-outline-primary" onclick="seleccionarFranja('completo')">
-                                                                        <i class="fas fa-clock"></i> Día Completo
-                                                                    </button>
-                                                                </div>
+                                                        <div class="form-row">
+                                                            <div class="col-sm-6 col-md-4 col-lg-3 mb-2">
+                                                                <button type="button" class="btn btn-outline-primary btn-block" onclick="seleccionarFranja('completo')">
+                                                                    <i class="fas fa-clock"></i> Día Completo
+                                                                </button>
+                                                            </div>
+                                                            <div class="col-sm-6 col-md-4 col-lg-3 mb-2">
+                                                                <button type="submit" class="btn btn-primary btn-block">
+                                                                    <i class="fas fa-calendar-check"></i> Aplicar Filtros
+                                                                </button>
+                                                            </div>
+                                                            <div class="col-sm-12 col-md-4 col-lg-6 mb-2 d-flex align-items-center justify-content-md-end">
+                                                                <small class="text-muted text-md-right w-100">
+                                                                    Ajuste los filtros y presione “Aplicar Filtros” para actualizar el reporte.
+                                                                </small>
                                                             </div>
                                                         </div>
                                                     </form>
