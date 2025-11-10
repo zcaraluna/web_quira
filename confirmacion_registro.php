@@ -403,13 +403,6 @@
                         $('#modal-instrucciones-postulante').modal('show');
                     });
 
-                    $('#modal-instrucciones-postulante').on('shown.bs.modal', function() {
-                        setBlurState(true);
-                    });
-
-                    $('#modal-instrucciones-postulante').on('hidden.bs.modal', function() {
-                        setBlurState(false);
-                    });
                 }
 
                 if (btnConfirmarInstrucciones && window.jQuery) {
@@ -433,7 +426,6 @@
                             videoTutorial.play().catch(() => {});
                         }
                         $('#modal-video-tutorial').modal('show');
-                    setBlurState(true);
                     });
 
                     $('#modal-video-tutorial').on('hidden.bs.modal', function() {
@@ -444,7 +436,6 @@
                             source.src = '';
                         }
                         videoTutorial.load();
-                    setBlurState(false);
                     });
                 }
 
