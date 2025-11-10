@@ -2278,6 +2278,32 @@ $distribucion_unidad = $pdo->query("
                                                                 </div>
                                                             </div>
                                                             <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                                                <label for="unidad_reporte" class="form-label">Unidad</label>
+                                                                <div class="input-group input-group-merge">
+                                                                    <div class="input-group-prepend">
+                                                                        <span class="input-group-text"><i class="fas fa-university"></i></span>
+                                                                    </div>
+                                                                    <select class="form-control" id="unidad_reporte" name="unidad_reporte">
+                                                                    <option value="">Todas las unidades</option>
+                                                                    <?php foreach ($unidades as $unidad): ?>
+                                                                    <option value="<?= htmlspecialchars($unidad['unidad']) ?>" <?= $unidad_reporte === $unidad['unidad'] ? 'selected' : '' ?>>
+                                                                        <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
+                                                                    </option>
+                                                                    <?php endforeach; ?>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="d-flex mt-2">
+                                                                    <button type="button" class="btn btn-outline-primary btn-block" onclick="seleccionarFranja('completo')">
+                                                                        <i class="fas fa-clock"></i> Día Completo
+                                                                    </button>
+                                                                </div>
+                                                                <div class="d-flex mt-2">
+                                                                    <button type="submit" class="btn btn-primary btn-block">
+                                                                        <i class="fas fa-calendar-check"></i> Aplicar Filtros
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
                                                                 <label for="hora_desde" class="form-label">Desde</label>
                                                                 <div class="input-group input-group-merge">
                                                                     <div class="input-group-prepend">
@@ -2294,39 +2320,6 @@ $distribucion_unidad = $pdo->query("
                                                                     </div>
                                                                     <input type="time" class="form-control" id="hora_hasta" name="hora_hasta" value="<?= $_GET['hora_hasta'] ?? '23:59' ?>">
                                                                 </div>
-                                                            </div>
-                                                            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
-                                                                <label for="unidad_reporte" class="form-label">Unidad</label>
-                                                                <div class="input-group input-group-merge">
-                                                                    <div class="input-group-prepend">
-                                                                        <span class="input-group-text"><i class="fas fa-university"></i></span>
-                                                                    </div>
-                                                                    <select class="form-control" id="unidad_reporte" name="unidad_reporte">
-                                                                    <option value="">Todas las unidades</option>
-                                                                    <?php foreach ($unidades as $unidad): ?>
-                                                                    <option value="<?= htmlspecialchars($unidad['unidad']) ?>" <?= $unidad_reporte === $unidad['unidad'] ? 'selected' : '' ?>>
-                                                                        <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
-                                                                    </option>
-                                                                    <?php endforeach; ?>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-row">
-                                                            <div class="col-sm-6 col-md-4 col-lg-3 mb-2">
-                                                                <button type="button" class="btn btn-outline-primary btn-block" onclick="seleccionarFranja('completo')">
-                                                                    <i class="fas fa-clock"></i> Día Completo
-                                                                </button>
-                                                            </div>
-                                                            <div class="col-sm-6 col-md-4 col-lg-3 mb-2">
-                                                                <button type="submit" class="btn btn-primary btn-block">
-                                                                    <i class="fas fa-calendar-check"></i> Aplicar Filtros
-                                                                </button>
-                                                            </div>
-                                                            <div class="col-sm-12 col-md-4 col-lg-6 mb-2 d-flex align-items-center justify-content-md-end">
-                                                                <small class="text-muted text-md-right w-100">
-                                                                    Ajuste los filtros y presione “Aplicar Filtros” para actualizar el reporte.
-                                                                </small>
                                                             </div>
                                                         </div>
                                                     </form>
