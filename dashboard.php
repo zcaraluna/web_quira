@@ -827,6 +827,19 @@ try {
     $stmt_aparatos->execute($parametros);
     $aparatos_utilizados_fecha = $stmt_aparatos->fetchAll();
     
+    // Distribución por sexo en la fecha específica (con franja horaria)
+    $stmt_sexo_fecha = $pdo->prepare("
+        SELECT 
+            COALESCE(NULLIF(p.sexo, ''), 'No especificado') as sexo,
+            COUNT(*) as cantidad
+        FROM postulantes p
+        WHERE $filtro_fecha_hora
+        GROUP BY COALESCE(NULLIF(p.sexo, ''), 'No especificado')
+        ORDER BY cantidad DESC
+    ");
+    $stmt_sexo_fecha->execute($parametros);
+    $postulantes_por_sexo_fecha = $stmt_sexo_fecha->fetchAll();
+    
     // Distribución de usuarios que han registrado en la fecha específica (con franja horaria)
     $stmt_usuarios = $pdo->prepare("
         SELECT 
@@ -883,6 +896,7 @@ try {
     $postulantes_fecha = 0;
     $postulantes_por_unidad_fecha = [];
     $aparatos_utilizados_fecha = [];
+    $postulantes_por_sexo_fecha = [];
     $usuarios_registradores_fecha = [];
     $horarios_registro = ['primer_registro' => null, 'ultimo_registro' => null];
     $postulantes_detallados = [];
@@ -2314,9 +2328,9 @@ $distribucion_unidad = $pdo->query("
                                                 </div>
                                             </div>
                                             
-                                            <!-- Postulantes por unidad -->
+                                            <!-- Postulantes por unidad, aparatos y sexo -->
                                             <div class="row mb-4">
-                                                <div class="col-md-6">
+                                                <div class="col-lg-4 col-md-6 mb-3">
                                                     <div class="card">
                                                         <div class="card-header">
                                                             <h6 class="mb-0">Postulantes por Unidad</h6>
@@ -2349,7 +2363,7 @@ $distribucion_unidad = $pdo->query("
                                                 </div>
                                                 
                                                 <!-- Aparatos utilizados -->
-                                                <div class="col-md-6">
+                                                <div class="col-lg-4 col-md-6 mb-3">
                                                     <div class="card">
                                                         <div class="card-header">
                                                             <h6 class="mb-0">Aparatos Biométricos Utilizados</h6>
@@ -2371,6 +2385,39 @@ $distribucion_unidad = $pdo->query("
                                                                         <tr>
                                                                             <td><?= htmlspecialchars($aparato['dispositivo']) ?></td>
                                                                             <td><span class="badge badge-success"><?= $aparato['cantidad'] ?></span></td>
+                                                                        </tr>
+                                                                        <?php endforeach; ?>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Postulantes por sexo -->
+                                                <div class="col-lg-4 col-md-6 mb-3">
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <h6 class="mb-0">Postulantes por Sexo</h6>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <?php if (empty($postulantes_por_sexo_fecha)): ?>
+                                                            <p class="text-muted text-center">No hay registros para esta fecha</p>
+                                                            <?php else: ?>
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Sexo</th>
+                                                                            <th>Cantidad</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <?php foreach ($postulantes_por_sexo_fecha as $sexo): ?>
+                                                                        <tr>
+                                                                            <td><?= htmlspecialchars($sexo['sexo']) ?></td>
+                                                                            <td><span class="badge badge-secondary"><?= $sexo['cantidad'] ?></span></td>
                                                                         </tr>
                                                                         <?php endforeach; ?>
                                                                     </tbody>
@@ -3965,6 +4012,102 @@ $distribucion_unidad = $pdo->query("
                         }),
                         <?php endif; ?>
                         
+                        <?php if (!empty($postulantes_por_sexo_fecha)): ?>
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: "POSTULANTES POR SEXO",
+                                    bold: true,
+                                    size: 28,
+                                    color: "2E5090"
+                                })
+                            ],
+                            spacing: { after: 200 }
+                        }),
+                        
+                        new docx.Table({
+                            width: {
+                                size: 100,
+                                type: docx.WidthType.PERCENTAGE,
+                            },
+                            rows: [
+                                // Encabezados
+                                new docx.TableRow({
+                                    children: [
+                                        new docx.TableCell({
+                                            children: [
+                                                new docx.Paragraph({
+                                                    children: [
+                                                        new docx.TextRun({
+                                                            text: "Sexo",
+                                                            bold: true,
+                                                            size: 22
+                                                        })
+                                                    ]
+                                                })
+                                            ],
+                                            shading: {
+                                                fill: "F0F0F0"
+                                            }
+                                        }),
+                                        new docx.TableCell({
+                                            children: [
+                                                new docx.Paragraph({
+                                                    children: [
+                                                        new docx.TextRun({
+                                                            text: "Cantidad",
+                                                            bold: true,
+                                                            size: 22
+                                                        })
+                                                    ]
+                                                })
+                                            ],
+                                            shading: {
+                                                fill: "F0F0F0"
+                                            }
+                                        })
+                                    ]
+                                }),
+                                // Datos
+                                <?php foreach ($postulantes_por_sexo_fecha as $sexo): ?>
+                                new docx.TableRow({
+                                    children: [
+                                        new docx.TableCell({
+                                            children: [
+                                                new docx.Paragraph({
+                                                    children: [
+                                                        new docx.TextRun({
+                                                            text: "<?= htmlspecialchars($sexo['sexo']) ?>",
+                                                            size: 20
+                                                        })
+                                                    ]
+                                                })
+                                            ]
+                                        }),
+                                        new docx.TableCell({
+                                            children: [
+                                                new docx.Paragraph({
+                                                    children: [
+                                                        new docx.TextRun({
+                                                            text: "<?= $sexo['cantidad'] ?>",
+                                                            size: 20
+                                                        })
+                                                    ]
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                }),
+                                <?php endforeach; ?>
+                            ]
+                        }),
+                        
+                        new docx.Paragraph({
+                            children: [new docx.TextRun({ text: "" })],
+                            spacing: { after: 400 }
+                        }),
+                        <?php endif; ?>
+                        
                         // Distribución de usuarios registradores
                         <?php if (!empty($usuarios_registradores_fecha)): ?>
                         new docx.Paragraph({
@@ -4549,6 +4692,28 @@ $distribucion_unidad = $pdo->query("
                                 <tr>
                                     <td><?= htmlspecialchars($aparato['dispositivo']) ?></td>
                                     <td><?= $aparato['cantidad'] ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($postulantes_por_sexo_fecha)): ?>
+                    <div class="section">
+                        <div class="section-title">POSTULANTES POR SEXO</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Sexo</th>
+                                    <th>Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($postulantes_por_sexo_fecha as $sexo): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($sexo['sexo']) ?></td>
+                                    <td><?= $sexo['cantidad'] ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
