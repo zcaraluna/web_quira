@@ -5213,8 +5213,8 @@ $distribucion_unidad = $pdo->query("
             overflow: hidden;
         }
         .modal-video-header {
-            background: linear-gradient(135deg, #2E5090 0%, #1f2937 100%);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            background-color: #2E5090;
+            border-bottom: none;
             align-items: center;
         }
         .modal-video-header h5 {
@@ -5354,7 +5354,7 @@ $distribucion_unidad = $pdo->query("
     <div class="modal fade" id="modal-video-tutorial" tabindex="-1" role="dialog" aria-labelledby="modalVideoTutorialLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content modal-video-content shadow-lg">
-                <div class="modal-header modal-video-header text-white" style="background-color: #2E5090;">
+                <div class="modal-header modal-video-header text-white">
                     <h5 class="modal-title" id="modalVideoTutorialLabel">
                         <i class="fas fa-play-circle mr-2"></i>Videotutorial de registro biométrico
                     </h5>
