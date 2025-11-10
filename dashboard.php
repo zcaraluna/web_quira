@@ -1333,7 +1333,7 @@ $distribucion_unidad = $pdo->query("
                                     Postulantes
                                 </a>
                                 <?php if (!in_array($_SESSION['rol'], ['SUPERVISOR'])): ?>
-                                <a class="nav-link mb-2" href="agregar_postulante.php">
+                                <a class="nav-link mb-2" href="agregar_postulante.php" id="link-agregar-postulante" data-destino="agregar_postulante.php">
                                     <i class="fas fa-fw fa-user-plus mr-2"></i>
                                     Agregar Postulante
                                 </a>
@@ -5205,6 +5205,79 @@ $distribucion_unidad = $pdo->query("
         </div>
     </footer>
 
+    <!-- Modal Instrucciones Agregar Postulante -->
+    <div class="modal fade" id="modal-instrucciones-postulante" tabindex="-1" role="dialog" aria-labelledby="modalInstruccionesPostulanteLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold" id="modalInstruccionesPostulanteLabel">
+                        <i class="fas fa-fingerprint mr-2"></i>Antes de agregar un postulante
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="lead mb-4">
+                        Para agregar un nuevo postulante, asegúrese de registrar el dedo del postulante en el dispositivo biométrico que tiene conectado a su computadora.
+                    </p>
+                    <ol class="pl-4">
+                        <li class="mb-3">
+                            Diríjase a su dispositivo biométrico y presione el botón <strong>M/OK</strong>.
+                        </li>
+                        <li class="mb-3">
+                            Entre en la opción <strong>Usuarios</strong>, elija <strong>Nuevo usuario</strong> y dentro del menú seleccione <strong>Huella</strong> para capturar la huella del postulante.
+                        </li>
+                        <li class="mb-3">
+                            Una vez tomada la huella del postulante, regrese a la pantalla principal del biométrico presionando <strong>ESC</strong> hasta llegar a ese punto.
+                        </li>
+                        <li class="mb-0">
+                            Puede utilizar este
+                            <button type="button" class="btn btn-link p-0 align-baseline" id="btn-ver-video-instrucciones" data-video-url="https://www.youtube.com/embed/VIDEO_ID" aria-label="Abrir videotutorial">
+                                vídeo
+                            </button>
+                            para ver un tutorial paso a paso.
+                        </li>
+                    </ol>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-success" id="btn-confirmar-instrucciones">
+                        <i class="fas fa-check mr-1"></i> Ya registré el dedo del postulante
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Video Tutorial -->
+    <div class="modal fade" id="modal-video-tutorial" tabindex="-1" role="dialog" aria-labelledby="modalVideoTutorialLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="modalVideoTutorialLabel">
+                        <i class="fas fa-play-circle mr-2"></i>Videotutorial de registro biométrico
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="embed-responsive embed-responsive-16by9">
+                        <iframe class="embed-responsive-item" id="iframe-video-tutorial" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer Simple -->
     <div class="footer-simple" id="footer-link">
         <span id="footer-text">Powered by </span><span id="footer-simple">s1mple</span>
@@ -5287,6 +5360,43 @@ $distribucion_unidad = $pdo->query("
             modalContainer.addEventListener('click', function(e) {
                 e.stopPropagation();
             });
+
+            // Modal previo para agregar postulante
+            const linkAgregarPostulante = document.getElementById('link-agregar-postulante');
+            const btnConfirmarInstrucciones = document.getElementById('btn-confirmar-instrucciones');
+            const btnVerVideoInstrucciones = document.getElementById('btn-ver-video-instrucciones');
+            const iframeVideoTutorial = document.getElementById('iframe-video-tutorial');
+            const destinoAgregar = linkAgregarPostulante ? linkAgregarPostulante.getAttribute('data-destino') : null;
+
+            if (linkAgregarPostulante && window.jQuery) {
+                linkAgregarPostulante.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    $('#modal-instrucciones-postulante').modal('show');
+                });
+            }
+
+            if (btnConfirmarInstrucciones && window.jQuery) {
+                btnConfirmarInstrucciones.addEventListener('click', function() {
+                    $('#modal-instrucciones-postulante').modal('hide');
+                    if (destinoAgregar) {
+                        window.location.href = destinoAgregar;
+                    }
+                });
+            }
+
+            if (btnVerVideoInstrucciones && iframeVideoTutorial && window.jQuery) {
+                btnVerVideoInstrucciones.addEventListener('click', function() {
+                    const videoUrl = btnVerVideoInstrucciones.getAttribute('data-video-url');
+                    if (videoUrl) {
+                        iframeVideoTutorial.src = videoUrl;
+                    }
+                    $('#modal-video-tutorial').modal('show');
+                });
+
+                $('#modal-video-tutorial').on('hidden.bs.modal', function() {
+                    iframeVideoTutorial.src = '';
+                });
+            }
         });
     </script>
 </body>
