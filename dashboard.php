@@ -5284,6 +5284,18 @@ $distribucion_unidad = $pdo->query("
             background: #1f3b6a;
             border-color: #1f3b6a;
         }
+        .modal-video-content {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .modal-video-body .video-wrapper {
+            padding-top: 56.25%;
+        }
+        @media (max-width: 992px) {
+            .modal-video-content {
+                max-width: 90vw;
+            }
+        }
         @media (max-width: 768px) {
             .modal-video-content {
                 border-radius: 0.75rem;
@@ -5344,7 +5356,7 @@ $distribucion_unidad = $pdo->query("
 
     <!-- Modal Video Tutorial -->
     <div class="modal fade" id="modal-video-tutorial" tabindex="-1" role="dialog" aria-labelledby="modalVideoTutorialLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content modal-video-content shadow-lg">
                 <div class="modal-header modal-video-header text-white">
                     <h5 class="modal-title" id="modalVideoTutorialLabel">
@@ -5370,9 +5382,6 @@ $distribucion_unidad = $pdo->query("
                     <button type="button" class="btn btn-outline-light btn-sm" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Cerrar
                     </button>
-                    <a href="assets/media/various/zktecok40.mp4" class="btn btn-primary btn-sm" download>
-                        <i class="fas fa-download mr-1"></i> Descargar video
-                    </a>
                 </div>
             </div>
         </div>
