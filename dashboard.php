@@ -5205,6 +5205,96 @@ $distribucion_unidad = $pdo->query("
         </div>
     </footer>
 
+    <style>
+        .modal-video-content {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .modal-video-header {
+            background: linear-gradient(135deg, #2E5090 0%, #1f2937 100%);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            align-items: center;
+        }
+        .modal-video-header h5 {
+            margin-bottom: 0;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+        .modal-video-header .close {
+            opacity: 0.8;
+        }
+        .modal-video-header .close:hover {
+            opacity: 1;
+        }
+        .modal-video-body {
+            padding: 0;
+            background: radial-gradient(circle at top, rgba(46, 80, 144, 0.15), transparent 55%), #0b1220;
+        }
+        .modal-video-body .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            background: #000;
+        }
+        .modal-video-body .video-wrapper video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+        }
+        .modal-video-body .video-helper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.9rem 1.5rem 1.2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .modal-video-body .video-helper i {
+            color: #38bdf8;
+        }
+        .modal-video-footer {
+            background: rgba(15, 23, 42, 0.85);
+            border-top: 1px solid rgba(148, 163, 184, 0.15);
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-video-footer .btn {
+            border-radius: 999px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .modal-video-footer .btn-outline-light {
+            border-color: rgba(226, 232, 240, 0.4);
+        }
+        .modal-video-footer .btn-outline-light:hover {
+            background: rgba(226, 232, 240, 0.1);
+        }
+        .modal-video-footer .btn-primary {
+            background: #2E5090;
+            border-color: #2E5090;
+        }
+        .modal-video-footer .btn-primary:hover {
+            background: #1f3b6a;
+            border-color: #1f3b6a;
+        }
+        @media (max-width: 768px) {
+            .modal-video-content {
+                border-radius: 0.75rem;
+            }
+            .modal-video-footer {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+        }
+    </style>
+
     <!-- Modal Instrucciones Agregar Postulante -->
     <div class="modal fade" id="modal-instrucciones-postulante" tabindex="-1" role="dialog" aria-labelledby="modalInstruccionesPostulanteLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -5254,9 +5344,9 @@ $distribucion_unidad = $pdo->query("
 
     <!-- Modal Video Tutorial -->
     <div class="modal fade" id="modal-video-tutorial" tabindex="-1" role="dialog" aria-labelledby="modalVideoTutorialLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-dark text-white">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content modal-video-content shadow-lg">
+                <div class="modal-header modal-video-header text-white">
                     <h5 class="modal-title" id="modalVideoTutorialLabel">
                         <i class="fas fa-play-circle mr-2"></i>Videotutorial de registro biométrico
                     </h5>
@@ -5264,18 +5354,25 @@ $distribucion_unidad = $pdo->query("
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body p-0">
-                    <div class="embed-responsive embed-responsive-16by9">
-                        <video id="video-tutorial" class="embed-responsive-item" controls preload="none" style="background: #000;">
+                <div class="modal-body modal-video-body">
+                    <div class="video-wrapper">
+                        <video id="video-tutorial" class="video-player" controls preload="none">
                             <source src="" type="video/mp4">
                             Tu navegador no soporta la reproducción de video.
                         </video>
                     </div>
+                    <div class="video-helper">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Si el video tarda en cargar, espere unos segundos o descárguelo para verlo en su reproductor local.</span>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-light text-white border-light" data-dismiss="modal">
+                <div class="modal-footer modal-video-footer">
+                    <button type="button" class="btn btn-outline-light btn-sm" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Cerrar
                     </button>
+                    <a href="assets/media/various/zktecok40.mp4" class="btn btn-primary btn-sm" download>
+                        <i class="fas fa-download mr-1"></i> Descargar video
+                    </a>
                 </div>
             </div>
         </div>
