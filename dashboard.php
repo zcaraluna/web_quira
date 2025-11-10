@@ -5209,16 +5209,16 @@ $distribucion_unidad = $pdo->query("
     <div class="modal fade" id="modal-instrucciones-postulante" tabindex="-1" role="dialog" aria-labelledby="modalInstruccionesPostulanteLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #1f2937 100%); border-bottom: none; box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.1);">
-                    <h5 class="modal-title font-weight-bold" id="modalInstruccionesPostulanteLabel">
+                <div class="modal-header" style="background-color: #2E5090; border-bottom: none;">
+                    <h5 class="modal-title font-weight-bold text-white" id="modalInstruccionesPostulanteLabel">
                         <i class="fas fa-fingerprint mr-2"></i>Antes de agregar un postulante
                     </h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <p class="lead mb-4">
+                <div class="modal-body" style="color: #4a5568;">
+                    <p class="lead mb-4" style="color: #404a5a;">
                         Para agregar un nuevo postulante, asegúrese de registrar el dedo del postulante en el dispositivo biométrico que tiene conectado a su computadora.
                     </p>
                     <ol class="pl-4">
@@ -5241,7 +5241,7 @@ $distribucion_unidad = $pdo->query("
                     </ol>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                    <button type="button" class="btn btn-outline-secondary text-secondary border-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Cerrar
                     </button>
                     <button type="button" class="btn btn-success" id="btn-confirmar-instrucciones">
@@ -5273,7 +5273,7 @@ $distribucion_unidad = $pdo->query("
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-light" data-dismiss="modal">
+                    <button type="button" class="btn btn-outline-light text-white border-light" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Cerrar
                     </button>
                 </div>
