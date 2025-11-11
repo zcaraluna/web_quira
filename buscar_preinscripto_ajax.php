@@ -155,7 +155,7 @@ try {
             'ci' => $preinscripto['ci'],
             'nombre_completo' => $preinscripto['nombre_completo'],
             'fecha_nacimiento' => $fecha_nacimiento_formatted,
-            'sexo' => $sexo_completo,
+            'sexo' => $sexo_completo ?? '',
             'unidad' => $preinscripto['unidad'],
             'edad' => $edad
         ]
