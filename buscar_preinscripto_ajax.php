@@ -128,16 +128,24 @@ try {
         exit;
     }
     
-    // Convertir sexo de H/M a Hombre/Mujer
-    $sexo_completo = $preinscripto['sexo'] === 'H' ? 'Hombre' : 'Mujer';
+    // Convertir sexo de H/M a Hombre/Mujer conservando null
+    $sexo_completo = null;
+    if ($preinscripto['sexo'] === 'H') {
+        $sexo_completo = 'Hombre';
+    } elseif ($preinscripto['sexo'] === 'M') {
+        $sexo_completo = 'Mujer';
+    }
     
     // Formatear fecha de nacimiento para el formulario (YYYY-MM-DD)
     $fecha_nacimiento_formatted = $preinscripto['fecha_nacimiento'];
     
-    // Calcular edad
-    $fecha_nac = new DateTime($preinscripto['fecha_nacimiento']);
-    $hoy = new DateTime();
-    $edad = $hoy->diff($fecha_nac)->y;
+    // Calcular edad solo si hay fecha disponible
+    $edad = null;
+    if (!empty($preinscripto['fecha_nacimiento'])) {
+        $fecha_nac = new DateTime($preinscripto['fecha_nacimiento']);
+        $hoy = new DateTime();
+        $edad = $hoy->diff($fecha_nac)->y;
+    }
     
     // Retornar datos en formato JSON
     echo json_encode([
