@@ -234,7 +234,12 @@ try {
     $stmt = $pdo->prepare("
         INSERT INTO preinscriptos (ci, nombre_completo, fecha_nacimiento, sexo, unidad, fecha_actualizacion)
         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT (ci) DO NOTHING
+        ON CONFLICT (ci) DO UPDATE SET
+            nombre_completo = EXCLUDED.nombre_completo,
+            fecha_nacimiento = EXCLUDED.fecha_nacimiento,
+            sexo = EXCLUDED.sexo,
+            unidad = EXCLUDED.unidad,
+            fecha_actualizacion = CURRENT_TIMESTAMP
     ");
     
     // Contadores
