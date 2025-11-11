@@ -818,18 +818,19 @@ $es_modo_prueba = verificar_modo_prueba_activo($pdo);
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="dedo_registrado"><i class="fas fa-hand-paper"></i> Dedo Registrado *</label>
+                                        <?php $dedo_seleccionado = $_POST['dedo_registrado'] ?? 'ID'; ?>
                                         <select class="form-control" id="dedo_registrado" name="dedo_registrado" required>
-                                            <option value="">Seleccionar dedo</option>
-                                            <option value="PD" <?= ($_POST['dedo_registrado'] ?? '') === 'PD' ? 'selected' : '' ?>>PD (Pulgar Derecho)</option>
-                                            <option value="ID" <?= ($_POST['dedo_registrado'] ?? '') === 'ID' ? 'selected' : '' ?>>ID (Índice Derecho)</option>
-                                            <option value="MD" <?= ($_POST['dedo_registrado'] ?? '') === 'MD' ? 'selected' : '' ?>>MD (Medio Derecho)</option>
-                                            <option value="AD" <?= ($_POST['dedo_registrado'] ?? '') === 'AD' ? 'selected' : '' ?>>AD (Anular Derecho)</option>
-                                            <option value="MeD" <?= ($_POST['dedo_registrado'] ?? '') === 'MeD' ? 'selected' : '' ?>>MeD (Meñique Derecho)</option>
-                                            <option value="PI" <?= ($_POST['dedo_registrado'] ?? '') === 'PI' ? 'selected' : '' ?>>PI (Pulgar Izquierdo)</option>
-                                            <option value="II" <?= ($_POST['dedo_registrado'] ?? '') === 'II' ? 'selected' : '' ?>>II (Índice Izquierdo)</option>
-                                            <option value="MI" <?= ($_POST['dedo_registrado'] ?? '') === 'MI' ? 'selected' : '' ?>>MI (Medio Izquierdo)</option>
-                                            <option value="AI" <?= ($_POST['dedo_registrado'] ?? '') === 'AI' ? 'selected' : '' ?>>AI (Anular Izquierdo)</option>
-                                            <option value="MeI" <?= ($_POST['dedo_registrado'] ?? '') === 'MeI' ? 'selected' : '' ?>>MeI (Meñique Izquierdo)</option>
+                                            <option value="" <?= $dedo_seleccionado === '' ? 'selected' : '' ?>>Seleccionar dedo</option>
+                                            <option value="PD" <?= $dedo_seleccionado === 'PD' ? 'selected' : '' ?>>PD (Pulgar Derecho)</option>
+                                            <option value="ID" <?= $dedo_seleccionado === 'ID' ? 'selected' : '' ?>>ID (Índice Derecho)</option>
+                                            <option value="MD" <?= $dedo_seleccionado === 'MD' ? 'selected' : '' ?>>MD (Medio Derecho)</option>
+                                            <option value="AD" <?= $dedo_seleccionado === 'AD' ? 'selected' : '' ?>>AD (Anular Derecho)</option>
+                                            <option value="MeD" <?= $dedo_seleccionado === 'MeD' ? 'selected' : '' ?>>MeD (Meñique Derecho)</option>
+                                            <option value="PI" <?= $dedo_seleccionado === 'PI' ? 'selected' : '' ?>>PI (Pulgar Izquierdo)</option>
+                                            <option value="II" <?= $dedo_seleccionado === 'II' ? 'selected' : '' ?>>II (Índice Izquierdo)</option>
+                                            <option value="MI" <?= $dedo_seleccionado === 'MI' ? 'selected' : '' ?>>MI (Medio Izquierdo)</option>
+                                            <option value="AI" <?= $dedo_seleccionado === 'AI' ? 'selected' : '' ?>>AI (Anular Izquierdo)</option>
+                                            <option value="MeI" <?= $dedo_seleccionado === 'MeI' ? 'selected' : '' ?>>MeI (Meñique Izquierdo)</option>
                                         </select>
                                     </div>
                                 </div>
