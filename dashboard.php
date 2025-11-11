@@ -3397,15 +3397,41 @@ $distribucion_unidad = $pdo->query("
             
             // Fecha de nacimiento
             const fechaNacimiento = postulante.fecha_nacimiento || postulante[4];
+            let fechaNacDate = null;
             if (fechaNacimiento) {
-                const fechaNac = new Date(fechaNacimiento);
-                document.getElementById('detalle_fecha_nacimiento').textContent = fechaNac.toLocaleDateString('es-ES');
+                if (/^\d{4}-\d{2}-\d{2}$/.test(fechaNacimiento.trim())) {
+                    const [anioStr, mesStr, diaStr] = fechaNacimiento.split('-');
+                    const anio = Number(anioStr);
+                    const mes = Number(mesStr);
+                    const dia = Number(diaStr);
+                    if (!Number.isNaN(anio) && !Number.isNaN(mes) && !Number.isNaN(dia)) {
+                        fechaNacDate = new Date(anio, mes - 1, dia);
+                    }
+                }
+                
+                if (!fechaNacDate || Number.isNaN(fechaNacDate.getTime())) {
+                    fechaNacDate = new Date(fechaNacimiento);
+                }
+                
+                if (!Number.isNaN(fechaNacDate.getTime())) {
+                    document.getElementById('detalle_fecha_nacimiento').textContent = fechaNacDate.toLocaleDateString('es-ES');
+                } else {
+                    document.getElementById('detalle_fecha_nacimiento').textContent = fechaNacimiento;
+                }
             } else {
                 document.getElementById('detalle_fecha_nacimiento').textContent = '-';
             }
             
-            const edad = postulante.edad || postulante[8];
-            document.getElementById('detalle_edad').textContent = (edad && edad !== null && edad !== '') ? edad + ' años' : '-';
+            let edad = postulante.edad || postulante[8];
+            if ((!edad && edad !== 0) && fechaNacDate && !Number.isNaN(fechaNacDate.getTime())) {
+                const hoy = new Date();
+                edad = hoy.getFullYear() - fechaNacDate.getFullYear();
+                const mesDiff = hoy.getMonth() - fechaNacDate.getMonth();
+                if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < fechaNacDate.getDate())) {
+                    edad--;
+                }
+            }
+            document.getElementById('detalle_edad').textContent = (edad || edad === 0) ? edad + ' años' : '-';
             const telefono = postulante.telefono || postulante[5];
             document.getElementById('detalle_telefono').textContent = (telefono && telefono !== null && telefono !== '') ? telefono : '-';
             
