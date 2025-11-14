@@ -2609,7 +2609,6 @@ $distribucion_unidad = $pdo->query("
                                                     <label class="form-check-label" for="separar-por-sexo">
                                                         <i class="fas fa-venus-mars mr-2"></i>Separar por sexo (Masculino/Femenino)
                                                     </label>
-                                                    <small class="form-text text-muted">Solo aplica si está marcado "Separar por dispositivo"</small>
                                                 </div>
                                             </div>
                                             <button type="submit" class="btn btn-primary" id="btn-exportar-word">
@@ -3760,30 +3759,6 @@ $distribucion_unidad = $pdo->query("
             // Función para exportar estadísticas
             alert('Función de exportación en desarrollo. Por ahora, puedes usar la función de reporte diario.');
         }
-        
-        // Controlar habilitación del checkbox de separar por sexo
-        document.addEventListener('DOMContentLoaded', function() {
-            const checkboxDispositivo = document.getElementById('separar-por-dispositivo');
-            const checkboxSexo = document.getElementById('separar-por-sexo');
-            
-            if (checkboxDispositivo && checkboxSexo) {
-                // Función para actualizar el estado del checkbox de sexo
-                function actualizarCheckboxSexo() {
-                    if (!checkboxDispositivo.checked) {
-                        checkboxSexo.checked = false;
-                        checkboxSexo.disabled = true;
-                    } else {
-                        checkboxSexo.disabled = false;
-                    }
-                }
-                
-                // Actualizar al cargar la página
-                actualizarCheckboxSexo();
-                
-                // Actualizar cuando cambie el checkbox de dispositivo
-                checkboxDispositivo.addEventListener('change', actualizarCheckboxSexo);
-            }
-        });
         
         // Función para exportar postulantes de una unidad a Word
         function exportarPostulantesWord(event) {
