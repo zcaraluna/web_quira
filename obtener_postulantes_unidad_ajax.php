@@ -41,7 +41,8 @@ try {
         SELECT 
             p.cedula,
             COALESCE(p.nombre_completo, p.nombre || ' ' || p.apellido) as nombre_completo,
-            COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo') as dispositivo
+            COALESCE(ab.nombre, p.aparato_nombre, 'Sin dispositivo') as dispositivo,
+            COALESCE(p.sexo, 'No especificado') as sexo
         FROM postulantes p
         LEFT JOIN aparatos_biometricos ab ON p.aparato_id = ab.id
         WHERE p.unidad = ?

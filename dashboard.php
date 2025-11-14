@@ -3912,40 +3912,8 @@ $distribucion_unidad = $pdo->query("
                 })
             ];
             
-            // Crear una sección por cada dispositivo
-            dispositivosOrdenados.forEach((dispositivo, dispositivoIndex) => {
-                const postulantesDispositivo = postulantesPorDispositivo[dispositivo];
-                
-                // Título de la sección del dispositivo
-                elementosDocumento.push(
-                    new docx.Paragraph({
-                        children: [new docx.TextRun({ text: "" })],
-                        spacing: { before: dispositivoIndex === 0 ? 0 : 400 }
-                    }),
-                    new docx.Paragraph({
-                        children: [
-                            new docx.TextRun({
-                                text: `DISPOSITIVO: ${dispositivo}`,
-                                bold: true,
-                                size: 26,
-                                color: "2E5090"
-                            })
-                        ],
-                        spacing: { after: 100 }
-                    }),
-                    new docx.Paragraph({
-                        children: [
-                            new docx.TextRun({
-                                text: `Total de postulantes en este dispositivo: ${postulantesDispositivo.length}`,
-                                bold: true,
-                                size: 20
-                            })
-                        ],
-                        spacing: { after: 200 }
-                    })
-                );
-                
-                // Crear tabla para este dispositivo
+            // Función para crear una tabla de postulantes
+            function crearTablaPostulantes(postulantes) {
                 const filasTabla = [
                     // Encabezado
                     new docx.TableRow({
@@ -4019,7 +3987,7 @@ $distribucion_unidad = $pdo->query("
                 ];
                 
                 // Agregar filas de postulantes
-                postulantesDispositivo.forEach((postulante, index) => {
+                postulantes.forEach((postulante, index) => {
                     filasTabla.push(
                         new docx.TableRow({
                             children: [
@@ -4076,16 +4044,108 @@ $distribucion_unidad = $pdo->query("
                     );
                 });
                 
-                // Agregar tabla al documento
+                return new docx.Table({
+                    width: {
+                        size: 100,
+                        type: docx.WidthType.PERCENTAGE
+                    },
+                    rows: filasTabla
+                });
+            }
+            
+            // Crear una sección por cada dispositivo
+            dispositivosOrdenados.forEach((dispositivo, dispositivoIndex) => {
+                const postulantesDispositivo = postulantesPorDispositivo[dispositivo];
+                
+                // Título de la sección del dispositivo
                 elementosDocumento.push(
-                    new docx.Table({
-                        width: {
-                            size: 100,
-                            type: docx.WidthType.PERCENTAGE
-                        },
-                        rows: filasTabla
+                    new docx.Paragraph({
+                        children: [new docx.TextRun({ text: "" })],
+                        spacing: { before: dispositivoIndex === 0 ? 0 : 400 }
+                    }),
+                    new docx.Paragraph({
+                        children: [
+                            new docx.TextRun({
+                                text: `DISPOSITIVO: ${dispositivo}`,
+                                bold: true,
+                                size: 26,
+                                color: "2E5090"
+                            })
+                        ],
+                        spacing: { after: 100 }
+                    }),
+                    new docx.Paragraph({
+                        children: [
+                            new docx.TextRun({
+                                text: `Total de postulantes en este dispositivo: ${postulantesDispositivo.length}`,
+                                bold: true,
+                                size: 20
+                            })
+                        ],
+                        spacing: { after: 200 }
                     })
                 );
+                
+                // Separar postulantes por sexo dentro del dispositivo
+                const postulantesHombre = postulantesDispositivo.filter(p => p.sexo === 'Hombre' || p.sexo === 'H');
+                const postulantesMujer = postulantesDispositivo.filter(p => p.sexo === 'Mujer' || p.sexo === 'M' || p.sexo === 'F');
+                const postulantesSinSexo = postulantesDispositivo.filter(p => 
+                    p.sexo !== 'Hombre' && p.sexo !== 'H' && p.sexo !== 'Mujer' && p.sexo !== 'M' && p.sexo !== 'F'
+                );
+                
+                // Sección de Hombres
+                if (postulantesHombre.length > 0) {
+                    elementosDocumento.push(
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `HOMBRES (${postulantesHombre.length})`,
+                                    bold: true,
+                                    size: 22,
+                                    color: "1E88E5"
+                                })
+                            ],
+                            spacing: { before: 200, after: 100 }
+                        })
+                    );
+                    elementosDocumento.push(crearTablaPostulantes(postulantesHombre));
+                }
+                
+                // Sección de Mujeres
+                if (postulantesMujer.length > 0) {
+                    elementosDocumento.push(
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `MUJERES (${postulantesMujer.length})`,
+                                    bold: true,
+                                    size: 22,
+                                    color: "E91E63"
+                                })
+                            ],
+                            spacing: { before: 200, after: 100 }
+                        })
+                    );
+                    elementosDocumento.push(crearTablaPostulantes(postulantesMujer));
+                }
+                
+                // Sección de Sin sexo especificado (si hay)
+                if (postulantesSinSexo.length > 0) {
+                    elementosDocumento.push(
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `NO ESPECIFICADO (${postulantesSinSexo.length})`,
+                                    bold: true,
+                                    size: 22,
+                                    color: "757575"
+                                })
+                            ],
+                            spacing: { before: 200, after: 100 }
+                        })
+                    );
+                    elementosDocumento.push(crearTablaPostulantes(postulantesSinSexo));
+                }
             });
             
             // Agregar pie de página
