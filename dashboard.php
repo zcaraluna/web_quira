@@ -3997,6 +3997,22 @@ $distribucion_unidad = $pdo->query("
                                 shading: {
                                     fill: "D3D3D3"
                                 }
+                            }),
+                            new docx.TableCell({
+                                children: [
+                                    new docx.Paragraph({
+                                        children: [
+                                            new docx.TextRun({
+                                                text: "Dispositivo Biométrico",
+                                                bold: true,
+                                                size: 20
+                                            })
+                                        ]
+                                    })
+                                ],
+                                shading: {
+                                    fill: "D3D3D3"
+                                }
                             })
                         ]
                     })
@@ -4037,6 +4053,18 @@ $distribucion_unidad = $pdo->query("
                                             children: [
                                                 new docx.TextRun({
                                                     text: postulante.nombre_completo || '',
+                                                    size: 18
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                }),
+                                new docx.TableCell({
+                                    children: [
+                                        new docx.Paragraph({
+                                            children: [
+                                                new docx.TextRun({
+                                                    text: postulante.dispositivo || 'Sin dispositivo',
                                                     size: 18
                                                 })
                                             ]
