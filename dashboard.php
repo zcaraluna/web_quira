@@ -2595,6 +2595,14 @@ $distribucion_unidad = $pdo->query("
                                                     <?php endif; ?>
                                                 </select>
                                             </div>
+                                            <div class="form-group">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="separar-por-sexo" name="separar_por_sexo">
+                                                    <label class="form-check-label" for="separar-por-sexo">
+                                                        <i class="fas fa-venus-mars mr-2"></i>Separar por sexo (Masculino/Femenino)
+                                                    </label>
+                                                </div>
+                                            </div>
                                             <button type="submit" class="btn btn-primary" id="btn-exportar-word">
                                                 <i class="fas fa-download mr-2"></i>Exportar a Word
                                             </button>
@@ -3784,8 +3792,11 @@ $distribucion_unidad = $pdo->query("
                         return;
                     }
                     
+                    // Obtener opción de separar por sexo
+                    const separarPorSexo = document.getElementById('separar-por-sexo').checked;
+                    
                     // Generar documento Word
-                    generarDocumentoPostulantes(data.unidad, data.postulantes, data.total);
+                    generarDocumentoPostulantes(data.unidad, data.postulantes, data.total, separarPorSexo);
                 })
                 .catch(error => {
                     statusDiv.style.display = 'none';
@@ -3810,7 +3821,7 @@ $distribucion_unidad = $pdo->query("
         }
         
         // Función para generar el documento Word de postulantes
-        function generarDocumentoPostulantes(nombreUnidad, postulantes, total) {
+        function generarDocumentoPostulantes(nombreUnidad, postulantes, total, separarPorSexo = false) {
             const fechaActual = new Date().toLocaleDateString('es-PY', { 
                 timeZone: 'America/Asuncion',
                 year: 'numeric',
@@ -4086,65 +4097,71 @@ $distribucion_unidad = $pdo->query("
                     })
                 );
                 
-                // Separar postulantes por sexo dentro del dispositivo
-                const postulantesHombre = postulantesDispositivo.filter(p => p.sexo === 'Hombre' || p.sexo === 'H');
-                const postulantesMujer = postulantesDispositivo.filter(p => p.sexo === 'Mujer' || p.sexo === 'M' || p.sexo === 'F');
-                const postulantesSinSexo = postulantesDispositivo.filter(p => 
-                    p.sexo !== 'Hombre' && p.sexo !== 'H' && p.sexo !== 'Mujer' && p.sexo !== 'M' && p.sexo !== 'F'
-                );
-                
-                // Sección de Hombres
-                if (postulantesHombre.length > 0) {
-                    elementosDocumento.push(
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: `HOMBRES (${postulantesHombre.length})`,
-                                    bold: true,
-                                    size: 22,
-                                    color: "1E88E5"
-                                })
-                            ],
-                            spacing: { before: 200, after: 100 }
-                        })
+                // Separar por sexo solo si está habilitado
+                if (separarPorSexo) {
+                    // Separar postulantes por sexo dentro del dispositivo
+                    const postulantesHombre = postulantesDispositivo.filter(p => p.sexo === 'Hombre' || p.sexo === 'H');
+                    const postulantesMujer = postulantesDispositivo.filter(p => p.sexo === 'Mujer' || p.sexo === 'M' || p.sexo === 'F');
+                    const postulantesSinSexo = postulantesDispositivo.filter(p => 
+                        p.sexo !== 'Hombre' && p.sexo !== 'H' && p.sexo !== 'Mujer' && p.sexo !== 'M' && p.sexo !== 'F'
                     );
-                    elementosDocumento.push(crearTablaPostulantes(postulantesHombre));
-                }
-                
-                // Sección de Mujeres
-                if (postulantesMujer.length > 0) {
-                    elementosDocumento.push(
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: `MUJERES (${postulantesMujer.length})`,
-                                    bold: true,
-                                    size: 22,
-                                    color: "E91E63"
-                                })
-                            ],
-                            spacing: { before: 200, after: 100 }
-                        })
-                    );
-                    elementosDocumento.push(crearTablaPostulantes(postulantesMujer));
-                }
-                
-                // Sección de Sin sexo especificado (si hay)
-                if (postulantesSinSexo.length > 0) {
-                    elementosDocumento.push(
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: `NO ESPECIFICADO (${postulantesSinSexo.length})`,
-                                    bold: true,
-                                    size: 22,
-                                    color: "757575"
-                                })
-                            ],
-                            spacing: { before: 200, after: 100 }
-                        })
-                    );
-                    elementosDocumento.push(crearTablaPostulantes(postulantesSinSexo));
+                    
+                    // Sección de Hombres
+                    if (postulantesHombre.length > 0) {
+                        elementosDocumento.push(
+                            new docx.Paragraph({
+                                children: [
+                                    new docx.TextRun({
+                                        text: `HOMBRES (${postulantesHombre.length})`,
+                                        bold: true,
+                                        size: 22,
+                                        color: "1E88E5"
+                                    })
+                                ],
+                                spacing: { before: 200, after: 100 }
+                            })
+                        );
+                        elementosDocumento.push(crearTablaPostulantes(postulantesHombre));
+                    }
+                    
+                    // Sección de Mujeres
+                    if (postulantesMujer.length > 0) {
+                        elementosDocumento.push(
+                            new docx.Paragraph({
+                                children: [
+                                    new docx.TextRun({
+                                        text: `MUJERES (${postulantesMujer.length})`,
+                                        bold: true,
+                                        size: 22,
+                                        color: "E91E63"
+                                    })
+                                ],
+                                spacing: { before: 200, after: 100 }
+                            })
+                        );
+                        elementosDocumento.push(crearTablaPostulantes(postulantesMujer));
+                    }
+                    
+                    // Sección de Sin sexo especificado (si hay)
+                    if (postulantesSinSexo.length > 0) {
+                        elementosDocumento.push(
+                            new docx.Paragraph({
+                                children: [
+                                    new docx.TextRun({
+                                        text: `NO ESPECIFICADO (${postulantesSinSexo.length})`,
+                                        bold: true,
+                                        size: 22,
+                                        color: "757575"
+                                    })
+                                ],
+                                spacing: { before: 200, after: 100 }
+                            })
+                        );
+                        elementosDocumento.push(crearTablaPostulantes(postulantesSinSexo));
+                    }
+                } else {
+                    // Si no se separa por sexo, mostrar todos los postulantes juntos
+                    elementosDocumento.push(crearTablaPostulantes(postulantesDispositivo));
                 }
             });
             
