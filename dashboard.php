@@ -3795,6 +3795,20 @@ $distribucion_unidad = $pdo->query("
                 });
         }
         
+        // Función para extraer número de dispositivo COLEPOL para ordenamiento
+        function extraerNumeroDispositivo(dispositivo) {
+            if (!dispositivo || dispositivo === 'Sin dispositivo') {
+                return 9999; // Sin dispositivo al final
+            }
+            // Buscar patrón COLEPOL seguido de número
+            const match = dispositivo.match(/COLEPOL\s*(\d+)/i);
+            if (match) {
+                return parseInt(match[1], 10);
+            }
+            // Si no es COLEPOL, ordenar alfabéticamente después de los COLEPOL
+            return 10000;
+        }
+        
         // Función para generar el documento Word de postulantes
         function generarDocumentoPostulantes(nombreUnidad, postulantes, total) {
             const fechaActual = new Date().toLocaleDateString('es-PY', { 
@@ -3813,237 +3827,264 @@ $distribucion_unidad = $pdo->query("
             // Obtener nombre del usuario desde PHP
             const nombreUsuario = <?= json_encode((!empty($_SESSION['grado']) ? $_SESSION['grado'] . ' ' : '') . $_SESSION['nombre'] . ' ' . $_SESSION['apellido']) ?>;
             
+            // Agrupar postulantes por dispositivo
+            const postulantesPorDispositivo = {};
+            postulantes.forEach(postulante => {
+                const dispositivo = postulante.dispositivo || 'Sin dispositivo';
+                if (!postulantesPorDispositivo[dispositivo]) {
+                    postulantesPorDispositivo[dispositivo] = [];
+                }
+                postulantesPorDispositivo[dispositivo].push(postulante);
+            });
+            
+            // Ordenar dispositivos: COLEPOL 1, COLEPOL 2, etc., luego otros, luego "Sin dispositivo"
+            const dispositivosOrdenados = Object.keys(postulantesPorDispositivo).sort((a, b) => {
+                const numA = extraerNumeroDispositivo(a);
+                const numB = extraerNumeroDispositivo(b);
+                if (numA !== numB) {
+                    return numA - numB;
+                }
+                // Si tienen el mismo número o no son COLEPOL, ordenar alfabéticamente
+                return a.localeCompare(b);
+            });
+            
+            // Construir elementos del documento
+            const elementosDocumento = [
+                // Título principal
+                new docx.Paragraph({
+                    children: [
+                        new docx.TextRun({
+                            text: "LISTA DE POSTULANTES",
+                            bold: true,
+                            size: 32,
+                            color: "000000"
+                        })
+                    ],
+                    alignment: docx.AlignmentType.CENTER,
+                    spacing: { after: 200 }
+                }),
+                
+                new docx.Paragraph({
+                    children: [
+                        new docx.TextRun({
+                            text: "Sistema QUIRA",
+                            bold: true,
+                            size: 24,
+                            color: "2E5090"
+                        })
+                    ],
+                    alignment: docx.AlignmentType.CENTER,
+                    spacing: { after: 400 }
+                }),
+                
+                // Información de la unidad
+                new docx.Paragraph({
+                    children: [
+                        new docx.TextRun({
+                            text: `Unidad: ${nombreUnidad}`,
+                            bold: true,
+                            size: 22
+                        })
+                    ],
+                    spacing: { after: 100 }
+                }),
+                
+                new docx.Paragraph({
+                    children: [
+                        new docx.TextRun({
+                            text: `Total de postulantes: ${total}`,
+                            bold: true,
+                            size: 22
+                        })
+                    ],
+                    spacing: { after: 200 }
+                }),
+                
+                new docx.Paragraph({
+                    children: [
+                        new docx.TextRun({
+                            text: `Documento generado el: ${fechaActual} ${horaActual}`,
+                            size: 18,
+                            color: "666666"
+                        })
+                    ],
+                    spacing: { after: 400 }
+                })
+            ];
+            
+            // Crear una sección por cada dispositivo
+            dispositivosOrdenados.forEach((dispositivo, dispositivoIndex) => {
+                const postulantesDispositivo = postulantesPorDispositivo[dispositivo];
+                
+                // Título de la sección del dispositivo
+                elementosDocumento.push(
+                    new docx.Paragraph({
+                        children: [new docx.TextRun({ text: "" })],
+                        spacing: { before: dispositivoIndex === 0 ? 0 : 400 }
+                    }),
+                    new docx.Paragraph({
+                        children: [
+                            new docx.TextRun({
+                                text: `DISPOSITIVO: ${dispositivo}`,
+                                bold: true,
+                                size: 26,
+                                color: "2E5090"
+                            })
+                        ],
+                        spacing: { after: 100 }
+                    }),
+                    new docx.Paragraph({
+                        children: [
+                            new docx.TextRun({
+                                text: `Total de postulantes en este dispositivo: ${postulantesDispositivo.length}`,
+                                bold: true,
+                                size: 20
+                            })
+                        ],
+                        spacing: { after: 200 }
+                    })
+                );
+                
+                // Crear tabla para este dispositivo
+                const filasTabla = [
+                    // Encabezado
+                    new docx.TableRow({
+                        children: [
+                            new docx.TableCell({
+                                children: [
+                                    new docx.Paragraph({
+                                        children: [
+                                            new docx.TextRun({
+                                                text: "N°",
+                                                bold: true,
+                                                size: 20
+                                            })
+                                        ]
+                                    })
+                                ],
+                                shading: {
+                                    fill: "D3D3D3"
+                                }
+                            }),
+                            new docx.TableCell({
+                                children: [
+                                    new docx.Paragraph({
+                                        children: [
+                                            new docx.TextRun({
+                                                text: "C.I.",
+                                                bold: true,
+                                                size: 20
+                                            })
+                                        ]
+                                    })
+                                ],
+                                shading: {
+                                    fill: "D3D3D3"
+                                }
+                            }),
+                            new docx.TableCell({
+                                children: [
+                                    new docx.Paragraph({
+                                        children: [
+                                            new docx.TextRun({
+                                                text: "Nombre Completo",
+                                                bold: true,
+                                                size: 20
+                                            })
+                                        ]
+                                    })
+                                ],
+                                shading: {
+                                    fill: "D3D3D3"
+                                }
+                            })
+                        ]
+                    })
+                ];
+                
+                // Agregar filas de postulantes
+                postulantesDispositivo.forEach((postulante, index) => {
+                    filasTabla.push(
+                        new docx.TableRow({
+                            children: [
+                                new docx.TableCell({
+                                    children: [
+                                        new docx.Paragraph({
+                                            children: [
+                                                new docx.TextRun({
+                                                    text: String(index + 1),
+                                                    size: 18
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                }),
+                                new docx.TableCell({
+                                    children: [
+                                        new docx.Paragraph({
+                                            children: [
+                                                new docx.TextRun({
+                                                    text: postulante.cedula || '',
+                                                    size: 18
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                }),
+                                new docx.TableCell({
+                                    children: [
+                                        new docx.Paragraph({
+                                            children: [
+                                                new docx.TextRun({
+                                                    text: postulante.nombre_completo || '',
+                                                    size: 18
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                })
+                            ]
+                        })
+                    );
+                });
+                
+                // Agregar tabla al documento
+                elementosDocumento.push(
+                    new docx.Table({
+                        width: {
+                            size: 100,
+                            type: docx.WidthType.PERCENTAGE
+                        },
+                        rows: filasTabla
+                    })
+                );
+            });
+            
+            // Agregar pie de página
+            elementosDocumento.push(
+                new docx.Paragraph({
+                    children: [new docx.TextRun({ text: "" })],
+                    spacing: { before: 400 }
+                }),
+                new docx.Paragraph({
+                    children: [
+                        new docx.TextRun({
+                            text: `Generado por: ${nombreUsuario}`,
+                            italics: true,
+                            size: 16,
+                            color: "808080"
+                        })
+                    ],
+                    alignment: docx.AlignmentType.CENTER,
+                    spacing: { before: 200 }
+                })
+            );
+            
             // Crear documento Word
             const doc = new docx.Document({
                 sections: [{
                     properties: {},
-                    children: [
-                        // Título principal
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: "LISTA DE POSTULANTES",
-                                    bold: true,
-                                    size: 32,
-                                    color: "000000"
-                                })
-                            ],
-                            alignment: docx.AlignmentType.CENTER,
-                            spacing: { after: 200 }
-                        }),
-                        
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: "Sistema QUIRA",
-                                    bold: true,
-                                    size: 24,
-                                    color: "2E5090"
-                                })
-                            ],
-                            alignment: docx.AlignmentType.CENTER,
-                            spacing: { after: 400 }
-                        }),
-                        
-                        // Información de la unidad
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: `Unidad: ${nombreUnidad}`,
-                                    bold: true,
-                                    size: 22
-                                })
-                            ],
-                            spacing: { after: 100 }
-                        }),
-                        
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: `Total de postulantes: ${total}`,
-                                    bold: true,
-                                    size: 22
-                                })
-                            ],
-                            spacing: { after: 200 }
-                        }),
-                        
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: `Documento generado el: ${fechaActual} ${horaActual}`,
-                                    size: 18,
-                                    color: "666666"
-                                })
-                            ],
-                            spacing: { after: 400 }
-                        }),
-                        
-                        // Tabla de postulantes
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: "LISTA DE POSTULANTES",
-                                    bold: true,
-                                    size: 24,
-                                    color: "2E5090"
-                                })
-                            ],
-                            spacing: { after: 200 }
-                        }),
-                        
-                        // Crear tabla
-                        new docx.Table({
-                            width: {
-                                size: 100,
-                                type: docx.WidthType.PERCENTAGE
-                            },
-                            rows: [
-                                // Encabezado
-                                new docx.TableRow({
-                                    children: [
-                                        new docx.TableCell({
-                                            children: [
-                                                new docx.Paragraph({
-                                                    children: [
-                                                        new docx.TextRun({
-                                                            text: "N°",
-                                                            bold: true,
-                                                            size: 20
-                                                        })
-                                                    ]
-                                                })
-                                            ],
-                                            shading: {
-                                                fill: "D3D3D3"
-                                            }
-                                        }),
-                                        new docx.TableCell({
-                                            children: [
-                                                new docx.Paragraph({
-                                                    children: [
-                                                        new docx.TextRun({
-                                                            text: "C.I.",
-                                                            bold: true,
-                                                            size: 20
-                                                        })
-                                                    ]
-                                                })
-                                            ],
-                                            shading: {
-                                                fill: "D3D3D3"
-                                            }
-                                        }),
-                                        new docx.TableCell({
-                                            children: [
-                                                new docx.Paragraph({
-                                                    children: [
-                                                        new docx.TextRun({
-                                                            text: "Nombre Completo",
-                                                            bold: true,
-                                                            size: 20
-                                                        })
-                                                    ]
-                                                })
-                                            ],
-                                            shading: {
-                                                fill: "D3D3D3"
-                                            }
-                                        }),
-                                        new docx.TableCell({
-                                            children: [
-                                                new docx.Paragraph({
-                                                    children: [
-                                                        new docx.TextRun({
-                                                            text: "Dispositivo Biométrico",
-                                                            bold: true,
-                                                            size: 20
-                                                        })
-                                                    ]
-                                                })
-                                            ],
-                                            shading: {
-                                                fill: "D3D3D3"
-                                            }
-                                        })
-                                    ]
-                                }),
-                                // Filas de datos
-                                ...postulantes.map((postulante, index) => 
-                                    new docx.TableRow({
-                                        children: [
-                                            new docx.TableCell({
-                                                children: [
-                                                    new docx.Paragraph({
-                                                        children: [
-                                                            new docx.TextRun({
-                                                                text: String(index + 1),
-                                                                size: 18
-                                                            })
-                                                        ]
-                                                    })
-                                                ]
-                                            }),
-                                            new docx.TableCell({
-                                                children: [
-                                                    new docx.Paragraph({
-                                                        children: [
-                                                            new docx.TextRun({
-                                                                text: postulante.cedula || '',
-                                                                size: 18
-                                                            })
-                                                        ]
-                                                    })
-                                                ]
-                                            }),
-                                            new docx.TableCell({
-                                                children: [
-                                                    new docx.Paragraph({
-                                                        children: [
-                                                            new docx.TextRun({
-                                                                text: postulante.nombre_completo || '',
-                                                                size: 18
-                                                            })
-                                                        ]
-                                                    })
-                                                ]
-                                            }),
-                                            new docx.TableCell({
-                                                children: [
-                                                    new docx.Paragraph({
-                                                        children: [
-                                                            new docx.TextRun({
-                                                                text: postulante.dispositivo || 'Sin dispositivo',
-                                                                size: 18
-                                                            })
-                                                        ]
-                                                    })
-                                                ]
-                                            })
-                                        ]
-                                    })
-                                )
-                            ]
-                        }),
-                        
-                        // Pie de página
-                        new docx.Paragraph({
-                            children: [new docx.TextRun({ text: "" })],
-                            spacing: { before: 400 }
-                        }),
-                        new docx.Paragraph({
-                            children: [
-                                new docx.TextRun({
-                                    text: `Generado por: ${nombreUsuario}`,
-                                    italics: true,
-                                    size: 16,
-                                    color: "808080"
-                                })
-                            ],
-                            alignment: docx.AlignmentType.CENTER,
-                            spacing: { before: 200 }
-                        })
-                    ]
+                    children: elementosDocumento
                 }]
             });
             
