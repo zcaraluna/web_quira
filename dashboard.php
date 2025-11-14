@@ -3911,6 +3911,19 @@ $distribucion_unidad = $pdo->query("
                 })
             ];
             
+            // Función para formatear el sexo
+            function formatearSexo(sexo) {
+                if (!sexo) return 'NO ESPECIFICADO';
+                const sexoUpper = String(sexo).toUpperCase().trim();
+                if (sexoUpper === 'HOMBRE' || sexoUpper === 'H' || sexoUpper === 'MASCULINO' || sexoUpper === 'M') {
+                    return 'MASCULINO';
+                }
+                if (sexoUpper === 'MUJER' || sexoUpper === 'F' || sexoUpper === 'FEMENINO' || sexoUpper === 'FEMENINA') {
+                    return 'FEMENINA';
+                }
+                return 'NO ESPECIFICADO';
+            }
+            
             // Función para crear una tabla de postulantes
             function crearTablaPostulantes(postulantes) {
                 const filasTabla = [
@@ -3955,6 +3968,22 @@ $distribucion_unidad = $pdo->query("
                                         children: [
                                             new docx.TextRun({
                                                 text: "Nombre Completo",
+                                                bold: true,
+                                                size: 20
+                                            })
+                                        ]
+                                    })
+                                ],
+                                shading: {
+                                    fill: "D3D3D3"
+                                }
+                            }),
+                            new docx.TableCell({
+                                children: [
+                                    new docx.Paragraph({
+                                        children: [
+                                            new docx.TextRun({
+                                                text: "Sexo",
                                                 bold: true,
                                                 size: 20
                                             })
@@ -4020,6 +4049,18 @@ $distribucion_unidad = $pdo->query("
                                             children: [
                                                 new docx.TextRun({
                                                     text: postulante.nombre_completo || '',
+                                                    size: 18
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                }),
+                                new docx.TableCell({
+                                    children: [
+                                        new docx.Paragraph({
+                                            children: [
+                                                new docx.TextRun({
+                                                    text: formatearSexo(postulante.sexo),
                                                     size: 18
                                                 })
                                             ]
