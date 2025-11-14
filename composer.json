@@ -1,0 +1,16 @@
+{
+    "name": "quira/sistema-postulantes",
+    "description": "Sistema de gestión de postulantes QUIRA",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "phpoffice/phpspreadsheet": "^1.30",
+        "phpoffice/phpword": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
+

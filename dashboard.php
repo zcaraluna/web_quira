@@ -2563,6 +2563,46 @@ $distribucion_unidad = $pdo->query("
                                 </div>
                             </div>
 
+                            <!-- Exportar Postulantes a Word -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-file-word mr-2"></i>Exportar Postulantes a Word</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3">Exporte una lista de todos los postulantes de una unidad específica a un documento Word.</p>
+                                        <form id="form-exportar-word" method="GET" action="exportar_postulantes_word.php" target="_blank">
+                                            <div class="form-group">
+                                                <label for="unidad-exportar"><i class="fas fa-building mr-2"></i>Seleccionar Unidad</label>
+                                                <select class="form-control" id="unidad-exportar" name="unidad" required>
+                                                    <option value="">-- Seleccione una unidad --</option>
+                                                    <?php if (isset($unidades_data) && !empty($unidades_data)): ?>
+                                                        <?php foreach ($unidades_data as $unidad): ?>
+                                                            <option value="<?= htmlspecialchars($unidad['nombre']) ?>">
+                                                                <?= htmlspecialchars($unidad['nombre']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                        <?php 
+                                                        // Obtener unidades directamente desde postulantes si no hay en unidades_data
+                                                        $unidades_directas = $pdo->query("SELECT DISTINCT unidad FROM postulantes WHERE unidad IS NOT NULL AND unidad != '' ORDER BY unidad")->fetchAll();
+                                                        foreach ($unidades_directas as $unidad): 
+                                                        ?>
+                                                            <option value="<?= htmlspecialchars($unidad['unidad']) ?>">
+                                                                <?= htmlspecialchars($unidad['unidad']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    <?php endif; ?>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-download mr-2"></i>Exportar a Word
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Configuración General -->
                             <div class="col-lg-6 mb-4">
                                 <div class="card">
