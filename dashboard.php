@@ -3810,6 +3810,9 @@ $distribucion_unidad = $pdo->query("
                 second: '2-digit'
             });
             
+            // Obtener nombre del usuario desde PHP
+            const nombreUsuario = <?= json_encode((!empty($_SESSION['grado']) ? $_SESSION['grado'] . ' ' : '') . $_SESSION['nombre'] . ' ' . $_SESSION['apellido']) ?>;
+            
             // Crear documento Word
             const doc = new docx.Document({
                 sections: [{
@@ -4001,9 +4004,9 @@ $distribucion_unidad = $pdo->query("
                                                                 text: postulante.nombre_completo || '',
                                                                 size: 18
                                                             })
-                                                        })
-                                                    ]
-                                                })
+                                                        ]
+                                                    })
+                                                ]
                                             }),
                                             new docx.TableCell({
                                                 children: [
@@ -4031,7 +4034,7 @@ $distribucion_unidad = $pdo->query("
                         new docx.Paragraph({
                             children: [
                                 new docx.TextRun({
-                                    text: `Generado por: <?= htmlspecialchars((!empty($_SESSION['grado']) ? $_SESSION['grado'] . ' ' : '') . $_SESSION['nombre'] . ' ' . $_SESSION['apellido'])) ?>`,
+                                    text: `Generado por: ${nombreUsuario}`,
                                     italics: true,
                                     size: 16,
                                     color: "808080"
