@@ -2571,7 +2571,7 @@ $distribucion_unidad = $pdo->query("
                                     </div>
                                     <div class="card-body">
                                         <p class="text-muted mb-3">Exporte una lista de todos los postulantes de una unidad específica a un documento Word.</p>
-                                        <form id="form-exportar-word" method="GET" action="exportar_postulantes_word.php" target="_blank">
+                                        <form id="form-exportar-word" onsubmit="exportarPostulantesWord(event)">
                                             <div class="form-group">
                                                 <label for="unidad-exportar"><i class="fas fa-building mr-2"></i>Seleccionar Unidad</label>
                                                 <select class="form-control" id="unidad-exportar" name="unidad" required>
@@ -2595,9 +2595,15 @@ $distribucion_unidad = $pdo->query("
                                                     <?php endif; ?>
                                                 </select>
                                             </div>
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" id="btn-exportar-word">
                                                 <i class="fas fa-download mr-2"></i>Exportar a Word
                                             </button>
+                                            <div id="exportar-word-status" class="mt-3" style="display: none;">
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                                                    Generando documento, por favor espere...
+                                                </div>
+                                            </div>
                                         </form>
                                     </div>
                                 </div>
@@ -3736,6 +3742,313 @@ $distribucion_unidad = $pdo->query("
         function exportarEstadisticas() {
             // Función para exportar estadísticas
             alert('Función de exportación en desarrollo. Por ahora, puedes usar la función de reporte diario.');
+        }
+        
+        // Función para exportar postulantes de una unidad a Word
+        function exportarPostulantesWord(event) {
+            event.preventDefault();
+            
+            const unidad = document.getElementById('unidad-exportar').value;
+            
+            if (!unidad) {
+                alert('Por favor seleccione una unidad');
+                return;
+            }
+            
+            // Verificar que las librerías estén disponibles
+            if (typeof docx === 'undefined' || typeof saveAs === 'undefined') {
+                alert('Error: Las librerías necesarias no están cargadas. Por favor recargue la página.');
+                return;
+            }
+            
+            // Mostrar estado de carga
+            const statusDiv = document.getElementById('exportar-word-status');
+            const btnExportar = document.getElementById('btn-exportar-word');
+            statusDiv.style.display = 'block';
+            btnExportar.disabled = true;
+            
+            // Obtener postulantes de la unidad
+            fetch(`obtener_postulantes_unidad_ajax.php?unidad=${encodeURIComponent(unidad)}`)
+                .then(response => response.json())
+                .then(data => {
+                    statusDiv.style.display = 'none';
+                    btnExportar.disabled = false;
+                    
+                    if (!data.success) {
+                        alert('Error: ' + (data.error || 'No se pudieron obtener los postulantes'));
+                        return;
+                    }
+                    
+                    if (data.postulantes.length === 0) {
+                        alert('No se encontraron postulantes para la unidad seleccionada.');
+                        return;
+                    }
+                    
+                    // Generar documento Word
+                    generarDocumentoPostulantes(data.unidad, data.postulantes, data.total);
+                })
+                .catch(error => {
+                    statusDiv.style.display = 'none';
+                    btnExportar.disabled = false;
+                    console.error('Error:', error);
+                    alert('Error al obtener los postulantes: ' + error.message);
+                });
+        }
+        
+        // Función para generar el documento Word de postulantes
+        function generarDocumentoPostulantes(nombreUnidad, postulantes, total) {
+            const fechaActual = new Date().toLocaleDateString('es-PY', { 
+                timeZone: 'America/Asuncion',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const horaActual = new Date().toLocaleTimeString('es-PY', { 
+                timeZone: 'America/Asuncion',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            // Crear documento Word
+            const doc = new docx.Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        // Título principal
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: "LISTA DE POSTULANTES",
+                                    bold: true,
+                                    size: 32,
+                                    color: "000000"
+                                })
+                            ],
+                            alignment: docx.AlignmentType.CENTER,
+                            spacing: { after: 200 }
+                        }),
+                        
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: "Sistema QUIRA",
+                                    bold: true,
+                                    size: 24,
+                                    color: "2E5090"
+                                })
+                            ],
+                            alignment: docx.AlignmentType.CENTER,
+                            spacing: { after: 400 }
+                        }),
+                        
+                        // Información de la unidad
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `Unidad: ${nombreUnidad}`,
+                                    bold: true,
+                                    size: 22
+                                })
+                            ],
+                            spacing: { after: 100 }
+                        }),
+                        
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `Total de postulantes: ${total}`,
+                                    bold: true,
+                                    size: 22
+                                })
+                            ],
+                            spacing: { after: 200 }
+                        }),
+                        
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `Documento generado el: ${fechaActual} ${horaActual}`,
+                                    size: 18,
+                                    color: "666666"
+                                })
+                            ],
+                            spacing: { after: 400 }
+                        }),
+                        
+                        // Tabla de postulantes
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: "LISTA DE POSTULANTES",
+                                    bold: true,
+                                    size: 24,
+                                    color: "2E5090"
+                                })
+                            ],
+                            spacing: { after: 200 }
+                        }),
+                        
+                        // Crear tabla
+                        new docx.Table({
+                            width: {
+                                size: 100,
+                                type: docx.WidthType.PERCENTAGE
+                            },
+                            rows: [
+                                // Encabezado
+                                new docx.TableRow({
+                                    children: [
+                                        new docx.TableCell({
+                                            children: [
+                                                new docx.Paragraph({
+                                                    children: [
+                                                        new docx.TextRun({
+                                                            text: "N°",
+                                                            bold: true,
+                                                            size: 20
+                                                        })
+                                                    ]
+                                                })
+                                            ],
+                                            shading: {
+                                                fill: "D3D3D3"
+                                            }
+                                        }),
+                                        new docx.TableCell({
+                                            children: [
+                                                new docx.Paragraph({
+                                                    children: [
+                                                        new docx.TextRun({
+                                                            text: "C.I.",
+                                                            bold: true,
+                                                            size: 20
+                                                        })
+                                                    ]
+                                                })
+                                            ],
+                                            shading: {
+                                                fill: "D3D3D3"
+                                            }
+                                        }),
+                                        new docx.TableCell({
+                                            children: [
+                                                new docx.Paragraph({
+                                                    children: [
+                                                        new docx.TextRun({
+                                                            text: "Nombre Completo",
+                                                            bold: true,
+                                                            size: 20
+                                                        })
+                                                    ]
+                                                })
+                                            ],
+                                            shading: {
+                                                fill: "D3D3D3"
+                                            }
+                                        }),
+                                        new docx.TableCell({
+                                            children: [
+                                                new docx.Paragraph({
+                                                    children: [
+                                                        new docx.TextRun({
+                                                            text: "Dispositivo Biométrico",
+                                                            bold: true,
+                                                            size: 20
+                                                        })
+                                                    ]
+                                                })
+                                            ],
+                                            shading: {
+                                                fill: "D3D3D3"
+                                            }
+                                        })
+                                    ]
+                                }),
+                                // Filas de datos
+                                ...postulantes.map((postulante, index) => 
+                                    new docx.TableRow({
+                                        children: [
+                                            new docx.TableCell({
+                                                children: [
+                                                    new docx.Paragraph({
+                                                        children: [
+                                                            new docx.TextRun({
+                                                                text: String(index + 1),
+                                                                size: 18
+                                                            })
+                                                        ]
+                                                    })
+                                                ]
+                                            }),
+                                            new docx.TableCell({
+                                                children: [
+                                                    new docx.Paragraph({
+                                                        children: [
+                                                            new docx.TextRun({
+                                                                text: postulante.cedula || '',
+                                                                size: 18
+                                                            })
+                                                        ]
+                                                    })
+                                                ]
+                                            }),
+                                            new docx.TableCell({
+                                                children: [
+                                                    new docx.Paragraph({
+                                                        children: [
+                                                            new docx.TextRun({
+                                                                text: postulante.nombre_completo || '',
+                                                                size: 18
+                                                            })
+                                                        })
+                                                    ]
+                                                })
+                                            }),
+                                            new docx.TableCell({
+                                                children: [
+                                                    new docx.Paragraph({
+                                                        children: [
+                                                            new docx.TextRun({
+                                                                text: postulante.dispositivo || 'Sin dispositivo',
+                                                                size: 18
+                                                            })
+                                                        ]
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    })
+                                )
+                            ]
+                        }),
+                        
+                        // Pie de página
+                        new docx.Paragraph({
+                            children: [new docx.TextRun({ text: "" })],
+                            spacing: { before: 400 }
+                        }),
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `Generado por: <?= htmlspecialchars((!empty($_SESSION['grado']) ? $_SESSION['grado'] . ' ' : '') . $_SESSION['nombre'] . ' ' . $_SESSION['apellido'])) ?>`,
+                                    italics: true,
+                                    size: 16,
+                                    color: "808080"
+                                })
+                            ],
+                            alignment: docx.AlignmentType.CENTER,
+                            spacing: { before: 200 }
+                        })
+                    ]
+                }]
+            });
+            
+            // Generar y descargar el documento
+            docx.Packer.toBlob(doc).then(blob => {
+                const nombreArchivo = `Postulantes_${nombreUnidad.replace(/[^a-zA-Z0-9_]/g, '_')}_${new Date().toISOString().split('T')[0]}.docx`;
+                saveAs(blob, nombreArchivo);
+            });
         }
         
         
