@@ -2597,10 +2597,19 @@ $distribucion_unidad = $pdo->query("
                                             </div>
                                             <div class="form-group">
                                                 <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="separar-por-dispositivo" name="separar_por_dispositivo" checked>
+                                                    <label class="form-check-label" for="separar-por-dispositivo">
+                                                        <i class="fas fa-fingerprint mr-2"></i>Separar por dispositivo biométrico
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="form-check">
                                                     <input class="form-check-input" type="checkbox" id="separar-por-sexo" name="separar_por_sexo">
                                                     <label class="form-check-label" for="separar-por-sexo">
                                                         <i class="fas fa-venus-mars mr-2"></i>Separar por sexo (Masculino/Femenino)
                                                     </label>
+                                                    <small class="form-text text-muted">Solo aplica si está marcado "Separar por dispositivo"</small>
                                                 </div>
                                             </div>
                                             <button type="submit" class="btn btn-primary" id="btn-exportar-word">
@@ -3752,6 +3761,30 @@ $distribucion_unidad = $pdo->query("
             alert('Función de exportación en desarrollo. Por ahora, puedes usar la función de reporte diario.');
         }
         
+        // Controlar habilitación del checkbox de separar por sexo
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxDispositivo = document.getElementById('separar-por-dispositivo');
+            const checkboxSexo = document.getElementById('separar-por-sexo');
+            
+            if (checkboxDispositivo && checkboxSexo) {
+                // Función para actualizar el estado del checkbox de sexo
+                function actualizarCheckboxSexo() {
+                    if (!checkboxDispositivo.checked) {
+                        checkboxSexo.checked = false;
+                        checkboxSexo.disabled = true;
+                    } else {
+                        checkboxSexo.disabled = false;
+                    }
+                }
+                
+                // Actualizar al cargar la página
+                actualizarCheckboxSexo();
+                
+                // Actualizar cuando cambie el checkbox de dispositivo
+                checkboxDispositivo.addEventListener('change', actualizarCheckboxSexo);
+            }
+        });
+        
         // Función para exportar postulantes de una unidad a Word
         function exportarPostulantesWord(event) {
             event.preventDefault();
@@ -3792,11 +3825,12 @@ $distribucion_unidad = $pdo->query("
                         return;
                     }
                     
-                    // Obtener opción de separar por sexo
+                    // Obtener opciones de separación
+                    const separarPorDispositivo = document.getElementById('separar-por-dispositivo').checked;
                     const separarPorSexo = document.getElementById('separar-por-sexo').checked;
                     
                     // Generar documento Word
-                    generarDocumentoPostulantes(data.unidad, data.postulantes, data.total, separarPorSexo);
+                    generarDocumentoPostulantes(data.unidad, data.postulantes, data.total, separarPorDispositivo, separarPorSexo);
                 })
                 .catch(error => {
                     statusDiv.style.display = 'none';
@@ -3821,7 +3855,7 @@ $distribucion_unidad = $pdo->query("
         }
         
         // Función para generar el documento Word de postulantes
-        function generarDocumentoPostulantes(nombreUnidad, postulantes, total, separarPorSexo = false) {
+        function generarDocumentoPostulantes(nombreUnidad, postulantes, total, separarPorDispositivo = true, separarPorSexo = false) {
             const fechaActual = new Date().toLocaleDateString('es-PY', { 
                 timeZone: 'America/Asuncion',
                 year: 'numeric',
@@ -3837,27 +3871,6 @@ $distribucion_unidad = $pdo->query("
             
             // Obtener nombre del usuario desde PHP
             const nombreUsuario = <?= json_encode((!empty($_SESSION['grado']) ? $_SESSION['grado'] . ' ' : '') . $_SESSION['nombre'] . ' ' . $_SESSION['apellido']) ?>;
-            
-            // Agrupar postulantes por dispositivo
-            const postulantesPorDispositivo = {};
-            postulantes.forEach(postulante => {
-                const dispositivo = postulante.dispositivo || 'Sin dispositivo';
-                if (!postulantesPorDispositivo[dispositivo]) {
-                    postulantesPorDispositivo[dispositivo] = [];
-                }
-                postulantesPorDispositivo[dispositivo].push(postulante);
-            });
-            
-            // Ordenar dispositivos: COLEPOL 1, COLEPOL 2, etc., luego otros, luego "Sin dispositivo"
-            const dispositivosOrdenados = Object.keys(postulantesPorDispositivo).sort((a, b) => {
-                const numA = extraerNumeroDispositivo(a);
-                const numB = extraerNumeroDispositivo(b);
-                if (numA !== numB) {
-                    return numA - numB;
-                }
-                // Si tienen el mismo número o no son COLEPOL, ordenar alfabéticamente
-                return a.localeCompare(b);
-            });
             
             // Construir elementos del documento
             const elementosDocumento = [
@@ -4064,45 +4077,13 @@ $distribucion_unidad = $pdo->query("
                 });
             }
             
-            // Crear una sección por cada dispositivo
-            dispositivosOrdenados.forEach((dispositivo, dispositivoIndex) => {
-                const postulantesDispositivo = postulantesPorDispositivo[dispositivo];
-                
-                // Título de la sección del dispositivo
-                elementosDocumento.push(
-                    new docx.Paragraph({
-                        children: [new docx.TextRun({ text: "" })],
-                        spacing: { before: dispositivoIndex === 0 ? 0 : 400 }
-                    }),
-                    new docx.Paragraph({
-                        children: [
-                            new docx.TextRun({
-                                text: `DISPOSITIVO: ${dispositivo}`,
-                                bold: true,
-                                size: 26,
-                                color: "2E5090"
-                            })
-                        ],
-                        spacing: { after: 100 }
-                    }),
-                    new docx.Paragraph({
-                        children: [
-                            new docx.TextRun({
-                                text: `Total de postulantes en este dispositivo: ${postulantesDispositivo.length}`,
-                                bold: true,
-                                size: 20
-                            })
-                        ],
-                        spacing: { after: 200 }
-                    })
-                );
-                
+            // Si no se separa por dispositivo, mostrar todos juntos
+            if (!separarPorDispositivo) {
                 // Separar por sexo solo si está habilitado
                 if (separarPorSexo) {
-                    // Separar postulantes por sexo dentro del dispositivo
-                    const postulantesHombre = postulantesDispositivo.filter(p => p.sexo === 'Hombre' || p.sexo === 'H');
-                    const postulantesMujer = postulantesDispositivo.filter(p => p.sexo === 'Mujer' || p.sexo === 'M' || p.sexo === 'F');
-                    const postulantesSinSexo = postulantesDispositivo.filter(p => 
+                    const postulantesHombre = postulantes.filter(p => p.sexo === 'Hombre' || p.sexo === 'H');
+                    const postulantesMujer = postulantes.filter(p => p.sexo === 'Mujer' || p.sexo === 'M' || p.sexo === 'F');
+                    const postulantesSinSexo = postulantes.filter(p => 
                         p.sexo !== 'Hombre' && p.sexo !== 'H' && p.sexo !== 'Mujer' && p.sexo !== 'M' && p.sexo !== 'F'
                     );
                     
@@ -4160,10 +4141,132 @@ $distribucion_unidad = $pdo->query("
                         elementosDocumento.push(crearTablaPostulantes(postulantesSinSexo));
                     }
                 } else {
-                    // Si no se separa por sexo, mostrar todos los postulantes juntos
-                    elementosDocumento.push(crearTablaPostulantes(postulantesDispositivo));
+                    // Mostrar todos juntos sin separación
+                    elementosDocumento.push(crearTablaPostulantes(postulantes));
                 }
-            });
+            } else {
+                // Agrupar postulantes por dispositivo
+                const postulantesPorDispositivo = {};
+                postulantes.forEach(postulante => {
+                    const dispositivo = postulante.dispositivo || 'Sin dispositivo';
+                    if (!postulantesPorDispositivo[dispositivo]) {
+                        postulantesPorDispositivo[dispositivo] = [];
+                    }
+                    postulantesPorDispositivo[dispositivo].push(postulante);
+                });
+                
+                // Ordenar dispositivos: COLEPOL 1, COLEPOL 2, etc., luego otros, luego "Sin dispositivo"
+                const dispositivosOrdenados = Object.keys(postulantesPorDispositivo).sort((a, b) => {
+                    const numA = extraerNumeroDispositivo(a);
+                    const numB = extraerNumeroDispositivo(b);
+                    if (numA !== numB) {
+                        return numA - numB;
+                    }
+                    // Si tienen el mismo número o no son COLEPOL, ordenar alfabéticamente
+                    return a.localeCompare(b);
+                });
+            
+                // Crear una sección por cada dispositivo
+                dispositivosOrdenados.forEach((dispositivo, dispositivoIndex) => {
+                    const postulantesDispositivo = postulantesPorDispositivo[dispositivo];
+                    
+                    // Título de la sección del dispositivo
+                    elementosDocumento.push(
+                        new docx.Paragraph({
+                            children: [new docx.TextRun({ text: "" })],
+                            spacing: { before: dispositivoIndex === 0 ? 0 : 400 }
+                        }),
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `DISPOSITIVO: ${dispositivo}`,
+                                    bold: true,
+                                    size: 26,
+                                    color: "2E5090"
+                                })
+                            ],
+                            spacing: { after: 100 }
+                        }),
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({
+                                    text: `Total de postulantes en este dispositivo: ${postulantesDispositivo.length}`,
+                                    bold: true,
+                                    size: 20
+                                })
+                            ],
+                            spacing: { after: 200 }
+                        })
+                    );
+                    
+                    // Separar por sexo solo si está habilitado
+                    if (separarPorSexo) {
+                        // Separar postulantes por sexo dentro del dispositivo
+                        const postulantesHombre = postulantesDispositivo.filter(p => p.sexo === 'Hombre' || p.sexo === 'H');
+                        const postulantesMujer = postulantesDispositivo.filter(p => p.sexo === 'Mujer' || p.sexo === 'M' || p.sexo === 'F');
+                        const postulantesSinSexo = postulantesDispositivo.filter(p => 
+                            p.sexo !== 'Hombre' && p.sexo !== 'H' && p.sexo !== 'Mujer' && p.sexo !== 'M' && p.sexo !== 'F'
+                        );
+                        
+                        // Sección de Hombres
+                        if (postulantesHombre.length > 0) {
+                            elementosDocumento.push(
+                                new docx.Paragraph({
+                                    children: [
+                                        new docx.TextRun({
+                                            text: `HOMBRES (${postulantesHombre.length})`,
+                                            bold: true,
+                                            size: 22,
+                                            color: "1E88E5"
+                                        })
+                                    ],
+                                    spacing: { before: 200, after: 100 }
+                                })
+                            );
+                            elementosDocumento.push(crearTablaPostulantes(postulantesHombre));
+                        }
+                        
+                        // Sección de Mujeres
+                        if (postulantesMujer.length > 0) {
+                            elementosDocumento.push(
+                                new docx.Paragraph({
+                                    children: [
+                                        new docx.TextRun({
+                                            text: `MUJERES (${postulantesMujer.length})`,
+                                            bold: true,
+                                            size: 22,
+                                            color: "E91E63"
+                                        })
+                                    ],
+                                    spacing: { before: 200, after: 100 }
+                                })
+                            );
+                            elementosDocumento.push(crearTablaPostulantes(postulantesMujer));
+                        }
+                        
+                        // Sección de Sin sexo especificado (si hay)
+                        if (postulantesSinSexo.length > 0) {
+                            elementosDocumento.push(
+                                new docx.Paragraph({
+                                    children: [
+                                        new docx.TextRun({
+                                            text: `NO ESPECIFICADO (${postulantesSinSexo.length})`,
+                                            bold: true,
+                                            size: 22,
+                                            color: "757575"
+                                        })
+                                    ],
+                                    spacing: { before: 200, after: 100 }
+                                })
+                            );
+                            elementosDocumento.push(crearTablaPostulantes(postulantesSinSexo));
+                        }
+                    } else {
+                        // Si no se separa por sexo, mostrar todos los postulantes juntos
+                        elementosDocumento.push(crearTablaPostulantes(postulantesDispositivo));
+                    }
+                });
+            }
             
             // Agregar pie de página
             elementosDocumento.push(
