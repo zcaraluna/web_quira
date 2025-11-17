@@ -2625,14 +2625,26 @@ $distribucion_unidad = $pdo->query("
                                 </div>
                             </div>
 
-                            <!-- Configuración General -->
+                            <!-- Usuarios sin Nombre en Dispositivo Biométrico -->
                             <div class="col-lg-6 mb-4">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h5 class="mb-0"><i class="fas fa-cog mr-2"></i>Configuración General</h5>
+                                        <h5 class="mb-0"><i class="fas fa-user-times mr-2"></i>Usuarios sin Nombre</h5>
                                     </div>
                                     <div class="card-body">
-                                        <p class="text-muted">Módulo de configuración en desarrollo...</p>
+                                        <p class="text-muted mb-3">Identifique los usuarios del dispositivo biométrico que no tienen nombre asignado (solo tienen huella registrada).</p>
+                                        <button class="btn btn-primary" id="btn-verificar-usuarios-sin-nombre" onclick="verificarUsuariosSinNombre()">
+                                            <i class="fas fa-search mr-2"></i>Verificar Usuarios sin Nombre
+                                        </button>
+                                        <div id="usuarios-sin-nombre-status" class="mt-3" style="display: none;">
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                                Conectando al dispositivo biométrico, por favor espere...
+                                            </div>
+                                        </div>
+                                        <div id="usuarios-sin-nombre-resultado" class="mt-3" style="display: none;">
+                                            <!-- Aquí se mostrarán los resultados -->
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3243,6 +3255,9 @@ $distribucion_unidad = $pdo->query("
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <?php if ($_SESSION['rol'] === 'SUPERADMIN'): ?>
+    <script src="assets/js/zkteco-bridge.js?v=20251030-1"></script>
+    <?php endif; ?>
 
     <script>
         function showSection(sectionName) {
@@ -3326,7 +3341,7 @@ $distribucion_unidad = $pdo->query("
             const hash = window.location.hash.substring(1); // Remover el #
             if (hash && hash !== 'dashboard') {
                 // Verificar que la sección existe antes de mostrarla
-                const validSections = ['usuarios', 'dispositivos', 'postulantes', 'unidades', 'estadisticas'];
+                const validSections = ['usuarios', 'dispositivos', 'postulantes', 'unidades', 'estadisticas', 'configuracion'];
                 if (validSections.includes(hash)) {
                     showSectionDirect(hash);
                 }
@@ -5953,6 +5968,178 @@ $distribucion_unidad = $pdo->query("
             }, 3000);
         }
 
+        // Función para verificar usuarios sin nombre en el dispositivo biométrico
+        async function verificarUsuariosSinNombre() {
+            const statusDiv = document.getElementById('usuarios-sin-nombre-status');
+            const resultadoDiv = document.getElementById('usuarios-sin-nombre-resultado');
+            const btnVerificar = document.getElementById('btn-verificar-usuarios-sin-nombre');
+            
+            // Verificar que el script del bridge esté disponible
+            if (typeof createZKTecoBridge === 'undefined') {
+                resultadoDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Error: No se pudo cargar el script de conexión al dispositivo biométrico.
+                    </div>
+                `;
+                resultadoDiv.style.display = 'block';
+                return;
+            }
+            
+            // Mostrar estado de carga
+            statusDiv.style.display = 'block';
+            resultadoDiv.style.display = 'none';
+            btnVerificar.disabled = true;
+            btnVerificar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
+            
+            let zktecoBridge = null;
+            
+            try {
+                // Crear instancia del bridge
+                zktecoBridge = createZKTecoBridge({
+                    wsUrl: 'ws://localhost:8001/ws/zkteco',
+                    httpUrl: 'http://localhost:8001'
+                });
+                
+                // Conectar al bridge
+                await zktecoBridge.connect();
+                
+                // Conectar al dispositivo
+                const deviceConnected = await zktecoBridge.connectToDevice();
+                
+                if (!deviceConnected) {
+                    throw new Error('No se pudo conectar al dispositivo biométrico. Verifique que el dispositivo esté encendido y conectado a la red.');
+                }
+                
+                // Obtener información del dispositivo
+                const deviceInfo = await zktecoBridge.getDeviceInfo();
+                
+                // Obtener lista de usuarios
+                const usersResult = await zktecoBridge.getUsers();
+                
+                if (!usersResult || !usersResult.users || !Array.isArray(usersResult.users)) {
+                    throw new Error('No se pudo obtener la lista de usuarios del dispositivo.');
+                }
+                
+                // Filtrar usuarios sin nombre
+                // Un usuario sin nombre puede tener:
+                // - nombre vacío ('')
+                // - nombre null o undefined
+                // - nombre que empieza con "NN-" (usuario sin nombre)
+                const usuariosSinNombre = usersResult.users.filter(user => {
+                    const nombre = user.name || '';
+                    return nombre === '' || 
+                           nombre === null || 
+                           nombre === undefined || 
+                           nombre.trim() === '' ||
+                           nombre.startsWith('NN-');
+                });
+                
+                // Ordenar por UID
+                usuariosSinNombre.sort((a, b) => parseInt(a.uid) - parseInt(b.uid));
+                
+                // Ocultar estado de carga
+                statusDiv.style.display = 'none';
+                
+                // Mostrar resultados
+                let resultadoHTML = '';
+                
+                if (usuariosSinNombre.length === 0) {
+                    resultadoHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <strong>Excelente:</strong> Todos los usuarios del dispositivo tienen nombre asignado.
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-muted mb-2"><strong>Total de usuarios en el dispositivo:</strong> ${usersResult.users.length}</p>
+                            ${deviceInfo.device_info ? `
+                                <p class="text-muted mb-0"><strong>Serial del dispositivo:</strong> ${deviceInfo.device_info.serial_number || 'No disponible'}</p>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    resultadoHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Atención:</strong> Se encontraron <strong>${usuariosSinNombre.length}</strong> usuario(s) sin nombre asignado.
+                        </div>
+                        <div class="mt-3">
+                            <h6 class="mb-3"><i class="fas fa-list mr-2"></i>Lista de Usuarios sin Nombre:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>UID</th>
+                                            <th>Nombre Actual</th>
+                                            <th>Privilegio</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${usuariosSinNombre.map(user => `
+                                            <tr>
+                                                <td><strong>${user.uid}</strong></td>
+                                                <td><span class="text-muted">${user.name || '(sin nombre)'}</span></td>
+                                                <td>${user.privilege || 0}</td>
+                                                <td><span class="badge badge-warning">Sin Nombre</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                <p class="text-muted mb-2"><strong>Total de usuarios en el dispositivo:</strong> ${usersResult.users.length}</p>
+                                <p class="text-muted mb-2"><strong>Usuarios sin nombre:</strong> ${usuariosSinNombre.length}</p>
+                                <p class="text-muted mb-0"><strong>Usuarios con nombre:</strong> ${usersResult.users.length - usuariosSinNombre.length}</p>
+                                ${deviceInfo.device_info ? `
+                                    <p class="text-muted mb-0 mt-2"><strong>Serial del dispositivo:</strong> ${deviceInfo.device_info.serial_number || 'No disponible'}</p>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                resultadoDiv.innerHTML = resultadoHTML;
+                resultadoDiv.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error verificando usuarios sin nombre:', error);
+                
+                // Ocultar estado de carga
+                statusDiv.style.display = 'none';
+                
+                // Mostrar error
+                resultadoDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Error:</strong> ${error.message}
+                        <br><br>
+                        <small>
+                            <strong>Posibles soluciones:</strong><br>
+                            1. Verifique que el dispositivo biométrico esté encendido y conectado a la red<br>
+                            2. Verifique que el servicio ZKTecoBridge esté corriendo en el puerto 8001<br>
+                            3. Revise la configuración de red del dispositivo biométrico<br>
+                            4. Intente nuevamente en unos momentos
+                        </small>
+                    </div>
+                `;
+                resultadoDiv.style.display = 'block';
+                
+            } finally {
+                // Restaurar botón
+                btnVerificar.disabled = false;
+                btnVerificar.innerHTML = '<i class="fas fa-search mr-2"></i>Verificar Usuarios sin Nombre';
+                
+                // Desconectar del bridge si existe
+                if (zktecoBridge) {
+                    try {
+                        await zktecoBridge.disconnect();
+                    } catch (e) {
+                        console.error('Error desconectando del bridge:', e);
+                    }
+                }
+            }
+        }
 
     </script>
 
