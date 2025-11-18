@@ -1,4 +1,7 @@
 <?php
+// Configurar zona horaria para Paraguay
+date_default_timezone_set('America/Asuncion');
+
 session_start();
 
 // Verificar si el usuario está logueado
@@ -46,15 +49,22 @@ try {
     $stats = $pdo->query("SELECT * FROM mv_estadisticas_postulantes")->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     // Si falla la vista materializada, usar consulta directa
-    $stats = $pdo->query("
+    // Usar fecha de PHP (America/Asuncion) en lugar de CURRENT_DATE de PostgreSQL
+    $fecha_hoy_paraguay = date('Y-m-d');
+    $fecha_hace_7_dias = date('Y-m-d', strtotime('-7 days'));
+    $fecha_hace_30_dias = date('Y-m-d', strtotime('-30 days'));
+    
+    $stats = $pdo->prepare("
         SELECT 
             COUNT(*) as total_postulantes,
-            COUNT(*) FILTER (WHERE DATE(fecha_registro) = CURRENT_DATE) as postulantes_hoy,
-            COUNT(*) FILTER (WHERE fecha_registro >= CURRENT_DATE - INTERVAL '7 days') as postulantes_semana,
-            COUNT(*) FILTER (WHERE fecha_registro >= CURRENT_DATE - INTERVAL '30 days') as postulantes_mes,
+            COUNT(*) FILTER (WHERE DATE(fecha_registro) = ?) as postulantes_hoy,
+            COUNT(*) FILTER (WHERE DATE(fecha_registro) >= ?) as postulantes_semana,
+            COUNT(*) FILTER (WHERE DATE(fecha_registro) >= ?) as postulantes_mes,
             COUNT(DISTINCT registrado_por) as total_registradores
         FROM postulantes
-    ")->fetch(PDO::FETCH_ASSOC);
+    ");
+    $stats->execute([$fecha_hoy_paraguay, $fecha_hace_7_dias, $fecha_hace_30_dias]);
+    $stats = $stats->fetch(PDO::FETCH_ASSOC);
 }
 
 $usuarios_count = $pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
@@ -685,19 +695,27 @@ try {
     $total_postulantes->execute($filtro_unidad_params);
     $total_postulantes = $total_postulantes->fetch()['total'];
     
-    $postulantes_hoy_sql = "SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) = CURRENT_DATE" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    // Usar fecha de PHP (America/Asuncion) en lugar de CURRENT_DATE de PostgreSQL
+    $fecha_hoy_paraguay = date('Y-m-d');
+    $fecha_hace_7_dias = date('Y-m-d', strtotime('-7 days'));
+    $fecha_hace_30_dias = date('Y-m-d', strtotime('-30 days'));
+    
+    $postulantes_hoy_sql = "SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) = ?" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    $postulantes_hoy_params = array_merge([$fecha_hoy_paraguay], $filtro_unidad_params);
     $postulantes_hoy = $pdo->prepare($postulantes_hoy_sql);
-    $postulantes_hoy->execute($filtro_unidad_params);
+    $postulantes_hoy->execute($postulantes_hoy_params);
     $postulantes_hoy = $postulantes_hoy->fetch()['total'];
     
-    $postulantes_semana_sql = "SELECT COUNT(*) as total FROM postulantes WHERE fecha_registro >= CURRENT_DATE - INTERVAL '7 days'" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    $postulantes_semana_sql = "SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) >= ?" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    $postulantes_semana_params = array_merge([$fecha_hace_7_dias], $filtro_unidad_params);
     $postulantes_semana = $pdo->prepare($postulantes_semana_sql);
-    $postulantes_semana->execute($filtro_unidad_params);
+    $postulantes_semana->execute($postulantes_semana_params);
     $postulantes_semana = $postulantes_semana->fetch()['total'];
     
-    $postulantes_mes_sql = "SELECT COUNT(*) as total FROM postulantes WHERE fecha_registro >= CURRENT_DATE - INTERVAL '30 days'" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    $postulantes_mes_sql = "SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) >= ?" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    $postulantes_mes_params = array_merge([$fecha_hace_30_dias], $filtro_unidad_params);
     $postulantes_mes = $pdo->prepare($postulantes_mes_sql);
-    $postulantes_mes->execute($filtro_unidad_params);
+    $postulantes_mes->execute($postulantes_mes_params);
     $postulantes_mes = $postulantes_mes->fetch()['total'];
     
     // Promedio de registros por día (rango personalizable)
