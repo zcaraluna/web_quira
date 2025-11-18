@@ -298,6 +298,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Obtener unidades disponibles
 $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER BY nombre")->fetchAll(PDO::FETCH_COLUMN);
+
+// Obtener aparatos biométricos disponibles
+try {
+    $aparatos_biometricos = $pdo->query("SELECT id, nombre FROM aparatos_biometricos ORDER BY nombre")->fetchAll();
+    if (empty($aparatos_biometricos)) {
+        $aparatos_biometricos = [];
+    }
+} catch (Exception $e) {
+    error_log("Error obteniendo aparatos biométricos: " . $e->getMessage());
+    $aparatos_biometricos = [];
+}
 ?>
 
 <!DOCTYPE html>
@@ -688,18 +699,52 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
                                         <label for="aparato_id"><i class="fas fa-fingerprint"></i> Aparato Biométrico</label>
                                         <select class="form-control" id="aparato_id" name="aparato_id">
                                             <option value="">Seleccionar dispositivo</option>
-                                            <?php foreach ($aparatos_biometricos as $aparato): ?>
+                                            <?php 
+                                            // Mostrar todos los dispositivos disponibles
+                                            if (!empty($aparatos_biometricos)): 
+                                                foreach ($aparatos_biometricos as $aparato): 
+                                            ?>
                                             <option value="<?= $aparato['id'] ?>" 
-                                                    <?= $postulante_data['aparato_id'] == $aparato['id'] ? 'selected' : '' ?>>
+                                                    <?= ($postulante_data['aparato_id'] && $postulante_data['aparato_id'] == $aparato['id']) ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($aparato['nombre']) ?>
                                             </option>
-                                            <?php endforeach; ?>
-                                            <?php if ($postulante_data['aparato_nombre'] && !$postulante_data['aparato_id']): ?>
-                                            <!-- Si el aparato fue eliminado, mostrar opción especial -->
-                                            <option value="" selected>
+                                            <?php 
+                                                endforeach; 
+                                            endif;
+                                            
+                                            // Si el aparato actual fue eliminado o no tiene ID, mostrarlo como opción especial
+                                            if (!empty($postulante_data['aparato_nombre'])) {
+                                                $aparato_id_existe = false;
+                                                $aparato_nombre_existe = false;
+                                                
+                                                // Verificar si el ID existe en la lista
+                                                if (!empty($postulante_data['aparato_id'])) {
+                                                    foreach ($aparatos_biometricos as $aparato) {
+                                                        if ($aparato['id'] == $postulante_data['aparato_id']) {
+                                                            $aparato_id_existe = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                // Verificar si el nombre existe en la lista
+                                                foreach ($aparatos_biometricos as $aparato) {
+                                                    if ($aparato['nombre'] === $postulante_data['aparato_nombre']) {
+                                                        $aparato_nombre_existe = true;
+                                                        break;
+                                                    }
+                                                }
+                                                
+                                                // Solo mostrar "(Eliminado)" si el aparato no existe en la lista actual
+                                                if (!$aparato_id_existe && !$aparato_nombre_existe):
+                                            ?>
+                                            <option value="" <?= !$postulante_data['aparato_id'] ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($postulante_data['aparato_nombre']) ?> (Eliminado)
                                             </option>
-                                            <?php endif; ?>
+                                            <?php 
+                                                endif;
+                                            } 
+                                            ?>
                                         </select>
                                         <input type="hidden" id="aparato_nombre" name="aparato_nombre" 
                                                value="<?= htmlspecialchars($postulante_data['aparato_nombre']) ?>">
