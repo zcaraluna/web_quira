@@ -73,6 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $observaciones = $_POST['observaciones'] ?? '';
         $sexo = $_POST['sexo'] ?? '';
         $dedo_registrado = $_POST['dedo_registrado'] ?? '';
+        $aparato_id = $_POST['aparato_id'] ?? null;
+        $aparato_nombre = $_POST['aparato_nombre'] ?? null;
         
         // Validaciones básicas
         if (empty($nombre_completo) || empty($cedula)) {
@@ -137,13 +139,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $observaciones_finales = '';
         }
         
+        // Obtener información del aparato si se proporcionó
+        if ($aparato_id && $aparato_id !== '') {
+            try {
+                $stmt_aparato = $pdo->prepare("SELECT id, nombre FROM aparatos_biometricos WHERE id = ?");
+                $stmt_aparato->execute([$aparato_id]);
+                $aparato_data = $stmt_aparato->fetch();
+                if ($aparato_data) {
+                    $aparato_id = $aparato_data['id'];
+                    $aparato_nombre = $aparato_data['nombre'];
+                } else {
+                    // Si no se encuentra, usar el nombre proporcionado
+                    $aparato_id = null;
+                    if (empty($aparato_nombre)) {
+                        $aparato_nombre = $postulante_data['aparato_nombre'];
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Error obteniendo información del aparato: " . $e->getMessage());
+                $aparato_id = $postulante_data['aparato_id'];
+                $aparato_nombre = $postulante_data['aparato_nombre'];
+            }
+        } else {
+            // Si no se proporcionó aparato_id, mantener los valores actuales
+            $aparato_id = $postulante_data['aparato_id'];
+            $aparato_nombre = $postulante_data['aparato_nombre'];
+        }
+        
         // Actualizar en la base de datos
         $stmt = $pdo->prepare("
             UPDATE postulantes SET 
                 nombre_completo = ?, cedula = ?, telefono = ?, 
                 fecha_nacimiento = ?, edad = ?, unidad = ?, 
                 dedo_registrado = ?, observaciones = ?, sexo = ?,
-                usuario_ultima_edicion = ?, fecha_ultima_edicion = ?
+                usuario_ultima_edicion = ?, fecha_ultima_edicion = ?,
+                aparato_id = ?, aparato_nombre = ?
             WHERE id = ?
         ");
         
@@ -152,6 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fecha_nacimiento, $edad, $unidad, 
             $dedo_registrado, $observaciones_finales, $sexo,
             $usuario_ultima_edicion, $fecha_ultima_edicion,
+            $aparato_id, $aparato_nombre,
             $postulante_id
         ]);
         
@@ -654,9 +685,25 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="aparato_biometrico"><i class="fas fa-fingerprint"></i> Aparato Biométrico</label>
-                                        <input type="text" class="form-control" id="aparato_biometrico" name="aparato_biometrico" 
-                                               value="<?= htmlspecialchars($postulante_data['aparato_nombre']) ?>" readonly>
+                                        <label for="aparato_id"><i class="fas fa-fingerprint"></i> Aparato Biométrico</label>
+                                        <select class="form-control" id="aparato_id" name="aparato_id">
+                                            <option value="">Seleccionar dispositivo</option>
+                                            <?php foreach ($aparatos_biometricos as $aparato): ?>
+                                            <option value="<?= $aparato['id'] ?>" 
+                                                    <?= $postulante_data['aparato_id'] == $aparato['id'] ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($aparato['nombre']) ?>
+                                            </option>
+                                            <?php endforeach; ?>
+                                            <?php if ($postulante_data['aparato_nombre'] && !$postulante_data['aparato_id']): ?>
+                                            <!-- Si el aparato fue eliminado, mostrar opción especial -->
+                                            <option value="" selected>
+                                                <?= htmlspecialchars($postulante_data['aparato_nombre']) ?> (Eliminado)
+                                            </option>
+                                            <?php endif; ?>
+                                        </select>
+                                        <input type="hidden" id="aparato_nombre" name="aparato_nombre" 
+                                               value="<?= htmlspecialchars($postulante_data['aparato_nombre']) ?>">
+                                        <small class="form-text text-muted">Puede cambiar el dispositivo biométrico asignado al postulante</small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -961,6 +1008,20 @@ $unidades = $pdo->query("SELECT nombre FROM unidades WHERE activa = true ORDER B
         setTimeout(() => {
             calcularEdad();
         }, 100);
+        
+        // Actualizar nombre del aparato cuando se selecciona uno diferente
+        document.getElementById('aparato_id').addEventListener('change', function() {
+            const select = this;
+            const nombreInput = document.getElementById('aparato_nombre');
+            const selectedOption = select.options[select.selectedIndex];
+            
+            if (selectedOption.value) {
+                nombreInput.value = selectedOption.text;
+            } else {
+                // Si no hay selección, mantener el valor actual
+                nombreInput.value = '<?= htmlspecialchars($postulante_data['aparato_nombre'] ?? '') ?>';
+            }
+        });
     </script>
 
     <!-- Footer Simple -->

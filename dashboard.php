@@ -88,10 +88,16 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                 $telefono = trim($_POST['telefono']);
                 $rol = $_POST['rol'];
                 $password = trim($_POST['password']);
+                $unidad_asignada = $_POST['unidad_asignada'] ?? null;
                 
                 // Validaciones básicas
                 if (empty($usuario) || empty($nombre) || empty($apellido) || empty($password)) {
                     throw new Exception('Los campos usuario, nombre, apellido y contraseña son obligatorios');
+                }
+                
+                // Si es SUPERVISOR, la unidad asignada es obligatoria
+                if ($rol === 'SUPERVISOR' && empty($unidad_asignada)) {
+                    throw new Exception('El campo Unidad Asignada es obligatorio para Supervisores');
                 }
                 
                 // Verificar si el usuario ya existe
@@ -101,10 +107,16 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                     throw new Exception('El nombre de usuario ya existe');
                 }
                 
-                // Crear usuario
+                // Crear usuario - intentar con unidad_asignada si existe el campo
                 $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("INSERT INTO usuarios (usuario, nombre, apellido, grado, cedula, telefono, rol, contrasena, primer_inicio, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true, NOW())");
-                $stmt->execute([$usuario, $nombre, $apellido, $grado, $cedula, $telefono, $rol, $password_hash]);
+                try {
+                    $stmt = $pdo->prepare("INSERT INTO usuarios (usuario, nombre, apellido, grado, cedula, telefono, rol, contrasena, primer_inicio, fecha_creacion, unidad_asignada) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true, NOW(), ?)");
+                    $stmt->execute([$usuario, $nombre, $apellido, $grado, $cedula, $telefono, $rol, $password_hash, $unidad_asignada]);
+                } catch (PDOException $e) {
+                    // Si el campo no existe, crear sin unidad_asignada
+                    $stmt = $pdo->prepare("INSERT INTO usuarios (usuario, nombre, apellido, grado, cedula, telefono, rol, contrasena, primer_inicio, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true, NOW())");
+                    $stmt->execute([$usuario, $nombre, $apellido, $grado, $cedula, $telefono, $rol, $password_hash]);
+                }
                 
                 $_SESSION['mensaje_usuarios'] = 'Usuario creado exitosamente';
                 $_SESSION['tipo_mensaje_usuarios'] = 'success';
@@ -119,10 +131,16 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                 $cedula = trim($_POST['cedula']);
                 $telefono = trim($_POST['telefono']);
                 $rol = $_POST['rol'];
+                $unidad_asignada = $_POST['unidad_asignada'] ?? null;
                 
                 // Validaciones básicas
                 if (empty($usuario) || empty($nombre) || empty($apellido)) {
                     throw new Exception('Los campos usuario, nombre y apellido son obligatorios');
+                }
+                
+                // Si es SUPERVISOR, la unidad asignada es obligatoria
+                if ($rol === 'SUPERVISOR' && empty($unidad_asignada)) {
+                    throw new Exception('El campo Unidad Asignada es obligatorio para Supervisores');
                 }
                 
                 // Verificar si el usuario ya existe (excluyendo el actual)
@@ -132,9 +150,15 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
                     throw new Exception('El nombre de usuario ya existe');
                 }
                 
-                // Actualizar usuario
-                $stmt = $pdo->prepare("UPDATE usuarios SET usuario = ?, nombre = ?, apellido = ?, grado = ?, cedula = ?, telefono = ?, rol = ? WHERE id = ?");
-                $stmt->execute([$usuario, $nombre, $apellido, $grado, $cedula, $telefono, $rol, $id]);
+                // Actualizar usuario - intentar con unidad_asignada si existe el campo
+                try {
+                    $stmt = $pdo->prepare("UPDATE usuarios SET usuario = ?, nombre = ?, apellido = ?, grado = ?, cedula = ?, telefono = ?, rol = ?, unidad_asignada = ? WHERE id = ?");
+                    $stmt->execute([$usuario, $nombre, $apellido, $grado, $cedula, $telefono, $rol, $unidad_asignada, $id]);
+                } catch (PDOException $e) {
+                    // Si el campo no existe, actualizar sin unidad_asignada
+                    $stmt = $pdo->prepare("UPDATE usuarios SET usuario = ?, nombre = ?, apellido = ?, grado = ?, cedula = ?, telefono = ?, rol = ? WHERE id = ?");
+                    $stmt->execute([$usuario, $nombre, $apellido, $grado, $cedula, $telefono, $rol, $id]);
+                }
                 
                 $_SESSION['mensaje_usuarios'] = 'Usuario actualizado exitosamente';
                 $_SESSION['tipo_mensaje_usuarios'] = 'success';
@@ -408,8 +432,19 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN']) && $_SERVER['REQUEST_MET
 
 // Obtener datos de usuarios si el usuario tiene permisos
 if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN'])) {
-    $usuarios = $pdo->query("SELECT id, usuario, nombre, apellido, rol, grado, cedula, telefono, fecha_creacion FROM usuarios ORDER BY fecha_creacion DESC")->fetchAll();
+    // Intentar obtener usuarios con unidad_asignada (si el campo existe)
+    try {
+        $usuarios = $pdo->query("SELECT id, usuario, nombre, apellido, rol, grado, cedula, telefono, fecha_creacion, unidad_asignada FROM usuarios ORDER BY fecha_creacion DESC")->fetchAll();
+    } catch (PDOException $e) {
+        // Si el campo no existe, obtener sin unidad_asignada
+        $usuarios = $pdo->query("SELECT id, usuario, nombre, apellido, rol, grado, cedula, telefono, fecha_creacion FROM usuarios ORDER BY fecha_creacion DESC")->fetchAll();
+        // Agregar campo unidad_asignada como null para compatibilidad
+        foreach ($usuarios as &$usuario) {
+            $usuario['unidad_asignada'] = null;
+        }
+    }
     $roles = $pdo->query("SELECT nombre FROM roles ORDER BY nombre")->fetchAll();
+    $unidades_para_supervisor = $pdo->query("SELECT id, nombre FROM unidades WHERE activa = true ORDER BY nombre")->fetchAll();
 }
 
 // Gestión de dispositivos biométricos - solo para ADMIN y SUPERADMIN
@@ -463,6 +498,24 @@ $filtro_fecha_hasta = isset($_GET['fecha_hasta']) ? $_GET['fecha_hasta'] : '';
 $filtro_unidad = isset($_GET['unidad']) ? $_GET['unidad'] : '';
 $filtro_aparato = isset($_GET['aparato']) ? $_GET['aparato'] : '';
 $filtro_dedo = isset($_GET['dedo']) ? $_GET['dedo'] : '';
+
+// Obtener unidad asignada del supervisor si es SUPERVISOR
+$unidad_supervisor = null;
+if ($_SESSION['rol'] === 'SUPERVISOR') {
+    try {
+        $stmt_unidad = $pdo->prepare("SELECT unidad_asignada FROM usuarios WHERE id = ?");
+        $stmt_unidad->execute([$_SESSION['user_id']]);
+        $resultado = $stmt_unidad->fetch();
+        if ($resultado && !empty($resultado['unidad_asignada'])) {
+            $unidad_supervisor = $resultado['unidad_asignada'];
+            // Forzar filtro de unidad para supervisor
+            $filtro_unidad = $unidad_supervisor;
+        }
+    } catch (PDOException $e) {
+        // Si el campo no existe, continuar sin filtro
+        error_log("Error obteniendo unidad asignada: " . $e->getMessage());
+    }
+}
 
 // Construir la consulta base
 $where_conditions = [];
@@ -619,11 +672,33 @@ if (in_array($_SESSION['rol'], ['ADMIN', 'SUPERADMIN', 'SUPERVISOR'])) {
 
 // Obtener estadísticas generales
 try {
+    // Construir filtro de unidad para estadísticas si es SUPERVISOR
+    $filtro_unidad_sql = "";
+    $filtro_unidad_params = [];
+    if (isset($unidad_supervisor) && $unidad_supervisor) {
+        $filtro_unidad_sql = " WHERE unidad = ?";
+        $filtro_unidad_params = [$unidad_supervisor];
+    }
+    
     // Estadísticas básicas
-    $total_postulantes = $pdo->query("SELECT COUNT(*) as total FROM postulantes")->fetch()['total'];
-    $postulantes_hoy = $pdo->query("SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) = CURRENT_DATE")->fetch()['total'];
-    $postulantes_semana = $pdo->query("SELECT COUNT(*) as total FROM postulantes WHERE fecha_registro >= CURRENT_DATE - INTERVAL '7 days'")->fetch()['total'];
-    $postulantes_mes = $pdo->query("SELECT COUNT(*) as total FROM postulantes WHERE fecha_registro >= CURRENT_DATE - INTERVAL '30 days'")->fetch()['total'];
+    $total_postulantes = $pdo->prepare("SELECT COUNT(*) as total FROM postulantes" . $filtro_unidad_sql);
+    $total_postulantes->execute($filtro_unidad_params);
+    $total_postulantes = $total_postulantes->fetch()['total'];
+    
+    $postulantes_hoy_sql = "SELECT COUNT(*) as total FROM postulantes WHERE DATE(fecha_registro) = CURRENT_DATE" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    $postulantes_hoy = $pdo->prepare($postulantes_hoy_sql);
+    $postulantes_hoy->execute($filtro_unidad_params);
+    $postulantes_hoy = $postulantes_hoy->fetch()['total'];
+    
+    $postulantes_semana_sql = "SELECT COUNT(*) as total FROM postulantes WHERE fecha_registro >= CURRENT_DATE - INTERVAL '7 days'" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    $postulantes_semana = $pdo->prepare($postulantes_semana_sql);
+    $postulantes_semana->execute($filtro_unidad_params);
+    $postulantes_semana = $postulantes_semana->fetch()['total'];
+    
+    $postulantes_mes_sql = "SELECT COUNT(*) as total FROM postulantes WHERE fecha_registro >= CURRENT_DATE - INTERVAL '30 days'" . ($filtro_unidad_sql ? " AND" . str_replace("WHERE", "", $filtro_unidad_sql) : "");
+    $postulantes_mes = $pdo->prepare($postulantes_mes_sql);
+    $postulantes_mes->execute($filtro_unidad_params);
+    $postulantes_mes = $postulantes_mes->fetch()['total'];
     
     // Promedio de registros por día (rango personalizable)
     $fecha_desde_promedio = $_GET['fecha_desde_promedio'] ?? '2025-10-29';
@@ -635,12 +710,21 @@ try {
     $dias_diferencia = $fecha_desde_obj->diff($fecha_hasta_obj)->days + 1; // +1 para incluir ambos días
     
     try {
-        $promedio_diario = $pdo->prepare("
+        $promedio_diario_sql = "
             SELECT ROUND(COUNT(*)::numeric / ?, 1) as promedio 
             FROM postulantes 
             WHERE DATE(fecha_registro) BETWEEN ? AND ?
-        ");
-        $promedio_diario->execute([$dias_diferencia, $fecha_desde_promedio, $fecha_hasta_promedio]);
+        ";
+        $promedio_params = [$dias_diferencia, $fecha_desde_promedio, $fecha_hasta_promedio];
+        
+        // Si es SUPERVISOR, filtrar por su unidad asignada
+        if (isset($unidad_supervisor) && $unidad_supervisor) {
+            $promedio_diario_sql .= " AND unidad = ?";
+            $promedio_params[] = $unidad_supervisor;
+        }
+        
+        $promedio_diario = $pdo->prepare($promedio_diario_sql);
+        $promedio_diario->execute($promedio_params);
         $promedio_diario = $promedio_diario->fetch()['promedio'];
         
         // Actualizar el texto del rango
@@ -652,16 +736,23 @@ try {
     }
     
     // Distribución por unidades (rango personalizable)
-    $distribucion_unidades = $pdo->prepare("
+    $distribucion_unidades_sql = "
         SELECT unidad, COUNT(*) as cantidad 
         FROM postulantes 
         WHERE unidad IS NOT NULL AND unidad != '' 
         AND DATE(fecha_registro) BETWEEN ? AND ?
-        GROUP BY unidad 
-        ORDER BY cantidad DESC 
-        LIMIT 10
-    ");
-    $distribucion_unidades->execute([$fecha_desde_promedio, $fecha_hasta_promedio]);
+    ";
+    $distribucion_params = [$fecha_desde_promedio, $fecha_hasta_promedio];
+    
+    // Si es SUPERVISOR, filtrar por su unidad asignada
+    if (isset($unidad_supervisor) && $unidad_supervisor) {
+        $distribucion_unidades_sql .= " AND unidad = ?";
+        $distribucion_params[] = $unidad_supervisor;
+    }
+    
+    $distribucion_unidades_sql .= " GROUP BY unidad ORDER BY cantidad DESC LIMIT 10";
+    $distribucion_unidades = $pdo->prepare($distribucion_unidades_sql);
+    $distribucion_unidades->execute($distribucion_params);
     $distribucion_unidades = $distribucion_unidades->fetchAll();
     
     // Distribución por dedos (rango personalizable)
@@ -795,8 +886,12 @@ try {
         error_log("DEBUG PARAMS: " . print_r($parametros, true));
     }
     
-    // Filtrar por unidad específica si se selecciona
-    if (!empty($unidad_reporte)) {
+    // Filtrar por unidad específica si se selecciona O si es SUPERVISOR
+    if ($_SESSION['rol'] === 'SUPERVISOR' && isset($unidad_supervisor) && $unidad_supervisor) {
+        // Forzar filtro de unidad para supervisor (ignorar filtro manual si existe)
+        $filtro_fecha_hora .= " AND p.unidad = ?";
+        $parametros[] = $unidad_supervisor;
+    } elseif (!empty($unidad_reporte)) {
         $filtro_fecha_hora .= " AND p.unidad = ?";
         $parametros[] = $unidad_reporte;
     }
@@ -1719,15 +1814,24 @@ $distribucion_unidad = $pdo->query("
                                         <!-- Filtro por unidad -->
                                         <div class="col-md-2 mb-3">
                                             <label for="unidad" class="form-label">Unidad</label>
-                                            <select class="form-control" id="unidad" name="unidad">
-                                                <option value="">Todas las unidades</option>
-                                                <?php foreach ($unidades as $unidad): ?>
-                                                <option value="<?= htmlspecialchars($unidad['unidad']) ?>" 
-                                                        <?= $filtro_unidad === $unidad['unidad'] ? 'selected' : '' ?>>
-                                                    <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
-                                                </option>
-                                                <?php endforeach; ?>
+                                            <select class="form-control" id="unidad" name="unidad" <?= ($_SESSION['rol'] === 'SUPERVISOR' && isset($unidad_supervisor) && $unidad_supervisor) ? 'disabled' : '' ?>>
+                                                <?php if ($_SESSION['rol'] === 'SUPERVISOR' && isset($unidad_supervisor) && $unidad_supervisor): ?>
+                                                    <option value="<?= htmlspecialchars($unidad_supervisor) ?>" selected>
+                                                        <?= htmlspecialchars($unidad_supervisor) ?> (Su unidad)
+                                                    </option>
+                                                <?php else: ?>
+                                                    <option value="">Todas las unidades</option>
+                                                    <?php foreach ($unidades as $unidad): ?>
+                                                    <option value="<?= htmlspecialchars($unidad['unidad']) ?>" 
+                                                            <?= $filtro_unidad === $unidad['unidad'] ? 'selected' : '' ?>>
+                                                        <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
+                                                    </option>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
                                             </select>
+                                            <?php if ($_SESSION['rol'] === 'SUPERVISOR' && isset($unidad_supervisor) && $unidad_supervisor): ?>
+                                            <small class="form-text text-muted">Solo puede ver datos de su unidad asignada</small>
+                                            <?php endif; ?>
                                         </div>
                                         
                                         <!-- Filtro por aparato -->
@@ -2303,14 +2407,23 @@ $distribucion_unidad = $pdo->query("
                                                                     <div class="input-group-prepend">
                                                                         <span class="input-group-text"><i class="fas fa-university"></i></span>
                                                                     </div>
-                                                                    <select class="form-control" id="unidad_reporte" name="unidad_reporte">
-                                                                    <option value="">Todas las unidades</option>
-                                                                    <?php foreach ($unidades as $unidad): ?>
-                                                                    <option value="<?= htmlspecialchars($unidad['unidad']) ?>" <?= $unidad_reporte === $unidad['unidad'] ? 'selected' : '' ?>>
-                                                                        <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
-                                                                    </option>
-                                                                    <?php endforeach; ?>
+                                                                    <select class="form-control" id="unidad_reporte" name="unidad_reporte" <?= ($_SESSION['rol'] === 'SUPERVISOR' && isset($unidad_supervisor) && $unidad_supervisor) ? 'disabled' : '' ?>>
+                                                                        <?php if ($_SESSION['rol'] === 'SUPERVISOR' && isset($unidad_supervisor) && $unidad_supervisor): ?>
+                                                                            <option value="<?= htmlspecialchars($unidad_supervisor) ?>" selected>
+                                                                                <?= htmlspecialchars($unidad_supervisor) ?> (Su unidad)
+                                                                            </option>
+                                                                        <?php else: ?>
+                                                                            <option value="">Todas las unidades</option>
+                                                                            <?php foreach ($unidades as $unidad): ?>
+                                                                            <option value="<?= htmlspecialchars($unidad['unidad']) ?>" <?= $unidad_reporte === $unidad['unidad'] ? 'selected' : '' ?>>
+                                                                                <?= str_replace('&quot;', '"', htmlspecialchars($unidad['unidad'])) ?>
+                                                                            </option>
+                                                                            <?php endforeach; ?>
+                                                                        <?php endif; ?>
                                                                     </select>
+                                                                    <?php if ($_SESSION['rol'] === 'SUPERVISOR' && isset($unidad_supervisor) && $unidad_supervisor): ?>
+                                                                    <small class="form-text text-muted">Solo puede ver datos de su unidad asignada</small>
+                                                                    <?php endif; ?>
                                                                 </div>
                                                             </div>
                                                             <div class="col-lg-4 col-md-6 mb-3 d-flex align-items-end">
@@ -2707,11 +2820,22 @@ $distribucion_unidad = $pdo->query("
                         </div>
                         <div class="form-group">
                             <label for="rol">Rol *</label>
-                            <select class="form-control" id="rol" name="rol" required>
+                            <select class="form-control" id="rol" name="rol" required onchange="toggleUnidadAsignada()">
                                 <option value="">Seleccionar rol</option>
                                 <?php foreach ($roles as $rol): ?>
                                 <option value="<?= htmlspecialchars($rol['nombre']) ?>"><?= htmlspecialchars($rol['nombre']) ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group" id="unidad-asignada-group" style="display: none;">
+                            <label for="unidad_asignada">Unidad Asignada * <small class="text-muted">(Obligatorio para Supervisores)</small></label>
+                            <select class="form-control" id="unidad_asignada" name="unidad_asignada">
+                                <option value="">Seleccionar unidad</option>
+                                <?php if (isset($unidades_para_supervisor)): ?>
+                                    <?php foreach ($unidades_para_supervisor as $unidad): ?>
+                                    <option value="<?= htmlspecialchars($unidad['nombre']) ?>"><?= htmlspecialchars($unidad['nombre']) ?></option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </select>
                         </div>
                     </div>
@@ -2764,11 +2888,22 @@ $distribucion_unidad = $pdo->query("
                         </div>
                         <div class="form-group">
                             <label for="edit_rol">Rol *</label>
-                            <select class="form-control" id="edit_rol" name="rol" required>
+                            <select class="form-control" id="edit_rol" name="rol" required onchange="toggleUnidadAsignadaEdit()">
                                 <option value="">Seleccionar rol</option>
                                 <?php foreach ($roles as $rol): ?>
                                 <option value="<?= htmlspecialchars($rol['nombre']) ?>"><?= htmlspecialchars($rol['nombre']) ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group" id="edit-unidad-asignada-group" style="display: none;">
+                            <label for="edit_unidad_asignada">Unidad Asignada * <small class="text-muted">(Obligatorio para Supervisores)</small></label>
+                            <select class="form-control" id="edit_unidad_asignada" name="unidad_asignada">
+                                <option value="">Seleccionar unidad</option>
+                                <?php if (isset($unidades_para_supervisor)): ?>
+                                    <?php foreach ($unidades_para_supervisor as $unidad): ?>
+                                    <option value="<?= htmlspecialchars($unidad['nombre']) ?>"><?= htmlspecialchars($unidad['nombre']) ?></option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </select>
                         </div>
                     </div>
@@ -3349,6 +3484,37 @@ $distribucion_unidad = $pdo->query("
         });
         <?php endif; ?>
         
+        // Funciones para mostrar/ocultar campo de unidad asignada
+        function toggleUnidadAsignada() {
+            const rolSelect = document.getElementById('rol');
+            const unidadGroup = document.getElementById('unidad-asignada-group');
+            const unidadSelect = document.getElementById('unidad_asignada');
+            
+            if (rolSelect.value === 'SUPERVISOR') {
+                unidadGroup.style.display = 'block';
+                unidadSelect.required = true;
+            } else {
+                unidadGroup.style.display = 'none';
+                unidadSelect.required = false;
+                unidadSelect.value = '';
+            }
+        }
+        
+        function toggleUnidadAsignadaEdit() {
+            const rolSelect = document.getElementById('edit_rol');
+            const unidadGroup = document.getElementById('edit-unidad-asignada-group');
+            const unidadSelect = document.getElementById('edit_unidad_asignada');
+            
+            if (rolSelect.value === 'SUPERVISOR') {
+                unidadGroup.style.display = 'block';
+                unidadSelect.required = true;
+            } else {
+                unidadGroup.style.display = 'none';
+                unidadSelect.required = false;
+                unidadSelect.value = '';
+            }
+        }
+        
         // Funciones para gestión de usuarios
         function editarUsuario(usuario) {
             document.getElementById('edit_id').value = usuario.id;
@@ -3359,6 +3525,14 @@ $distribucion_unidad = $pdo->query("
             document.getElementById('edit_cedula').value = usuario.cedula || '';
             document.getElementById('edit_telefono').value = usuario.telefono || '';
             document.getElementById('edit_rol').value = usuario.rol;
+            
+            // Manejar unidad_asignada si existe
+            if (usuario.unidad_asignada) {
+                document.getElementById('edit_unidad_asignada').value = usuario.unidad_asignada;
+            }
+            
+            // Verificar si debe mostrarse el campo de unidad asignada
+            toggleUnidadAsignadaEdit();
             
             $('#modalEditarUsuario').modal('show');
         }
