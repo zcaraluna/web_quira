@@ -667,9 +667,15 @@ $aparatos_eliminados = $pdo->query("
 // Combinar aparatos activos y eliminados
 $aparatos = [];
 foreach ($aparatos_activos as $aparato) {
+    if (stripos($aparato['nombre'], 'COPIA') !== false) {
+        continue;
+    }
     $aparatos[] = ['id' => $aparato['id'], 'nombre' => $aparato['nombre'], 'tipo' => 'activo'];
 }
 foreach ($aparatos_eliminados as $aparato) {
+    if (stripos($aparato['nombre'], 'COPIA') !== false) {
+        continue;
+    }
     $aparatos[] = ['id' => 'eliminado_' . base64_encode($aparato['nombre']), 'nombre' => $aparato['nombre'], 'tipo' => 'eliminado'];
 }
 
