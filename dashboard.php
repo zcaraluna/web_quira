@@ -873,18 +873,18 @@ try {
         $usuarios_activos_ampliado = [];
     }
 
-    // Capturadores de huellas (por aparato)
+    // Capturadores de huellas (por usuario)
     try {
         $capturadores_huellas = $pdo->prepare("
             SELECT 
-                COALESCE(a.nombre, 'Aparato Desconocido') as aparato,
-                COUNT(p.id) as registros
+                COALESCE(NULLIF(TRIM(u.nombre || ' ' || u.apellido), ''), u.usuario, 'Usuario Desconocido') as capturador,
+                COUNT(p.id) as capturas
             FROM postulantes p
-            LEFT JOIN aparatos_biometricos a ON a.id = p.aparato_id
-            WHERE p.aparato_id IS NOT NULL
+            LEFT JOIN usuarios u ON u.id = p.capturador_id
+            WHERE p.capturador_id IS NOT NULL
             AND DATE(p.fecha_registro) BETWEEN ? AND ?
-            GROUP BY COALESCE(a.nombre, 'Aparato Desconocido')
-            ORDER BY registros DESC
+            GROUP BY COALESCE(NULLIF(TRIM(u.nombre || ' ' || u.apellido), ''), u.usuario, 'Usuario Desconocido')
+            ORDER BY capturas DESC
         ");
         $capturadores_huellas->execute([$fecha_desde_promedio, $fecha_hasta_promedio]);
         $capturadores_huellas = $capturadores_huellas->fetchAll();
@@ -6450,15 +6450,15 @@ $distribucion_unidad = $pdo->query("
                                     <thead>
                                         <tr>
                                             <th>Capturador</th>
-                                            <th>Registros</th>
+                                            <th>Capturas de dedos</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php if (!empty($capturadores_huellas)): ?>
                                             <?php foreach ($capturadores_huellas as $capturador): ?>
                                             <tr>
-                                                <td><?= htmlspecialchars($capturador['aparato']) ?></td>
-                                                <td><span class="badge badge-info"><?= $capturador['registros'] ?></span></td>
+                                                <td><?= htmlspecialchars($capturador['capturador']) ?></td>
+                                                <td><span class="badge badge-info"><?= $capturador['capturas'] ?></span></td>
                                             </tr>
                                             <?php endforeach; ?>
                                         <?php else: ?>
