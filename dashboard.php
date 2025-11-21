@@ -2336,7 +2336,12 @@ $distribucion_unidad = $pdo->query("
                                     <div class="col-lg-12 mb-5">
                                         <div class="card">
                                             <div class="card-header">
-                                                <h6 class="mb-0">Usuarios Más Activos</h6>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">Usuarios Más Activos</h6>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirModalUsuariosActivos()">
+                                                        <i class="fas fa-expand-arrows-alt"></i> Ampliar
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="card-body" style="padding: 2rem;">
                                                 <div class="table-responsive">
@@ -6020,6 +6025,11 @@ $distribucion_unidad = $pdo->query("
             // });
         });
         
+        // Función para abrir modal de usuarios más activos
+        function abrirModalUsuariosActivos() {
+            $('#modalUsuariosActivos').modal('show');
+        }
+
         // Función para abrir modal de registros por día
         function abrirModalRegistrosDia() {
             $('#modalRegistrosDia').modal('show');
@@ -6340,6 +6350,52 @@ $distribucion_unidad = $pdo->query("
         }
 
     </script>
+
+    <!-- Modal para Usuarios Más Activos -->
+    <div class="modal fade" id="modalUsuariosActivos" tabindex="-1" role="dialog" aria-labelledby="modalUsuariosActivosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalUsuariosActivosLabel">Usuarios Más Activos - Detalle</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Registros</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($usuarios_activos)): ?>
+                                    <?php foreach ($usuarios_activos as $usuario): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($usuario['usuario']) ?></td>
+                                        <td><span class="badge badge-success"><?= $usuario['registros'] ?></span></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted">
+                                            <i class="fas fa-users fa-2x mb-2"></i><br>
+                                            No hay datos disponibles
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal para Registros por Día -->
     <div class="modal fade" id="modalRegistrosDia" tabindex="-1" role="dialog" aria-labelledby="modalRegistrosDiaLabel" aria-hidden="true">
