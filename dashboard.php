@@ -832,7 +832,7 @@ try {
     $registros_por_dia->execute([$fecha_desde_promedio, $fecha_hasta_promedio]);
     $registros_por_dia = $registros_por_dia->fetchAll();
     
-    // Usuarios más activos
+    // Usuarios más activos (top 10)
     try {
         $usuarios_activos = $pdo->prepare("
             SELECT 
@@ -851,6 +851,46 @@ try {
     } catch (Exception $e) {
         error_log("Error en consulta usuarios_activos: " . $e->getMessage());
         $usuarios_activos = [];
+    }
+
+    // Usuarios más activos - listado completo para la ampliación
+    try {
+        $usuarios_activos_ampliado = $pdo->prepare("
+            SELECT 
+                COALESCE(u.nombre || ' ' || u.apellido, p.registrado_por, 'Usuario Desconocido') as usuario,
+                COUNT(p.id) as registros
+            FROM postulantes p
+            LEFT JOIN usuarios u ON u.usuario = p.registrado_por
+            WHERE p.registrado_por IS NOT NULL AND p.registrado_por != ''
+            AND DATE(p.fecha_registro) BETWEEN ? AND ?
+            GROUP BY COALESCE(u.nombre || ' ' || u.apellido, p.registrado_por, 'Usuario Desconocido')
+            ORDER BY registros DESC
+        ");
+        $usuarios_activos_ampliado->execute([$fecha_desde_promedio, $fecha_hasta_promedio]);
+        $usuarios_activos_ampliado = $usuarios_activos_ampliado->fetchAll();
+    } catch (Exception $e) {
+        error_log("Error en consulta usuarios_activos_ampliado: " . $e->getMessage());
+        $usuarios_activos_ampliado = [];
+    }
+
+    // Capturadores de huellas (por aparato)
+    try {
+        $capturadores_huellas = $pdo->prepare("
+            SELECT 
+                COALESCE(a.nombre, 'Aparato Desconocido') as aparato,
+                COUNT(p.id) as registros
+            FROM postulantes p
+            LEFT JOIN aparatos_biometricos a ON a.id = p.aparato_id
+            WHERE p.aparato_id IS NOT NULL
+            AND DATE(p.fecha_registro) BETWEEN ? AND ?
+            GROUP BY COALESCE(a.nombre, 'Aparato Desconocido')
+            ORDER BY registros DESC
+        ");
+        $capturadores_huellas->execute([$fecha_desde_promedio, $fecha_hasta_promedio]);
+        $capturadores_huellas = $capturadores_huellas->fetchAll();
+    } catch (Exception $e) {
+        error_log("Error en consulta capturadores_huellas: " . $e->getMessage());
+        $capturadores_huellas = [];
     }
     
     // Horarios de mayor actividad (rango personalizable)
@@ -6362,32 +6402,77 @@ $distribucion_unidad = $pdo->query("
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Usuario</th>
-                                    <th>Registros</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($usuarios_activos)): ?>
-                                    <?php foreach ($usuarios_activos as $usuario): ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($usuario['usuario']) ?></td>
-                                        <td><span class="badge badge-success"><?= $usuario['registros'] ?></span></td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="2" class="text-center text-muted">
-                                            <i class="fas fa-users fa-2x mb-2"></i><br>
-                                            No hay datos disponibles
-                                        </td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
+                    <ul class="nav nav-tabs mb-3" id="modalUsuariosActivosTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="modal-tab-usuarios" data-toggle="tab" href="#modal-usuarios-content" role="tab" aria-controls="modal-usuarios-content" aria-selected="true">
+                                <i class="fas fa-users mr-1"></i>Usuarios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="modal-tab-capturadores" data-toggle="tab" href="#modal-capturadores-content" role="tab" aria-controls="modal-capturadores-content" aria-selected="false">
+                                <i class="fas fa-fingerprint mr-1"></i>Capturadores de Huellas
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="modalUsuariosActivosTabsContent">
+                        <div class="tab-pane fade show active" id="modal-usuarios-content" role="tabpanel" aria-labelledby="modal-tab-usuarios">
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Usuario</th>
+                                            <th>Registros</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (!empty($usuarios_activos_ampliado)): ?>
+                                            <?php foreach ($usuarios_activos_ampliado as $usuario): ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars($usuario['usuario']) ?></td>
+                                                <td><span class="badge badge-success"><?= $usuario['registros'] ?></span></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="2" class="text-center text-muted">
+                                                    <i class="fas fa-users fa-2x mb-2"></i><br>
+                                                    No hay datos disponibles
+                                                </td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="modal-capturadores-content" role="tabpanel" aria-labelledby="modal-tab-capturadores">
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Capturador</th>
+                                            <th>Registros</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (!empty($capturadores_huellas)): ?>
+                                            <?php foreach ($capturadores_huellas as $capturador): ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars($capturador['aparato']) ?></td>
+                                                <td><span class="badge badge-info"><?= $capturador['registros'] ?></span></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="2" class="text-center text-muted">
+                                                    <i class="fas fa-fingerprint fa-2x mb-2"></i><br>
+                                                    No hay capturadores activos en el período seleccionado
+                                                </td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
